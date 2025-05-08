@@ -46,26 +46,28 @@ const HowItWorks = () => {
                 
                 {/* Step 1 */}
                 <div className="relative mb-20">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-full md:w-1/2 md:text-right order-2 md:order-1">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div className="w-full md:w-5/12 md:text-right order-2 md:order-1">
                       <h3 className="text-2xl font-bold text-navy-800 mb-4">Sign Up & Create Your Account</h3>
                       <p className="text-gray-600 mb-4">
                         Start with a free 14-day trial. Enter your business details to create your account and access the ScanServe dashboard.
                       </p>
-                      <ul className="space-y-2 text-gray-700">
+                      <ul className="space-y-2 text-gray-700 md:mr-6">
                         <li>No credit card required</li>
                         <li>Quick 2-minute setup</li>
                         <li>Immediate access to all features</li>
                       </ul>
                     </div>
                     
-                    <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg z-10">
-                      <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
-                        1
+                    <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
+                        <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                          1
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="w-full md:w-1/2 order-1 md:order-2">
+                    <div className="w-full md:w-5/12 order-1 md:order-2 md:ml-auto">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
                         <img 
                           src="https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=500&auto=format&fit=crop" 
@@ -79,13 +81,13 @@ const HowItWorks = () => {
                 
                 {/* Step 2 */}
                 <div className="relative mb-20">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-full md:w-1/2 order-2">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div className="w-full md:w-5/12 md:ml-auto order-2">
                       <h3 className="text-2xl font-bold text-navy-800 mb-4">Build Your Digital Menu</h3>
                       <p className="text-gray-600 mb-4">
                         Use our intuitive menu builder to create and customize your digital menu. Add categories, items, descriptions, images, and prices.
                       </p>
-                      <ul className="space-y-2 text-gray-700">
+                      <ul className="space-y-2 text-gray-700 md:ml-6">
                         <li>User-friendly drag-and-drop interface</li>
                         <li>Upload images for each menu item</li>
                         <li>Add allergen information and modifiers</li>
@@ -93,13 +95,15 @@ const HowItWorks = () => {
                       </ul>
                     </div>
                     
-                    <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg z-10">
-                      <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
-                        2
+                    <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
+                        <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                          2
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="w-full md:w-1/2 order-1 md:order-1">
+                    <div className="w-full md:w-5/12 order-1 md:order-1 md:text-right">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
                         <img 
                           src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=500&auto=format&fit=crop" 
@@ -113,13 +117,13 @@ const HowItWorks = () => {
                 
                 {/* Step 3 */}
                 <div className="relative mb-20">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-full md:w-1/2 md:text-right order-2 md:order-1">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div className="w-full md:w-5/12 md:text-right order-2 md:order-1">
                       <h3 className="text-2xl font-bold text-navy-800 mb-4">Generate & Deploy QR Codes</h3>
                       <p className="text-gray-600 mb-4">
                         Create custom QR codes for each table, room, or location. Download, print, and place them for customers to scan.
                       </p>
-                      <ul className="space-y-2 text-gray-700">
+                      <ul className="space-y-2 text-gray-700 md:mr-6">
                         <li>Unique QR codes for each location</li>
                         <li>Customizable with your branding</li>
                         <li>Print-ready formats</li>
@@ -127,13 +131,15 @@ const HowItWorks = () => {
                       </ul>
                     </div>
                     
-                    <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg z-10">
-                      <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
-                        3
+                    <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
+                        <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                          3
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="w-full md:w-1/2 order-1 md:order-2">
+                    <div className="w-full md:w-5/12 order-1 md:order-2 md:ml-auto">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
                         <img 
                           src="https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=500&auto=format&fit=crop" 
@@ -147,13 +153,13 @@ const HowItWorks = () => {
                 
                 {/* Step 4 */}
                 <div className="relative mb-20">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-full md:w-1/2 order-2">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div className="w-full md:w-5/12 md:ml-auto order-2">
                       <h3 className="text-2xl font-bold text-navy-800 mb-4">Customers Scan & Order</h3>
                       <p className="text-gray-600 mb-4">
                         Customers scan the QR code with their smartphone camera. No app download required. They can browse your menu and place orders directly.
                       </p>
-                      <ul className="space-y-2 text-gray-700">
+                      <ul className="space-y-2 text-gray-700 md:ml-6">
                         <li>Instant menu access for customers</li>
                         <li>Mobile-friendly interface</li>
                         <li>Easy ordering process</li>
@@ -161,13 +167,15 @@ const HowItWorks = () => {
                       </ul>
                     </div>
                     
-                    <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg z-10">
-                      <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
-                        4
+                    <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
+                        <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                          4
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="w-full md:w-1/2 order-1 md:order-1">
+                    <div className="w-full md:w-5/12 order-1 md:order-1 md:text-right">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
                         <img 
                           src="https://images.unsplash.com/photo-1593508512255-86ab42a8e24c?w=500&auto=format&fit=crop" 
@@ -181,13 +189,13 @@ const HowItWorks = () => {
                 
                 {/* Step 5 */}
                 <div className="relative">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-full md:w-1/2 md:text-right order-2 md:order-1">
+                  <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+                    <div className="w-full md:w-5/12 md:text-right order-2 md:order-1">
                       <h3 className="text-2xl font-bold text-navy-800 mb-4">Receive & Manage Orders</h3>
                       <p className="text-gray-600 mb-4">
                         Get instant notifications of new orders. Manage them from your dashboard, update status, and track fulfillment.
                       </p>
-                      <ul className="space-y-2 text-gray-700">
+                      <ul className="space-y-2 text-gray-700 md:mr-6">
                         <li>Real-time order notifications</li>
                         <li>Order management dashboard</li>
                         <li>Order status tracking</li>
@@ -195,13 +203,15 @@ const HowItWorks = () => {
                       </ul>
                     </div>
                     
-                    <div className="md:absolute md:left-1/2 md:transform md:-translate-x-1/2 bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg z-10">
-                      <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
-                        5
+                    <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
+                        <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
+                          5
+                        </div>
                       </div>
                     </div>
                     
-                    <div className="w-full md:w-1/2 order-1 md:order-2">
+                    <div className="w-full md:w-5/12 order-1 md:order-2 md:ml-auto">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
                         <img 
                           src="https://images.unsplash.com/photo-1564218989864-0d562e8b9371?w=500&auto=format&fit=crop" 
