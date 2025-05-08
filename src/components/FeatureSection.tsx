@@ -43,7 +43,7 @@ const FeatureSection = () => {
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-navy-800 mb-4">
-            Features Designed for <span className="text-orange-500">Hospitality Success</span>
+            Features Designed for <span className="text-gradient">Hospitality Success</span>
           </h2>
           <p className="text-lg text-gray-700">
             Everything you need to transform your menu experience and streamline operations.
@@ -54,10 +54,12 @@ const FeatureSection = () => {
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="feature-card group hover-scale"
+              className="feature-card group card-hover"
             >
-              <div className="mb-4">
-                {feature.icon}
+              <div className="mb-4 bg-orange-100 w-16 h-16 rounded-lg flex items-center justify-center group-hover:bg-orange-500 transition-colors duration-300">
+                <div className="text-orange-500 group-hover:text-white transition-colors duration-300">
+                  {feature.icon}
+                </div>
               </div>
               <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">
                 {feature.title}

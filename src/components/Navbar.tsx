@@ -1,19 +1,38 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
-    <header className="fixed w-full bg-white/95 backdrop-blur-sm z-50 shadow-sm">
-      <div className="container-custom py-4">
+    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-sm shadow-md py-3' : 'bg-transparent py-4'}`}>
+      <div className="container-custom">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center">
             <span className="text-2xl font-bold text-navy-800">
@@ -23,19 +42,19 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link to="/" className="nav-link font-medium">Home</Link>
-            <Link to="/features" className="nav-link font-medium">Features</Link>
-            <Link to="/how-it-works" className="nav-link font-medium">How It Works</Link>
-            <Link to="/use-cases" className="nav-link font-medium">Use Cases</Link>
-            <Link to="/pricing" className="nav-link font-medium">Pricing</Link>
-            <Link to="/contact" className="nav-link font-medium">Contact</Link>
+            <Link to="/" className={`nav-link font-medium ${isActive('/') ? 'text-orange-500 after:w-full' : ''}`}>Home</Link>
+            <Link to="/features" className={`nav-link font-medium ${isActive('/features') ? 'text-orange-500 after:w-full' : ''}`}>Features</Link>
+            <Link to="/how-it-works" className={`nav-link font-medium ${isActive('/how-it-works') ? 'text-orange-500 after:w-full' : ''}`}>How It Works</Link>
+            <Link to="/use-cases" className={`nav-link font-medium ${isActive('/use-cases') ? 'text-orange-500 after:w-full' : ''}`}>Use Cases</Link>
+            <Link to="/pricing" className={`nav-link font-medium ${isActive('/pricing') ? 'text-orange-500 after:w-full' : ''}`}>Pricing</Link>
+            <Link to="/contact" className={`nav-link font-medium ${isActive('/contact') ? 'text-orange-500 after:w-full' : ''}`}>Contact</Link>
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button variant="outline" asChild>
+            <Button variant="outline" className="hover-lift" asChild>
               <Link to="/login">Login</Link>
             </Button>
-            <Button className="bg-orange-500 hover:bg-orange-600" asChild>
+            <Button className="bg-orange-500 hover:bg-orange-600 hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg" asChild>
               <Link to="/get-started">Get Started</Link>
             </Button>
           </div>
@@ -43,7 +62,7 @@ const Navbar = () => {
           {/* Mobile Menu Button */}
           <button 
             onClick={toggleMenu}
-            className="md:hidden text-navy-800 hover:text-orange-500"
+            className="md:hidden text-navy-800 hover:text-orange-500 transition-colors z-50"
             aria-label="Toggle menu"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -52,20 +71,20 @@ const Navbar = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden pt-4 pb-6 animate-fade-in">
+          <div className="md:hidden fixed inset-0 bg-white pt-20 px-6 pb-6 animate-fade-in z-40">
             <nav className="flex flex-col gap-4">
-              <Link to="/" className="nav-link font-medium py-2" onClick={toggleMenu}>Home</Link>
-              <Link to="/features" className="nav-link font-medium py-2" onClick={toggleMenu}>Features</Link>
-              <Link to="/how-it-works" className="nav-link font-medium py-2" onClick={toggleMenu}>How It Works</Link>
-              <Link to="/use-cases" className="nav-link font-medium py-2" onClick={toggleMenu}>Use Cases</Link>
-              <Link to="/pricing" className="nav-link font-medium py-2" onClick={toggleMenu}>Pricing</Link>
-              <Link to="/contact" className="nav-link font-medium py-2" onClick={toggleMenu}>Contact</Link>
+              <Link to="/" className={`nav-link font-medium py-2 text-lg ${isActive('/') ? 'text-orange-500' : ''}`} onClick={toggleMenu}>Home</Link>
+              <Link to="/features" className={`nav-link font-medium py-2 text-lg ${isActive('/features') ? 'text-orange-500' : ''}`} onClick={toggleMenu}>Features</Link>
+              <Link to="/how-it-works" className={`nav-link font-medium py-2 text-lg ${isActive('/how-it-works') ? 'text-orange-500' : ''}`} onClick={toggleMenu}>How It Works</Link>
+              <Link to="/use-cases" className={`nav-link font-medium py-2 text-lg ${isActive('/use-cases') ? 'text-orange-500' : ''}`} onClick={toggleMenu}>Use Cases</Link>
+              <Link to="/pricing" className={`nav-link font-medium py-2 text-lg ${isActive('/pricing') ? 'text-orange-500' : ''}`} onClick={toggleMenu}>Pricing</Link>
+              <Link to="/contact" className={`nav-link font-medium py-2 text-lg ${isActive('/contact') ? 'text-orange-500' : ''}`} onClick={toggleMenu}>Contact</Link>
             </nav>
-            <div className="flex flex-col sm:flex-row gap-3 mt-6">
-              <Button variant="outline" className="w-full" asChild>
+            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+              <Button variant="outline" className="w-full text-lg py-6" asChild>
                 <Link to="/login" onClick={toggleMenu}>Login</Link>
               </Button>
-              <Button className="bg-orange-500 hover:bg-orange-600 w-full" asChild>
+              <Button className="bg-orange-500 hover:bg-orange-600 w-full text-lg py-6" asChild>
                 <Link to="/get-started" onClick={toggleMenu}>Get Started</Link>
               </Button>
             </div>

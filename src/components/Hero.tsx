@@ -13,12 +13,17 @@ const Hero = () => {
         <div className="absolute top-60 -left-20 w-72 h-72 rounded-full bg-sky-100 opacity-50 blur-3xl"></div>
         <div className="absolute bottom-0 left-1/2 w-96 h-96 -translate-x-1/2 rounded-full bg-orange-50 opacity-30 blur-3xl"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+        
+        {/* Animated background elements */}
+        <div className="absolute top-1/4 left-1/4 w-8 h-8 rounded-full bg-orange-300 opacity-20 animate-float" style={{ animationDelay: '0.5s' }}></div>
+        <div className="absolute bottom-1/3 right-1/3 w-6 h-6 rounded-full bg-sky-300 opacity-20 animate-float" style={{ animationDelay: '1.5s' }}></div>
+        <div className="absolute top-1/2 right-1/4 w-10 h-10 rounded-full bg-orange-200 opacity-20 animate-float" style={{ animationDelay: '1s' }}></div>
       </div>
 
       <div className="container-custom relative min-h-[calc(100vh-76px)] flex flex-col justify-center py-16 md:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-16 items-center">
           <div className="max-w-xl">
-            <div className="inline-block px-4 py-1 bg-orange-100 text-orange-600 font-medium rounded-full mb-6 animate-fade-in">
+            <div className="inline-block px-4 py-1 bg-orange-100 text-orange-600 font-medium rounded-full mb-6 animate-fade-in shadow-sm">
               Next-Gen Digital Menu Solution
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-navy-800 leading-tight mb-6 animate-fade-in [animation-delay:0.1s]">
@@ -56,14 +61,14 @@ const Hero = () => {
                 <img 
                   src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=800&auto=format&fit=crop" 
                   alt="ScanServe QR code menu in action" 
-                  className="w-full h-auto rounded-xl shadow-sm"
+                  className="w-full h-auto rounded-xl shadow-sm image-hover"
                 />
                 
                 <div className="absolute -right-6 -top-6 bg-white rounded-full p-5 shadow-lg rotate-12 animate-bounce [animation-duration:4s]">
                   <Scan className="h-8 w-8 text-orange-500" />
                 </div>
                 
-                <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-gray-100">
+                <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-gray-100 hover-lift">
                   <div className="flex items-start gap-3">
                     <div className="bg-orange-500 text-white p-3 rounded-lg">
                       <Smartphone className="h-6 w-6" />

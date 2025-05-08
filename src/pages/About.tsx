@@ -16,7 +16,7 @@ const About = () => {
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                About <span className="text-orange-500">ScanServe</span>
+                About <span className="text-gradient">ScanServe</span>
               </h1>
               <p className="text-xl text-gray-700 mb-8">
                 Transforming the dining experience with innovative digital solutions
@@ -29,8 +29,11 @@ const About = () => {
         <section className="section bg-white">
           <div className="container-custom">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-navy-800 mb-6">Our Story</h2>
+              <div className="animate-fade-in">
+                <h2 className="text-3xl font-bold text-navy-800 mb-6 relative inline-block">
+                  Our Story
+                  <span className="absolute -bottom-1 left-0 w-1/3 h-1 bg-orange-500"></span>
+                </h2>
                 <p className="text-gray-700 mb-4">
                   ScanServe was founded in 2023 with a simple mission: to help restaurants and hospitality businesses 
                   thrive in the digital age by making menu management and ordering simpler, more efficient, and 
@@ -47,14 +50,17 @@ const About = () => {
                   solutions that are intuitive, powerful, and tailored to the unique needs of food service businesses.
                 </p>
               </div>
-              <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&auto=format&fit=crop" 
-                  alt="Team meeting" 
-                  className="rounded-lg shadow-lg w-full object-cover"
-                />
-                <div className="absolute -bottom-6 -left-6 bg-orange-500 w-32 h-32 rounded-lg opacity-20"></div>
-                <div className="absolute -top-6 -right-6 bg-sky-500 w-32 h-32 rounded-lg opacity-20"></div>
+              <div className="relative animate-fade-in [animation-delay:0.2s]">
+                <div className="absolute -inset-4 md:-inset-6 bg-gradient-to-r from-orange-500/20 to-sky-200/20 rounded-xl blur-lg -z-10"></div>
+                <div className="relative overflow-hidden rounded-lg shadow-lg hover-lift">
+                  <img 
+                    src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600&auto=format&fit=crop" 
+                    alt="Team meeting" 
+                    className="rounded-lg w-full object-cover image-hover"
+                  />
+                </div>
+                <div className="absolute -bottom-6 -left-6 bg-orange-500 w-32 h-32 rounded-lg opacity-20 animate-pulse-subtle"></div>
+                <div className="absolute -top-6 -right-6 bg-sky-500 w-32 h-32 rounded-lg opacity-20 animate-pulse-subtle [animation-delay:1s]"></div>
               </div>
             </div>
           </div>
@@ -71,44 +77,44 @@ const About = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group card-hover">
                 <div className="bg-orange-100 text-orange-500 w-14 h-14 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                   <Users size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-navy-800 mb-2">Customer First</h3>
+                <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">Customer First</h3>
                 <p className="text-gray-700">
                   We design our solutions with both restaurant owners and their customers in mind, 
                   ensuring a seamless experience for everyone.
                 </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group card-hover">
                 <div className="bg-orange-100 text-orange-500 w-14 h-14 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                   <Building size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-navy-800 mb-2">Innovation</h3>
+                <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">Innovation</h3>
                 <p className="text-gray-700">
                   We constantly evolve our platform, seeking new ways to help businesses operate 
                   more efficiently and profitably.
                 </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group card-hover">
                 <div className="bg-orange-100 text-orange-500 w-14 h-14 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                   <Trophy size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-navy-800 mb-2">Excellence</h3>
+                <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">Excellence</h3>
                 <p className="text-gray-700">
                   We're committed to providing the highest quality tools, support, and service to 
                   help our clients succeed.
                 </p>
               </div>
               
-              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group">
+              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow group card-hover">
                 <div className="bg-orange-100 text-orange-500 w-14 h-14 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:text-white transition-colors">
                   <Heart size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-navy-800 mb-2">Passion</h3>
+                <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">Passion</h3>
                 <p className="text-gray-700">
                   We genuinely love what we do and are passionate about helping the hospitality 
                   industry thrive in the digital age.
@@ -167,16 +173,16 @@ const About = () => {
                   bio: "Former restaurant consultant who understands the industry's unique challenges."
                 }
               ].map((member, index) => (
-                <div key={index} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+                <div key={index} className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group card-hover">
                   <div className="aspect-square overflow-hidden">
                     <img 
                       src={member.image} 
                       alt={member.name} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 filter group-hover:brightness-110"
                     />
                   </div>
                   <div className="p-6">
-                    <h3 className="text-xl font-bold text-navy-800 mb-1">{member.name}</h3>
+                    <h3 className="text-xl font-bold text-navy-800 mb-1 group-hover:text-orange-500 transition-colors">{member.name}</h3>
                     <p className="text-orange-500 font-medium mb-3">{member.title}</p>
                     <p className="text-gray-700">{member.bio}</p>
                   </div>

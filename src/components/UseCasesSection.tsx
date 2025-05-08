@@ -31,7 +31,7 @@ const UseCasesSection = () => {
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-navy-800 mb-4">
-            Perfect for <span className="text-orange-500">Every Business</span>
+            Perfect for <span className="text-gradient">Every Business</span>
           </h2>
           <p className="text-lg text-gray-700">
             ScanServe adapts to your unique business needs, whether you're a cozy café or a large hotel chain.
@@ -42,7 +42,7 @@ const UseCasesSection = () => {
           {useCases.map((useCase, index) => (
             <div 
               key={index} 
-              className="group relative overflow-hidden rounded-xl shadow-md hover-scale bg-white"
+              className="group relative overflow-hidden rounded-xl shadow-md hover-lift bg-white"
             >
               <div className="aspect-video overflow-hidden">
                 <img 
@@ -50,9 +50,13 @@ const UseCasesSection = () => {
                   alt={useCase.title} 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               
-              <div className="p-6">
+              <div className="p-6 relative">
+                <div className="absolute -top-10 right-6 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300">
+                  <ArrowRight size={20} />
+                </div>
                 <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">
                   {useCase.title}
                 </h3>
@@ -64,7 +68,7 @@ const UseCasesSection = () => {
                   className="inline-flex items-center text-orange-500 font-medium story-link group-hover:text-orange-600 transition-colors"
                 >
                   Learn more
-                  <ArrowRight size={16} className="ml-1" />
+                  <ArrowRight size={16} className="ml-1 group-hover:ml-2 transition-all duration-300" />
                 </Link>
               </div>
             </div>
