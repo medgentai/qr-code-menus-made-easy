@@ -9,9 +9,14 @@ import Features from "./pages/Features";
 import HowItWorks from "./pages/HowItWorks";
 import UseCases from "./pages/UseCases";
 import RestaurantUseCase from "./pages/RestaurantUseCase";
+import HotelUseCase from "./pages/HotelUseCase";
+import CafeUseCase from "./pages/CafeUseCase";
+import FoodTruckUseCase from "./pages/FoodTruckUseCase";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
+import About from "./pages/About";
+import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,9 +33,14 @@ const App = () => (
           <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/use-cases" element={<UseCases />} />
           <Route path="/use-cases/restaurants" element={<RestaurantUseCase />} />
+          <Route path="/use-cases/hotels" element={<HotelUseCase />} />
+          <Route path="/use-cases/cafes" element={<CafeUseCase />} />
+          <Route path="/use-cases/food-trucks" element={<FoodTruckUseCase />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/get-started" element={<GetStarted />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<Blog />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
