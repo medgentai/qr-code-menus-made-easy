@@ -64,10 +64,20 @@ const Hero = () => {
                   className="w-full h-auto rounded-xl shadow-sm image-hover"
                 />
                 
-                <div className="absolute -right-6 -top-6 bg-white rounded-full p-5 shadow-lg rotate-12 animate-bounce [animation-duration:4s]">
+                <div className="absolute right-8 top-10 bg-white rounded-full p-5 shadow-lg rotate-12 animate-bounce [animation-duration:4s]">
                   <Scan className="h-8 w-8 text-orange-500" />
                 </div>
-                
+
+                {/* Floating elements - moved inside the image container */}
+                <div className="absolute right-8 bottom-1/3 bg-white rounded-lg p-3 shadow-lg animate-float rotate-6 z-20">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-sky-100 p-2 rounded-full">
+                      <Utensils className="h-4 w-4 text-sky-600" />
+                    </div>
+                    <span className="text-xs font-medium text-navy-800">Order Received!</span>
+                  </div>
+                </div>
+
                 <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-gray-100 hover-lift">
                   <div className="flex items-start gap-3">
                     <div className="bg-orange-500 text-white p-3 rounded-lg">
@@ -79,16 +89,6 @@ const Hero = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-            
-            {/* Floating elements */}
-            <div className="absolute -right-4 bottom-1/3 bg-white rounded-lg p-3 shadow-lg animate-float rotate-6">
-              <div className="flex items-center gap-2">
-                <div className="bg-sky-100 p-2 rounded-full">
-                  <Utensils className="h-4 w-4 text-sky-600" />
-                </div>
-                <span className="text-xs font-medium text-navy-800">Order Received!</span>
               </div>
             </div>
           </div>
