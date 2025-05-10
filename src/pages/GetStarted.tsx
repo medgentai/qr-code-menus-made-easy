@@ -32,8 +32,8 @@ const GetStarted = () => {
     
     // Show success toast
     toast({
-      title: "Account Created!",
-      description: "Welcome to ScanServe! We've sent you an email with login details.",
+      title: "Request Received!",
+      description: "Thank you for booking a demo with ScanServe! We'll contact you shortly.",
     });
     
     // Reset form (in a real app, you'd redirect to the dashboard or login)
@@ -57,10 +57,10 @@ const GetStarted = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                  Start Your <span className="text-orange-500">Free Trial</span>
+                  Book Your <span className="text-orange-500">Free Demo</span>
                 </h1>
                 <p className="text-xl text-gray-700 mb-8">
-                  Sign up now to experience the power of ScanServe. No credit card required.
+                  Sign up now to experience the power of ScanServe. Our team will guide you through a personalized demo.
                 </p>
                 
                 <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
@@ -162,7 +162,7 @@ const GetStarted = () => {
                     className="bg-orange-500 hover:bg-orange-600 text-white w-full flex items-center justify-center gap-2 group"
                     size="lg"
                   >
-                    Create Your Account
+                    Book Your Free Demo
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Button>
                   
@@ -174,18 +174,18 @@ const GetStarted = () => {
               
               <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-8">
                 <h3 className="text-2xl font-bold text-navy-800 mb-6">
-                  Your Free Trial Includes:
+                  Your Free Demo Includes:
                 </h3>
                 
                 <ul className="space-y-4">
                   {[
-                    "Full access to all ScanServe features for 14 days",
-                    "Unlimited QR code generation",
-                    "Complete menu customization",
-                    "Real-time order management",
-                    "Detailed analytics & reporting",
-                    "Personalized onboarding support",
-                    "No credit card required"
+                    "Personalized walkthrough of ScanServe features",
+                    "Live QR code generation demonstration",
+                    "Complete menu customization showcase",
+                    "Real-time order management preview",
+                    "Detailed analytics & reporting examples",
+                    "Q&A session with our product specialists",
+                    "Custom implementation strategy for your business"
                   ].map((feature, index) => (
                     <li key={index} className="flex items-start">
                       <CheckCircle className="h-6 w-6 text-orange-500 mr-3 flex-shrink-0 mt-0.5" />
