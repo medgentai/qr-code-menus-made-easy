@@ -17,9 +17,9 @@ const PricingSection = () => {
     {
       name: "Restaurant",
       description: "Perfect for restaurants looking to modernize their menu experience.",
-      monthlyPrice: 599,
-      annualPrice: 499,
-      annualTotal: 5988,
+      monthlyPrice: 799,
+      annualPrice: 599,
+      annualTotal: 7188,
       icon: <Utensils className="h-10 w-10 text-orange-500" />,
       features: [
         "Unlimited QR code menus",
@@ -33,14 +33,14 @@ const PricingSection = () => {
       ],
       cta: "Start Free Trial",
       highlight: true,
-      dailyCost: 20
+      dailyCost: 24
     },
     {
       name: "Hotel",
       description: "Ideal for hotels with multiple dining venues and room service.",
-      monthlyPrice: 999,
-      annualPrice: 899,
-      annualTotal: 10788,
+      monthlyPrice: 1599,
+      annualPrice: 1399,
+      annualTotal: 16788,
       icon: <Hotel className="h-10 w-10 text-orange-500" />,
       features: [
         "All Restaurant features",
@@ -54,7 +54,7 @@ const PricingSection = () => {
       ],
       cta: "Start Free Trial",
       highlight: false,
-      dailyCost: 30
+      dailyCost: 46
     },
     {
       name: "Custom",
@@ -103,10 +103,10 @@ const PricingSection = () => {
           {plans.map((plan, index) => (
             <div 
               key={index} 
-              className={`pricing-card ${plan.highlight ? 'border-orange-500 shadow-lg relative overflow-hidden' : ''} hover-scale`}
+              className={`pricing-card relative ${plan.highlight ? 'border-orange-500 border-2 shadow-lg overflow-visible z-10' : ''} hover-scale`}
             >
               {plan.highlight && (
-                <div className="absolute top-0 right-0 -mt-2 -mr-2 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase shadow-md">
+                <div className="absolute top-0 right-0 -mt-4 -mr-4 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase shadow-lg z-10">
                   Most Popular
                 </div>
               )}
@@ -150,6 +150,10 @@ const PricingSection = () => {
                       </HoverCard>
                     </div>
                   )}
+                  
+                  <div className="mt-2 text-xs text-gray-500">
+                    *Excluding applicable taxes and payment gateway fees
+                  </div>
                 </div>
               )}
               
@@ -158,6 +162,9 @@ const PricingSection = () => {
                   <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
                     <span className="text-lg font-semibold text-navy-800 block mb-1">Flexible Pricing</span>
                     <span className="text-gray-600 text-sm">Tailored to your specific needs</span>
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    *Excluding applicable taxes and payment gateway fees
                   </div>
                 </div>
               )}
