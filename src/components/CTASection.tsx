@@ -39,23 +39,16 @@ const CTASection = () => {
             Join thousands of businesses already using ScanServe to modernize their operations and delight their customers.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-5 justify-center">
+          <div className="flex justify-center">
             <Button 
               className="bg-white text-orange-500 hover:bg-gray-100 text-base flex items-center gap-2 group px-8 py-6 h-auto rounded-xl shadow-xl shadow-orange-700/20 hover:-translate-y-1 transition-all duration-300"
               size="lg"
               asChild
             >
               <Link to="/get-started">
-                Start Your Free Trial
+                Book a Free Demo
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
-            </Button>
-            <Button 
-              className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-base px-8 py-6 h-auto rounded-xl hover:-translate-y-1 transition-all duration-300"
-              size="lg"
-              asChild
-            >
-              <Link to="/demo">Request a Demo</Link>
             </Button>
           </div>
           

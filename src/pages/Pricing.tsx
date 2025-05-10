@@ -92,7 +92,7 @@ const Pricing = () => {
                   asChild
                 >
                   <Link to="/get-started">
-                    Start Free Trial 
+                    Book a Free Demo 
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
@@ -101,7 +101,7 @@ const Pricing = () => {
                   size="lg"
                   asChild
                 >
-                  <Link to="/contact">Contact Sales</Link>
+                  <Link to="/get-started">Contact Sales</Link>
                 </Button>
               </div>
             </div>

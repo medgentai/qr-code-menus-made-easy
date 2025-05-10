@@ -31,7 +31,7 @@ const PricingSection = () => {
         "Easy category management",
         "Special dish highlights"
       ],
-      cta: "Start Free Trial",
+      cta: "Book a Free Demo",
       highlight: true,
       dailyCost: 24
     },
@@ -52,26 +52,9 @@ const PricingSection = () => {
         "Priority support",
         "Multi-language support"
       ],
-      cta: "Start Free Trial",
+      cta: "Book a Free Demo",
       highlight: false,
       dailyCost: 46
-    },
-    {
-      name: "Custom",
-      description: "For businesses with specialized requirements.",
-      icon: <CircleDollarSign className="h-10 w-10 text-orange-500" />,
-      features: [
-        "Tailored solution",
-        "Custom branding",
-        "API access",
-        "Custom integrations",
-        "Advanced analytics",
-        "Dedicated account manager",
-        "24/7 premium support",
-        "Personalized training"
-      ],
-      cta: "Contact Sales",
-      highlight: false
     }
   ];
 
@@ -99,7 +82,7 @@ const PricingSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {plans.map((plan, index) => (
             <div 
               key={index} 
@@ -118,56 +101,42 @@ const PricingSection = () => {
               
               <p className="text-gray-600 mb-6 h-12">{plan.description}</p>
               
-              {plan.name !== "Custom" && (
-                <div className="mb-6">
-                  <div className="flex items-end">
-                    <span className="text-4xl font-bold text-navy-800">
-                      ₹{isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                    </span>
-                    <span className="text-gray-500 ml-1">/month</span>
-                  </div>
-                  
-                  {isAnnual && (
-                    <div className="flex items-center mt-2">
-                      <div className="text-orange-500 text-sm font-medium">
-                        ₹{plan.annualTotal} billed annually
-                      </div>
-                      
-                      <HoverCard>
-                        <HoverCardTrigger>
-                          <div className="ml-2 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full cursor-help">
-                            Only ₹{plan.dailyCost}/day
-                          </div>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80">
-                          <div className="text-sm">
-                            <p className="font-medium">Just ₹{plan.dailyCost} per day</p>
-                            <p className="text-gray-600 mt-1">
-                              That's less than the cost of a cup of chai! Invest in your business's digital presence for pennies a day.
-                            </p>
-                          </div>
-                        </HoverCardContent>
-                      </HoverCard>
+              <div className="mb-6">
+                <div className="flex items-end">
+                  <span className="text-4xl font-bold text-navy-800">
+                    ₹{isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                  </span>
+                  <span className="text-gray-500 ml-1">/month</span>
+                </div>
+                
+                {isAnnual && (
+                  <div className="flex items-center mt-2">
+                    <div className="text-orange-500 text-sm font-medium">
+                      ₹{plan.annualTotal} billed annually
                     </div>
-                  )}
-                  
-                  <div className="mt-2 text-xs text-gray-500">
-                    *Excluding applicable taxes and payment gateway fees
+                    
+                    <HoverCard>
+                      <HoverCardTrigger>
+                        <div className="ml-2 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full cursor-help">
+                          Only ₹{plan.dailyCost}/day
+                        </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-80">
+                        <div className="text-sm">
+                          <p className="font-medium">Just ₹{plan.dailyCost} per day</p>
+                          <p className="text-gray-600 mt-1">
+                            That's less than the cost of a cup of chai! Invest in your business's digital presence for pennies a day.
+                          </p>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                   </div>
+                )}
+                
+                <div className="mt-2 text-xs text-gray-500">
+                  *Excluding applicable taxes and payment gateway fees
                 </div>
-              )}
-              
-              {plan.name === "Custom" && (
-                <div className="mb-6">
-                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
-                    <span className="text-lg font-semibold text-navy-800 block mb-1">Flexible Pricing</span>
-                    <span className="text-gray-600 text-sm">Tailored to your specific needs</span>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    *Excluding applicable taxes and payment gateway fees
-                  </div>
-                </div>
-              )}
+              </div>
               
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, i) => (
@@ -182,7 +151,7 @@ const PricingSection = () => {
                 className={`w-full ${plan.highlight ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'btn-outline'}`}
                 asChild
               >
-                <Link to={plan.cta === "Contact Sales" ? "/contact" : "/get-started"}>
+                <Link to="/get-started">
                   {plan.cta}
                 </Link>
               </Button>
@@ -199,7 +168,7 @@ const PricingSection = () => {
             className="bg-white text-navy-800 hover:bg-gray-100"
             asChild
           >
-            <Link to="/contact">Contact Sales</Link>
+            <Link to="/get-started">Contact Sales</Link>
           </Button>
         </div>
       </div>
