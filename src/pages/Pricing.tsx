@@ -75,38 +75,7 @@ const Pricing = () => {
           </div>
         </section>
         
-        {/* CTA Section */}
-        <section className="section bg-navy-800 text-white">
-          <div className="container-custom">
-            <div className="max-w-4xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Still Have Questions?
-              </h2>
-              <p className="text-xl text-gray-300 mb-8">
-                Our team is here to help you choose the right plan for your business.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
-                  className="bg-orange-500 hover:bg-orange-600 text-white text-base flex items-center gap-2 group"
-                  size="lg"
-                  asChild
-                >
-                  <Link to="/get-started">
-                    Book a Free Demo 
-                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </Button>
-                <Button 
-                  className="bg-transparent border-2 border-white hover:bg-white/10 text-white text-base"
-                  size="lg"
-                  asChild
-                >
-                  <Link to="/get-started">Contact Sales</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
+      
       </main>
       
       <Footer />
