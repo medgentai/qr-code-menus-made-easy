@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
@@ -57,6 +56,8 @@ const PricingSection = () => {
       dailyCost: 46
     }
   ];
+
+  const customSolutionDescription = "Whether you run Cafés & Bars, Food Trucks, Event Spaces, or need an Enterprise solution, our team can tailor ScanServe to meet your specific requirements and scale with your business.";
 
   return (
     <section className="section bg-navy-800" id="pricing">
@@ -162,7 +163,7 @@ const PricingSection = () => {
         <div className="max-w-3xl mx-auto mt-16 bg-navy-700 rounded-xl p-8 text-center">
           <h3 className="text-2xl font-bold text-white mb-4">Need a custom solution?</h3>
           <p className="text-gray-300 mb-6">
-            Contact our sales team to discuss your specific requirements and get a tailored quote.
+            {customSolutionDescription}
           </p>
           <Button 
             className="bg-white text-navy-800 hover:bg-gray-100"

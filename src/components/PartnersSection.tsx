@@ -3,12 +3,12 @@ import React from 'react';
 
 const PartnersSection = () => {
   const partners = [
-    { id: 1, name: "Foodify", logo: "https://placehold.co/200x80/f8fafc/475569?text=Foodify" },
-    { id: 2, name: "DineConnect", logo: "https://placehold.co/200x80/f8fafc/475569?text=DineConnect" },
-    { id: 3, name: "TablePro", logo: "https://placehold.co/200x80/f8fafc/475569?text=TablePro" },
-    { id: 4, name: "GastroHub", logo: "https://placehold.co/200x80/f8fafc/475569?text=GastroHub" },
-    { id: 5, name: "MenuMaster", logo: "https://placehold.co/200x80/f8fafc/475569?text=MenuMaster" },
-    { id: 6, name: "OrderEase", logo: "https://placehold.co/200x80/f8fafc/475569?text=OrderEase" },
+    { id: 1, name: "Taj Hotels", logo: "https://placehold.co/200x80/f8fafc/475569?text=Taj+Hotels" },
+    { id: 2, name: "Domino's", logo: "https://placehold.co/200x80/f8fafc/475569?text=Dominos" },
+    { id: 3, name: "Pizza Hut", logo: "https://placehold.co/200x80/f8fafc/475569?text=Pizza+Hut" },
+    { id: 4, name: "Oberoi", logo: "https://placehold.co/200x80/f8fafc/475569?text=Oberoi" },
+    { id: 5, name: "Burger King", logo: "https://placehold.co/200x80/f8fafc/475569?text=Burger+King" },
+    { id: 6, name: "McDonald's", logo: "https://placehold.co/200x80/f8fafc/475569?text=McDonalds" },
   ];
 
   return (
