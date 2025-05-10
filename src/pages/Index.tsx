@@ -22,8 +22,7 @@ const Index = () => {
           <FeatureSection />
         </div>
         <HowItWorksSection />
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-50 to-sky-50 opacity-50"></div>
+        <div className="relative bg-white py-1">
           <UseCasesSection />
         </div>
         <PartnersSection />

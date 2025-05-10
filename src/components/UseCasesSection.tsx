@@ -27,7 +27,7 @@ const useCases = [
 
 const UseCasesSection = () => {
   return (
-    <section className="section bg-white" id="use-cases">
+    <section className="section bg-white relative z-10" id="use-cases">
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-navy-800 mb-4">
@@ -50,22 +50,22 @@ const UseCasesSection = () => {
                   alt={useCase.title} 
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               
               <div className="p-6 relative">
                 <div className="absolute -top-10 right-6 w-12 h-12 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 group-hover:-translate-y-2 transition-all duration-300">
                   <ArrowRight size={20} />
                 </div>
-                <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">
+                <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors relative z-10">
                   {useCase.title}
                 </h3>
-                <p className="text-gray-700 mb-4">
+                <p className="text-gray-700 mb-4 relative z-10">
                   {useCase.description}
                 </p>
                 <Link 
                   to={useCase.link} 
-                  className="inline-flex items-center text-orange-500 font-medium story-link group-hover:text-orange-600 transition-colors"
+                  className="inline-flex items-center text-orange-500 font-medium story-link group-hover:text-orange-600 transition-colors relative z-10"
                 >
                   Learn more
                   <ArrowRight size={16} className="ml-1 group-hover:ml-2 transition-all duration-300" />

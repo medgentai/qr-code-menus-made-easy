@@ -2,59 +2,73 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Restaurant, Hotel, CircleDollarSign } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 const PricingSection = () => {
   const [isAnnual, setIsAnnual] = useState(true);
 
   const plans = [
     {
-      name: "Starter",
-      description: "Perfect for small businesses just getting started.",
-      monthlyPrice: 29,
-      annualPrice: 24,
+      name: "Restaurant",
+      description: "Perfect for restaurants looking to modernize their menu experience.",
+      monthlyPrice: 599,
+      annualPrice: 499,
+      annualTotal: 5988,
+      icon: <Restaurant className="h-10 w-10 text-orange-500" />,
       features: [
         "Unlimited QR code menus",
-        "Basic menu customization",
+        "Menu customization",
         "Real-time menu updates",
         "Mobile-friendly design",
         "Basic analytics",
-        "Email support"
+        "Email support",
+        "Easy category management",
+        "Special dish highlights"
       ],
       cta: "Start Free Trial",
-      highlight: false
+      highlight: true,
+      dailyCost: 20
     },
     {
-      name: "Professional",
-      description: "Ideal for growing businesses with multiple menus.",
-      monthlyPrice: 79,
-      annualPrice: 65,
+      name: "Hotel",
+      description: "Ideal for hotels with multiple dining venues and room service.",
+      monthlyPrice: 999,
+      annualPrice: 899,
+      annualTotal: 10788,
+      icon: <Hotel className="h-10 w-10 text-orange-500" />,
       features: [
-        "All Starter features",
-        "Advanced menu customization",
+        "All Restaurant features",
         "Multiple menu management",
+        "Room service integration",
         "Order management system",
         "Customer feedback collection",
         "Enhanced analytics",
-        "Priority support"
+        "Priority support",
+        "Multi-language support"
       ],
       cta: "Start Free Trial",
-      highlight: true
+      highlight: false,
+      dailyCost: 30
     },
     {
-      name: "Enterprise",
-      description: "For large operations with custom requirements.",
-      monthlyPrice: 199,
-      annualPrice: 169,
+      name: "Custom",
+      description: "For businesses with specialized requirements.",
+      icon: <CircleDollarSign className="h-10 w-10 text-orange-500" />,
       features: [
-        "All Professional features",
-        "White-label solution",
+        "Tailored solution",
+        "Custom branding",
         "API access",
         "Custom integrations",
-        "Multi-location management",
+        "Advanced analytics",
         "Dedicated account manager",
-        "24/7 premium support"
+        "24/7 premium support",
+        "Personalized training"
       ],
       cta: "Contact Sales",
       highlight: false
@@ -97,20 +111,56 @@ const PricingSection = () => {
                 </div>
               )}
               
-              <h3 className="text-xl font-bold text-navy-800 mb-2">{plan.name}</h3>
+              <div className="flex items-center gap-3 mb-4">
+                {plan.icon}
+                <h3 className="text-xl font-bold text-navy-800">{plan.name}</h3>
+              </div>
+              
               <p className="text-gray-600 mb-6 h-12">{plan.description}</p>
               
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-navy-800">
-                  ${isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                </span>
-                <span className="text-gray-500">/month</span>
-                {isAnnual && (
-                  <div className="text-orange-500 text-sm font-medium mt-1">
-                    Billed annually
+              {plan.name !== "Custom" && (
+                <div className="mb-6">
+                  <div className="flex items-end">
+                    <span className="text-4xl font-bold text-navy-800">
+                      ₹{isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                    </span>
+                    <span className="text-gray-500 ml-1">/month</span>
                   </div>
-                )}
-              </div>
+                  
+                  {isAnnual && (
+                    <div className="flex items-center mt-2">
+                      <div className="text-orange-500 text-sm font-medium">
+                        ₹{plan.annualTotal} billed annually
+                      </div>
+                      
+                      <HoverCard>
+                        <HoverCardTrigger>
+                          <div className="ml-2 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full cursor-help">
+                            Only ₹{plan.dailyCost}/day
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <div className="text-sm">
+                            <p className="font-medium">Just ₹{plan.dailyCost} per day</p>
+                            <p className="text-gray-600 mt-1">
+                              That's less than the cost of a cup of chai! Invest in your business's digital presence for pennies a day.
+                            </p>
+                          </div>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {plan.name === "Custom" && (
+                <div className="mb-6">
+                  <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                    <span className="text-lg font-semibold text-navy-800 block mb-1">Flexible Pricing</span>
+                    <span className="text-gray-600 text-sm">Tailored to your specific needs</span>
+                  </div>
+                </div>
+              )}
               
               <ul className="space-y-3 mb-8">
                 {plan.features.map((feature, i) => (
