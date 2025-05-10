@@ -2,9 +2,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Scan, Smartphone, Utensils } from 'lucide-react';
+import { ArrowRight, Scan, Smartphone, Utensils, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 const Hero = () => {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-white to-sky-50 pt-24">
       {/* Background patterns and shapes */}
@@ -13,7 +15,7 @@ const Hero = () => {
         <div className="absolute top-60 -left-20 w-72 h-72 rounded-full bg-sky-100 opacity-50 blur-3xl"></div>
         <div className="absolute bottom-0 left-1/2 w-96 h-96 -translate-x-1/2 rounded-full bg-orange-50 opacity-30 blur-3xl"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-        
+
         {/* Animated background elements */}
         <div className="absolute top-1/4 left-1/4 w-8 h-8 rounded-full bg-orange-300 opacity-20 animate-float" style={{ animationDelay: '0.5s' }}></div>
         <div className="absolute bottom-1/3 right-1/3 w-6 h-6 rounded-full bg-sky-300 opacity-20 animate-float" style={{ animationDelay: '1.5s' }}></div>
@@ -36,34 +38,45 @@ const Hero = () => {
               Transform your menu experience with contactless, customizable digital menus. Update in real-time, reduce costs, and delight your customers.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in [animation-delay:0.3s]">
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-8 py-6 h-auto text-base flex items-center gap-2 group rounded-xl shadow-lg shadow-orange-500/20" size="lg" asChild>
-                <Link to="/get-started">
-                  Get Started Free 
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-8 py-6 h-auto text-base flex items-center gap-2 group rounded-xl shadow-lg shadow-orange-500/20" size="lg" asChild>
+                  <Link to="/dashboard">
+                    Go to Dashboard
+                    <LayoutDashboard size={18} className="ml-2" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium px-8 py-6 h-auto text-base flex items-center gap-2 group rounded-xl shadow-lg shadow-orange-500/20" size="lg" asChild>
+                  <Link to="/get-started">
+                    Get Started Free
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              )}
               <Button className="bg-white border border-gray-200 text-navy-800 hover:border-orange-300 hover:bg-orange-50 font-medium px-8 py-6 h-auto text-base rounded-xl" size="lg" asChild>
                 <Link to="/how-it-works">See How It Works</Link>
               </Button>
             </div>
-            <div className="mt-6 text-gray-600 text-sm animate-fade-in [animation-delay:0.4s]">
-              No credit card required. Free 14-day trial.
-            </div>
+            {!isAuthenticated && (
+              <div className="mt-6 text-gray-600 text-sm animate-fade-in [animation-delay:0.4s]">
+                No credit card required. Free 14-day trial.
+              </div>
+            )}
           </div>
-          
+
           <div className="relative lg:ml-auto animate-fade-in [animation-delay:0.3s]">
             <div className="absolute -top-8 -right-8 w-40 h-40 bg-orange-500/10 rounded-full blur-xl"></div>
             <div className="absolute -bottom-12 -left-12 w-56 h-56 bg-sky-200/30 rounded-full blur-xl"></div>
-            
+
             <div className="relative z-10 transform hover:rotate-1 hover:scale-[1.02] transition-all duration-500">
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-sky-300/20 rounded-2xl blur-lg"></div>
               <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-3">
-                <img 
-                  src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=800&auto=format&fit=crop" 
-                  alt="ScanServe QR code menu in action" 
+                <img
+                  src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=800&auto=format&fit=crop"
+                  alt="ScanServe QR code menu in action"
                   className="w-full h-auto rounded-xl shadow-sm image-hover"
                 />
-                
+
                 <div className="absolute right-8 top-10 bg-white rounded-full p-5 shadow-lg rotate-12 animate-bounce [animation-duration:4s]">
                   <Scan className="h-8 w-8 text-orange-500" />
                 </div>
@@ -94,7 +107,7 @@ const Hero = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Wave divider */}
       <div className="absolute bottom-0 left-0 right-0">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" fill="white">

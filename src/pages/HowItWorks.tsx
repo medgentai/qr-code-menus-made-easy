@@ -4,13 +4,15 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 const HowItWorks = () => {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -23,7 +25,7 @@ const HowItWorks = () => {
                 A simple, intuitive platform designed to transform your menu experience in just a few steps.
               </p>
               <div className="aspect-video max-w-2xl mx-auto rounded-xl overflow-hidden shadow-xl">
-                <iframe 
+                <iframe
                   className="w-full h-full"
                   src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Replace with your actual video
                   title="ScanServe Demo"
@@ -35,7 +37,7 @@ const HowItWorks = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Step-by-Step Guide */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -43,7 +45,7 @@ const HowItWorks = () => {
               <div className="relative">
                 {/* Vertical Timeline Line */}
                 <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-orange-100 transform -translate-x-1/2"></div>
-                
+
                 {/* Step 1 */}
                 <div className="relative mb-20">
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -58,7 +60,7 @@ const HowItWorks = () => {
                         <li>Immediate access to all features</li>
                       </ul>
                     </div>
-                    
+
                     <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
                       <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
                         <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
@@ -66,19 +68,19 @@ const HowItWorks = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="w-full md:w-5/12 order-1 md:order-2 md:ml-auto">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
-                        <img 
-                          src="https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=500&auto=format&fit=crop" 
-                          alt="Sign up process" 
+                        <img
+                          src="https://images.unsplash.com/photo-1517292987719-0369a794ec0f?w=500&auto=format&fit=crop"
+                          alt="Sign up process"
                           className="w-full h-auto"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Step 2 */}
                 <div className="relative mb-20">
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -94,7 +96,7 @@ const HowItWorks = () => {
                         <li>Organize by categories</li>
                       </ul>
                     </div>
-                    
+
                     <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
                       <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
                         <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
@@ -102,19 +104,19 @@ const HowItWorks = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="w-full md:w-5/12 order-1 md:order-1 md:text-right">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
-                        <img 
-                          src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=500&auto=format&fit=crop" 
-                          alt="Menu building process" 
+                        <img
+                          src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=500&auto=format&fit=crop"
+                          alt="Menu building process"
                           className="w-full h-auto"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Step 3 */}
                 <div className="relative mb-20">
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -130,7 +132,7 @@ const HowItWorks = () => {
                         <li>Easy placement instructions</li>
                       </ul>
                     </div>
-                    
+
                     <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
                       <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
                         <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
@@ -138,19 +140,19 @@ const HowItWorks = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="w-full md:w-5/12 order-1 md:order-2 md:ml-auto">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
-                        <img 
-                          src="https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=500&auto=format&fit=crop" 
-                          alt="QR code generation" 
+                        <img
+                          src="https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=500&auto=format&fit=crop"
+                          alt="QR code generation"
                           className="w-full h-auto"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Step 4 */}
                 <div className="relative mb-20">
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -166,7 +168,7 @@ const HowItWorks = () => {
                         <li>Special requests and notes</li>
                       </ul>
                     </div>
-                    
+
                     <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
                       <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
                         <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
@@ -174,19 +176,19 @@ const HowItWorks = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="w-full md:w-5/12 order-1 md:order-1 md:text-right">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
-                        <img 
-                          src="https://images.unsplash.com/photo-1593508512255-86ab42a8e24c?w=500&auto=format&fit=crop" 
-                          alt="Customer scanning QR code" 
+                        <img
+                          src="https://images.unsplash.com/photo-1593508512255-86ab42a8e24c?w=500&auto=format&fit=crop"
+                          alt="Customer scanning QR code"
                           className="w-full h-auto"
                         />
                       </div>
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Step 5 */}
                 <div className="relative">
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -202,7 +204,7 @@ const HowItWorks = () => {
                         <li>Analytics and reporting</li>
                       </ul>
                     </div>
-                    
+
                     <div className="relative md:absolute md:left-1/2 md:transform md:-translate-x-1/2 z-10 flex items-center justify-center">
                       <div className="bg-white rounded-full p-4 border-4 border-orange-100 shadow-lg">
                         <div className="bg-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
@@ -210,12 +212,12 @@ const HowItWorks = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="w-full md:w-5/12 order-1 md:order-2 md:ml-auto">
                       <div className="bg-gray-100 rounded-xl overflow-hidden shadow-md">
-                        <img 
-                          src="https://images.unsplash.com/photo-1564218989864-0d562e8b9371?w=500&auto=format&fit=crop" 
-                          alt="Order management dashboard" 
+                        <img
+                          src="https://images.unsplash.com/photo-1564218989864-0d562e8b9371?w=500&auto=format&fit=crop"
+                          alt="Order management dashboard"
                           className="w-full h-auto"
                         />
                       </div>
@@ -226,7 +228,7 @@ const HowItWorks = () => {
             </div>
           </div>
         </section>
-        
+
         {/* FAQ Section */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -234,7 +236,7 @@ const HowItWorks = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Frequently Asked Questions
               </h2>
-              
+
               <div className="space-y-6">
                 {[
                   {
@@ -267,7 +269,7 @@ const HowItWorks = () => {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="section bg-orange-500 text-white">
           <div className="container-custom">
@@ -278,21 +280,34 @@ const HowItWorks = () => {
               <p className="text-xl mb-8">
                 Start your free 14-day trial today. No credit card required.
               </p>
-              <Button 
-                className="bg-white text-orange-500 hover:bg-gray-100 text-base flex items-center gap-2 group mx-auto"
-                size="lg"
-                asChild
-              >
-                <Link to="/get-started">
-                  Get Started Now
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button
+                  className="bg-white text-orange-500 hover:bg-gray-100 text-base flex items-center gap-2 group mx-auto"
+                  size="lg"
+                  asChild
+                >
+                  <Link to="/dashboard">
+                    Go to Dashboard
+                    <LayoutDashboard size={18} className="ml-2" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  className="bg-white text-orange-500 hover:bg-gray-100 text-base flex items-center gap-2 group mx-auto"
+                  size="lg"
+                  asChild
+                >
+                  <Link to="/get-started">
+                    Get Started Now
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

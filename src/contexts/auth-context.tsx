@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { api, API_BASE_URL, API_PREFIX } from '@/lib/api';
 import { toast } from '@/components/ui/sonner';
 
 // User interface based on the backend JWT strategy's cleanUser
@@ -98,10 +98,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const saveAuthState = (user: User | null, accessToken: string | null, refreshToken: string | null) => {
     if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
     else localStorage.removeItem(USER_KEY);
-    
+
     if (accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     else localStorage.removeItem(ACCESS_TOKEN_KEY);
-    
+
     if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
     else localStorage.removeItem(REFRESH_TOKEN_KEY);
   };
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
-    
+
     setState({
       user: null,
       accessToken: null,
@@ -126,13 +126,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await api.post('/auth/login', { email, password }, { withAuth: false });
-      
+
       // Check if OTP verification is required
       if (response.data.requiresOtp) {
         toast.info('Please verify your email with the OTP code sent.');
         return false;
       }
-      
+
       // Save auth state
       setState({
         user: response.data.user,
@@ -142,7 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
-      
+
       saveAuthState(response.data.user, response.data.accessToken, response.data.refreshToken);
       return true;
     } catch (error) {
@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const verifyOtp = async (email: string, otpCode: string): Promise<boolean> => {
     try {
       const response = await api.post('/auth/verify-otp', { email, otpCode }, { withAuth: false });
-      
+
       // Save auth state
       setState({
         user: response.data.user,
@@ -177,7 +177,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       });
-      
+
       saveAuthState(response.data.user, response.data.accessToken, response.data.refreshToken);
       return true;
     } catch (error) {
@@ -200,16 +200,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Logout function
   const logout = async () => {
-    if (state.accessToken) {
-      try {
-        await api.post('/auth/logout');
-      } catch (error) {
-        // Continue with logout even if the API call fails
-        console.error('Logout API call failed:', error);
-      }
-    }
-    
+    // Store token before clearing state
+    const currentToken = state.accessToken;
+
+    // First clear the local state to ensure UI updates immediately
     clearAuthState();
+
+    // Show success message to user
+    toast.success('You have been logged out successfully');
+
+    // Then try to notify the server (but don't wait for it)
+    if (currentToken) {
+      // Use setTimeout to push this to the next event loop cycle
+      // This ensures it happens after the UI updates
+      setTimeout(() => {
+        try {
+          // Use a simple fetch to avoid any dependencies on the auth state
+          fetch(`${API_BASE_URL}${API_PREFIX}/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${currentToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({}) // Send empty object as body
+          }).catch(e => {
+            // Silently ignore any errors - user is already logged out on the client
+            console.log('Backend logout notification attempted');
+          });
+        } catch (error) {
+          // Ignore errors - user is already logged out on the client
+        }
+      }, 0);
+    }
   };
 
   // Forgot password function
@@ -239,14 +261,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Refresh session function
   const refreshSession = async (): Promise<boolean> => {
     if (!state.refreshToken) return false;
-    
+
     try {
       const response = await api.post(
         '/auth/refresh-token',
         { refreshToken: state.refreshToken },
         { withAuth: false, showErrorToast: false }
       );
-      
+
       setState(prev => ({
         ...prev,
         accessToken: response.data.accessToken,
@@ -255,7 +277,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading: false,
         error: null,
       }));
-      
+
       saveAuthState(state.user, response.data.accessToken, response.data.refreshToken);
       return true;
     } catch (error) {
@@ -267,7 +289,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Update user function
   const updateUser = (userData: Partial<User>) => {
     if (!state.user) return;
-    
+
     const updatedUser = { ...state.user, ...userData };
     setState(prev => ({ ...prev, user: updatedUser }));
     saveAuthState(updatedUser, state.accessToken, state.refreshToken);

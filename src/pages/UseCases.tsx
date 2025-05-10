@@ -4,7 +4,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 const useCases = [
   {
@@ -88,10 +89,11 @@ const useCases = [
 ];
 
 const UseCases = () => {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -103,30 +105,39 @@ const UseCases = () => {
               <p className="text-xl text-gray-700 mb-8">
                 Discover how our digital menu solutions can be tailored to meet the specific needs of your industry.
               </p>
-              <Button className="btn-primary text-base" size="lg" asChild>
-                <Link to="/get-started">Get Started Free</Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button className="btn-primary text-base" size="lg" asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button className="btn-primary text-base" size="lg" asChild>
+                  <Link to="/get-started">Get Started Free</Link>
+                </Button>
+              )}
             </div>
           </div>
         </section>
-        
+
         {/* Use Cases Grid */}
         <section className="section bg-white">
           <div className="container-custom">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {useCases.map((useCase, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="group relative overflow-hidden rounded-xl shadow-md hover-scale bg-white border border-gray-100"
                 >
                   <div className="aspect-video overflow-hidden">
-                    <img 
-                      src={useCase.image} 
-                      alt={useCase.title} 
+                    <img
+                      src={useCase.image}
+                      alt={useCase.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                   </div>
-                  
+
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-navy-800 mb-2 group-hover:text-orange-500 transition-colors">
                       {useCase.title}
@@ -146,7 +157,7 @@ const UseCases = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Success Story */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -154,7 +165,7 @@ const UseCases = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Customer Success Stories
               </h2>
-              
+
               <div className="bg-white rounded-xl overflow-hidden shadow-md">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="p-8 md:p-10">
@@ -168,9 +179,9 @@ const UseCases = () => {
                       "Before ScanServe, we were spending thousands on printing menus. Now, we can update our menu instantly, showcase beautiful photos of our dishes, and our customers love the convenience of ordering directly from their phones."
                     </p>
                     <div className="flex items-center">
-                      <img 
-                        src="https://randomuser.me/api/portraits/women/32.jpg" 
-                        alt="Sarah Johnson" 
+                      <img
+                        src="https://randomuser.me/api/portraits/women/32.jpg"
+                        alt="Sarah Johnson"
                         className="w-12 h-12 rounded-full mr-4"
                       />
                       <div>
@@ -182,11 +193,11 @@ const UseCases = () => {
                       <Link to="/success-stories">Read Full Story</Link>
                     </Button>
                   </div>
-                  
+
                   <div className="bg-gray-100">
-                    <img 
-                      src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&auto=format&fit=crop" 
-                      alt="Taste of Italy Restaurant" 
+                    <img
+                      src="https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&auto=format&fit=crop"
+                      alt="Taste of Italy Restaurant"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -195,10 +206,10 @@ const UseCases = () => {
             </div>
           </div>
         </section>
-        
-       
+
+
       </main>
-      
+
       <Footer />
     </div>
   );

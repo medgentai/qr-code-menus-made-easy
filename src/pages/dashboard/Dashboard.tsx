@@ -257,7 +257,7 @@ const Dashboard = () => {
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Tabs defaultValue="top-items" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid grid-cols-2">
                   <TabsTrigger value="top-items">Top Items</TabsTrigger>
                   <TabsTrigger value="categories">Categories</TabsTrigger>
                 </TabsList>
@@ -423,10 +423,10 @@ const Dashboard = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex w-full overflow-x-auto">
-            <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
-            <TabsTrigger value="orders" className="flex-1">Orders</TabsTrigger>
-            <TabsTrigger value="analytics" className="flex-1">Analytics</TabsTrigger>
+          <TabsList className="overflow-x-auto">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="orders">Orders</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
         </Tabs>
 

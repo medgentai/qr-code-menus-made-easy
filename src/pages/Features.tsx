@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, ClipboardCheck, Clock, FileText, ImageIcon, LayoutDashboard, List, QrCode, Settings, Users } from 'lucide-react';
+import { useAuth } from '@/contexts/auth-context';
 
 const FeaturesList = [
   {
@@ -55,10 +56,11 @@ const FeaturesList = [
 ];
 
 const Features = () => {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -70,20 +72,29 @@ const Features = () => {
               <p className="text-xl text-gray-700 mb-8">
                 Everything you need to create exceptional digital menu experiences and streamline your operations.
               </p>
-              <Button className="btn-primary text-base" size="lg" asChild>
-                <Link to="/get-started">Get Started Free</Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button className="btn-primary text-base" size="lg" asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Go to Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <Button className="btn-primary text-base" size="lg" asChild>
+                  <Link to="/get-started">Get Started Free</Link>
+                </Button>
+              )}
             </div>
           </div>
         </section>
-        
+
         {/* Features List Section */}
         <section className="section bg-white">
           <div className="container-custom">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {FeaturesList.map((feature, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="feature-card group hover-scale"
                 >
                   <div className="mb-4">
@@ -100,7 +111,7 @@ const Features = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Benefits Section */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -112,7 +123,7 @@ const Features = () => {
                 See how ScanServe delivers real value to your business.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
                 <ul className="space-y-6">
@@ -133,22 +144,22 @@ const Features = () => {
                   ))}
                 </ul>
               </div>
-              
+
               <div className="relative">
                 <div className="absolute -inset-4 md:-inset-6 bg-gradient-to-r from-orange-500/20 to-sky-200/20 rounded-xl blur-lg -z-10"></div>
-                <img 
-                  src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=600&auto=format&fit=crop" 
-                  alt="Restaurant team celebrating success" 
+                <img
+                  src="https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?w=600&auto=format&fit=crop"
+                  alt="Restaurant team celebrating success"
                   className="w-full h-auto rounded-xl shadow-lg"
                 />
               </div>
             </div>
           </div>
         </section>
-        
-  
+
+
       </main>
-      
+
       <Footer />
     </div>
   );
