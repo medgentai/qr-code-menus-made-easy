@@ -14,7 +14,7 @@ const PricingSection = () => {
 
   const plans = [
     {
-      name: "Restaurant",
+      name: "Restaurant / Cafes",
       description: "Perfect for restaurants looking to modernize their menu experience.",
       monthlyPrice: 799,
       annualPrice: 599,
