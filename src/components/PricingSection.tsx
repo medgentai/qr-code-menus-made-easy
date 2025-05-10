@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { CheckCircle, Restaurant, Hotel, CircleDollarSign } from 'lucide-react';
+import { CheckCircle, Utensils, Hotel, CircleDollarSign } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import {
   HoverCard,
@@ -20,7 +20,7 @@ const PricingSection = () => {
       monthlyPrice: 599,
       annualPrice: 499,
       annualTotal: 5988,
-      icon: <Restaurant className="h-10 w-10 text-orange-500" />,
+      icon: <Utensils className="h-10 w-10 text-orange-500" />,
       features: [
         "Unlimited QR code menus",
         "Menu customization",
