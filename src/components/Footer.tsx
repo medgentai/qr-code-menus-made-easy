@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
+
 
 const Footer = () => {
   return (
@@ -87,25 +87,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-      
-      {/* CTA Section in Footer - Only keep one button */}
-      <div className="mt-12 bg-navy-700 py-10">
-        <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center">
-            <h3 className="text-2xl font-bold text-white mb-4">Ready to transform your dining experience?</h3>
-            <p className="text-gray-300 mb-6">
-              Join thousands of businesses already using ScanServe for their menu management.
-            </p>
-            <Button 
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-              size="lg"
-              asChild
-            >
-              <Link to="/get-started">Request Custom Demo</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+
     </footer>
   );
 };
