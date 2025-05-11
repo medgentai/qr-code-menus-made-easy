@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth-context";
 import { OrganizationProvider } from "@/contexts/organization-context";
+import { VenueProvider } from "@/contexts/venue-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 
@@ -43,6 +44,16 @@ import OrganizationDetails from "./pages/organizations/OrganizationDetails";
 import OrganizationSettings from "./pages/organizations/OrganizationSettings";
 import OrganizationMembers from "./pages/organizations/OrganizationMembers";
 
+// Venue pages
+import VenueList from "./pages/venues/VenueList";
+import VenueCreate from "./pages/venues/VenueCreate";
+import VenueDetails from "./pages/venues/VenueDetails";
+import VenueEdit from "./pages/venues/VenueEdit";
+import VenueTables from "./pages/venues/VenueTables";
+import VenueSettings from "./pages/venues/VenueSettings";
+import TableCreate from "./pages/venues/TableCreate";
+import TableEdit from "./pages/venues/TableEdit";
+
 // Create React Query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,9 +71,10 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <OrganizationProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
+            <VenueProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
               <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -153,10 +165,77 @@ const App = () => (
                 }
               />
 
+              {/* Venue routes */}
+              <Route
+                path="/organizations/:id/venues"
+                element={
+                  <ProtectedRoute>
+                    <VenueList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/create"
+                element={
+                  <ProtectedRoute>
+                    <VenueCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId"
+                element={
+                  <ProtectedRoute>
+                    <VenueDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/edit"
+                element={
+                  <ProtectedRoute>
+                    <VenueEdit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/tables/create"
+                element={
+                  <ProtectedRoute>
+                    <TableCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/tables/:tableId/edit"
+                element={
+                  <ProtectedRoute>
+                    <TableEdit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/tables"
+                element={
+                  <ProtectedRoute>
+                    <VenueTables />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/settings"
+                element={
+                  <ProtectedRoute>
+                    <VenueSettings />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>
-            </TooltipProvider>
+              </TooltipProvider>
+            </VenueProvider>
           </OrganizationProvider>
         </BrowserRouter>
       </AuthProvider>

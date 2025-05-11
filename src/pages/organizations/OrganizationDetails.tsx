@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
+import { useVenue } from '@/contexts/venue-context';
+import { toast } from '@/components/ui/sonner';
 import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +19,16 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   ArrowLeft,
   Building2,
   Calendar,
@@ -32,8 +44,19 @@ import {
   Truck,
   Wine,
   Store,
-  BarChart
+  BarChart,
+  Plus,
+  MoreHorizontal,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
 
 const OrganizationDetails = () => {
@@ -44,9 +67,12 @@ const OrganizationDetails = () => {
     fetchOrganizationDetails,
     isLoading,
     selectOrganization,
-    organizations
+    organizations,
+    deleteOrganization
   } = useOrganization();
   const [activeTab, setActiveTab] = useState('overview');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { venues, fetchVenuesForOrganization } = useVenue();
 
   useEffect(() => {
     if (id) {
@@ -55,8 +81,11 @@ const OrganizationDetails = () => {
       if (org) {
         selectOrganization(org);
       }
+
+      // Fetch venues for this organization
+      fetchVenuesForOrganization(id);
     }
-  }, [id, organizations, selectOrganization]);
+  }, [id, organizations, selectOrganization, fetchVenuesForOrganization]);
 
   // Function to get the appropriate icon based on organization type
   const getOrganizationIcon = (type: OrganizationType) => {
@@ -140,60 +169,80 @@ const OrganizationDetails = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col space-y-4 sm:space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-col sm:flex-row lg:flex-row lg:items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/organizations')}
-              className="self-start mb-2 sm:mb-0 lg:mb-0 sm:mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/organizations')}>
+              <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 flex-shrink-0">
-                {currentOrganizationDetails.logoUrl ? (
-                  <AvatarImage src={currentOrganizationDetails.logoUrl} alt={currentOrganizationDetails.name} />
-                ) : (
-                  <AvatarFallback>
-                    {getInitials(currentOrganizationDetails.name)}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-xl lg:text-2xl font-bold tracking-tight truncate max-w-[200px] sm:max-w-[300px] md:max-w-[400px]">
-                    {currentOrganizationDetails.name}
-                  </h1>
-                  <Badge variant={currentOrganizationDetails.isActive ? "default" : "secondary"} className="flex-shrink-0">
-                    {currentOrganizationDetails.isActive ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <p className="text-muted-foreground flex items-center gap-1 text-sm">
-                  {getOrganizationIcon(currentOrganizationDetails.type)}
-                  <span>{OrganizationTypeLabels[currentOrganizationDetails.type]}</span>
-                </p>
-              </div>
+            <div className="text-sm breadcrumbs">
+              <ul className="flex items-center gap-1 text-muted-foreground">
+                <li><Link to="/organizations">Organizations</Link></li>
+                <li>•</li>
+                <li className="text-foreground font-medium">{currentOrganizationDetails.name}</li>
+              </ul>
             </div>
           </div>
-          <div className="flex gap-2 mt-2 sm:mt-2 lg:mt-0">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/organizations/${id}/members`)}
-              className="flex-1 sm:flex-1 lg:flex-none"
+              onClick={() => navigate(`/organizations/${id}/venues`)}
             >
-              <Users className="h-4 w-4 mr-2" />
-              <span className="inline">Members</span>
+              <MapPin className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Manage Venues</span>
+              <span className="inline sm:hidden">Venues</span>
             </Button>
-            <Button
-              size="sm"
-              onClick={() => navigate(`/organizations/${id}/settings`)}
-              className="flex-1 sm:flex-1 lg:flex-none"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              <span className="inline">Settings</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(`/organizations/${id}/edit`)}>
+                  <Edit className="h-4 w-4 mr-2" /> Edit Organization
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/organizations/${id}/members`)}>
+                  <Users className="h-4 w-4 mr-2" /> Manage Members
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(`/organizations/${id}/settings`)}>
+                  <Settings className="h-4 w-4 mr-2" /> Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" /> Delete Organization
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12 flex-shrink-0">
+            {currentOrganizationDetails.logoUrl ? (
+              <AvatarImage src={currentOrganizationDetails.logoUrl} alt={currentOrganizationDetails.name} />
+            ) : (
+              <AvatarFallback>
+                {getInitials(currentOrganizationDetails.name)}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">
+                {currentOrganizationDetails.name}
+              </h1>
+              <Badge variant={currentOrganizationDetails.isActive ? "default" : "secondary"}>
+                {currentOrganizationDetails.isActive ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground flex items-center gap-1 mt-1">
+              {getOrganizationIcon(currentOrganizationDetails.type)}
+              <span>{OrganizationTypeLabels[currentOrganizationDetails.type]}</span>
+            </p>
           </div>
         </div>
 
@@ -377,23 +426,81 @@ const OrganizationDetails = () => {
 
           <TabsContent value="venues">
             <Card>
-              <CardHeader>
-                <CardTitle>Venues</CardTitle>
-                <CardDescription>
-                  Manage your physical locations
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <MapPin className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Venues Yet</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  Venues represent your physical locations. Add your first venue to start creating menus and QR codes.
-                </p>
-                <Button className="w-full sm:w-auto">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Add Your First Venue
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Venues</CardTitle>
+                  <CardDescription>
+                    Manage your physical locations
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => navigate(`/organizations/${id}/venues/create`)}
+                  className="w-full sm:w-auto"
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Venue
                 </Button>
+              </CardHeader>
+              <CardContent>
+                {venues.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <MapPin className="h-16 w-16 text-muted-foreground/60 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No Venues Yet</h3>
+                    <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+                      Venues represent your physical locations. Add your first venue to start creating menus and QR codes.
+                    </p>
+                    <Button
+                      className="w-full sm:w-auto"
+                      onClick={() => navigate(`/organizations/${id}/venues/create`)}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Your First Venue
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {venues.map((venue) => (
+                      <div key={venue.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-medium">{venue.name}</h3>
+                          <Badge variant={venue.isActive ? "default" : "secondary"}>
+                            {venue.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                        {venue.description && (
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {venue.description}
+                          </p>
+                        )}
+                        {venue.address && (
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                            <span className="truncate">
+                              {[venue.address, venue.city, venue.state].filter(Boolean).join(', ')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-end mt-3">
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/organizations/${id}/venues/${venue.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
+              <CardFooter className="flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate(`/organizations/${id}/venues`)}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Manage All Venues
+                </Button>
+              </CardFooter>
             </Card>
           </TabsContent>
 
@@ -464,6 +571,39 @@ const OrganizationDetails = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Organization Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this organization?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the organization
+              and all associated data including venues, menus, and QR codes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={async () => {
+                if (id) {
+                  const isDeleted = await deleteOrganization(id);
+                  if (isDeleted) {
+                    toast.success('Organization deleted successfully');
+                    navigate('/organizations');
+                  } else {
+                    toast.error('Failed to delete organization');
+                  }
+                }
+                setShowDeleteDialog(false);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };

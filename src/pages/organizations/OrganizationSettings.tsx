@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -36,6 +36,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -182,21 +183,49 @@ const OrganizationSettings = () => {
   // Check if delete button should be enabled
   const isDeleteEnabled = deleteConfirmText === currentOrganization?.name;
 
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/organizations/${id}`)}
-            className="self-start mb-2 sm:mb-0 md:mb-0 sm:mr-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/organizations/${id}`)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div className="text-sm breadcrumbs">
+              <ul className="flex items-center gap-1 text-muted-foreground">
+                <li><Link to="/organizations">Organizations</Link></li>
+                <li>•</li>
+                <li><Link to={`/organizations/${id}`}>{currentOrganization?.name}</Link></li>
+                <li>•</li>
+                <li className="text-foreground font-medium">Settings</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12 flex-shrink-0">
+            {currentOrganization?.logoUrl ? (
+              <AvatarImage src={currentOrganization.logoUrl} alt={currentOrganization.name} />
+            ) : (
+              <AvatarFallback>
+                {currentOrganization?.name ? getInitials(currentOrganization.name) : 'ORG'}
+              </AvatarFallback>
+            )}
+          </Avatar>
           <div>
-            <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold tracking-tight">Organization Settings</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <h1 className="text-3xl font-bold">Organization Settings</h1>
+            <p className="text-muted-foreground mt-1">
               Manage settings for {currentOrganization?.name}
             </p>
           </div>

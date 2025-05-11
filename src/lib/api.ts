@@ -180,5 +180,5 @@ export const api = {
     apiRequest<T>(endpoint, 'PATCH', data, options),
 
   delete: <T>(endpoint: string, options?: RequestOptions) =>
-    apiRequest<T>(endpoint, 'DELETE', undefined, options),
+    apiRequest<T>(endpoint, 'DELETE', {}, options),
 };
