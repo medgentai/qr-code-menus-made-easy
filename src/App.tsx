@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth-context";
+import { OrganizationProvider } from "@/contexts/organization-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 
@@ -35,6 +36,13 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
 
+// Organization pages
+import OrganizationList from "./pages/organizations/OrganizationList";
+import OrganizationCreate from "./pages/organizations/OrganizationCreate";
+import OrganizationDetails from "./pages/organizations/OrganizationDetails";
+import OrganizationSettings from "./pages/organizations/OrganizationSettings";
+import OrganizationMembers from "./pages/organizations/OrganizationMembers";
+
 // Create React Query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,11 +58,12 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
+        <BrowserRouter>
+          <OrganizationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/features" element={<Features />} />
@@ -102,11 +111,54 @@ const App = () => (
                 }
               />
 
+              {/* Organization routes */}
+              <Route
+                path="/organizations"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/create"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/settings"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationSettings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/members"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationMembers />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+              </Routes>
+            </TooltipProvider>
+          </OrganizationProvider>
+        </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
