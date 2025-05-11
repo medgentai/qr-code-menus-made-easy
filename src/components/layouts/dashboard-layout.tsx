@@ -159,6 +159,34 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                         <Building2 className="h-4 w-4" />
                         Organizations
                       </a>
+                      {currentOrganization && (
+                        <>
+                          <a
+                            href={`/organizations/${currentOrganization.id}/venues`}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                            onClick={closeMobileMenu}
+                          >
+                            <MapPin className="h-4 w-4" />
+                            Venues
+                          </a>
+                          <a
+                            href={`/organizations/${currentOrganization.id}/menus`}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                            onClick={closeMobileMenu}
+                          >
+                            <Utensils className="h-4 w-4" />
+                            Menus
+                          </a>
+                          <a
+                            href={`/organizations/${currentOrganization.id}?activeTab=qrcodes`}
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                            onClick={closeMobileMenu}
+                          >
+                            <QrCode className="h-4 w-4" />
+                            QR Codes
+                          </a>
+                        </>
+                      )}
                       <a
                         href="/profile"
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
@@ -352,6 +380,27 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                         >
                           <Building2 className="h-3 w-3" />
                           <span>Overview</span>
+                        </a>
+                        <a
+                          href={`/organizations/${currentOrganization.id}/venues`}
+                          className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-primary"
+                        >
+                          <MapPin className="h-3 w-3" />
+                          <span>Venues</span>
+                        </a>
+                        <a
+                          href={`/organizations/${currentOrganization.id}/menus`}
+                          className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-primary"
+                        >
+                          <Utensils className="h-3 w-3" />
+                          <span>Menus</span>
+                        </a>
+                        <a
+                          href={`/organizations/${currentOrganization.id}?activeTab=qrcodes`}
+                          className="flex items-center gap-2 rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-primary"
+                        >
+                          <QrCode className="h-3 w-3" />
+                          <span>QR Codes</span>
                         </a>
                         <a
                           href={`/organizations/${currentOrganization.id}/members`}

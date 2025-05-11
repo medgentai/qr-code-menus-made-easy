@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrganization } from '@/contexts/organization-context';
 import DashboardLayout from '@/components/layouts/dashboard-layout';
+import { toast } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -77,9 +78,9 @@ const TableCreate = () => {
   // Handle form submission
   const onSubmit = async (data: TableFormValues) => {
     if (!venueId) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const table = await createTable({
         venueId,
@@ -88,8 +89,9 @@ const TableCreate = () => {
         status: data.status,
         location: data.location
       });
-      
+
       if (table) {
+        toast.success('Table created successfully! A QR code has been automatically generated for this table.');
         navigate(`/organizations/${organizationId}/venues/${venueId}`);
       }
     } finally {
@@ -178,9 +180,9 @@ const TableCreate = () => {
                       <FormItem>
                         <FormLabel>Capacity</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="4" 
+                          <Input
+                            type="number"
+                            placeholder="4"
                             min={1}
                             {...field}
                             value={field.value === undefined ? '' : field.value}
@@ -201,8 +203,8 @@ const TableCreate = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -233,10 +235,10 @@ const TableCreate = () => {
                     <FormItem>
                       <FormLabel>Location</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Near window, second floor" 
-                          className="min-h-[80px]" 
-                          {...field} 
+                        <Textarea
+                          placeholder="Near window, second floor"
+                          className="min-h-[80px]"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -256,8 +258,8 @@ const TableCreate = () => {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting || isLoading}
                     className="w-full sm:w-auto order-1 sm:order-2"
                   >

@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/auth-context";
 import { OrganizationProvider } from "@/contexts/organization-context";
 import { VenueProvider } from "@/contexts/venue-context";
+import { MenuProvider } from "@/contexts/menu-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 
@@ -54,6 +55,22 @@ import VenueSettings from "./pages/venues/VenueSettings";
 import TableCreate from "./pages/venues/TableCreate";
 import TableEdit from "./pages/venues/TableEdit";
 
+// Menu pages
+import MenuList from "./pages/menus/MenuList";
+import MenuCreate from "./pages/menus/MenuCreate";
+import MenuDetails from "./pages/menus/MenuDetails";
+import MenuEdit from "./pages/menus/MenuEdit";
+import CategoryCreate from "./pages/menus/CategoryCreate";
+import CategoryEdit from "./pages/menus/CategoryEdit";
+import MenuItemCreate from "./pages/menus/MenuItemCreate";
+import MenuItemEdit from "./pages/menus/MenuItemEdit";
+import MenuPreview from "./pages/menus/MenuPreview";
+
+// QR Code pages
+import QrCodeCreate from "./pages/qr-codes/QrCodeCreate";
+import QrCodeDetails from "./pages/qr-codes/QrCodeDetails";
+import QrCodeEdit from "./pages/qr-codes/QrCodeEdit";
+
 // Create React Query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,9 +89,10 @@ const App = () => (
         <BrowserRouter>
           <OrganizationProvider>
             <VenueProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
+              <MenuProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
               <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -231,10 +249,116 @@ const App = () => (
                 }
               />
 
+              {/* QR Code routes */}
+              <Route
+                path="/organizations/:id/venues/:venueId/qrcodes/create"
+                element={
+                  <ProtectedRoute>
+                    <QrCodeCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/qrcodes/:qrCodeId"
+                element={
+                  <ProtectedRoute>
+                    <QrCodeDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/qrcodes/:qrCodeId/edit"
+                element={
+                  <ProtectedRoute>
+                    <QrCodeEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Menu routes */}
+              <Route
+                path="/organizations/:id/menus"
+                element={
+                  <ProtectedRoute>
+                    <MenuList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/menus/create"
+                element={
+                  <ProtectedRoute>
+                    <MenuCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/menus/:menuId"
+                element={
+                  <ProtectedRoute>
+                    <MenuDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/menus/:menuId/edit"
+                element={
+                  <ProtectedRoute>
+                    <MenuEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations/:id/menus/:menuId/categories/create"
+                element={
+                  <ProtectedRoute>
+                    <CategoryCreate />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations/:id/menus/:menuId/categories/:categoryId/edit"
+                element={
+                  <ProtectedRoute>
+                    <CategoryEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations/:id/menus/:menuId/categories/:categoryId/items/create"
+                element={
+                  <ProtectedRoute>
+                    <MenuItemCreate />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations/:id/menus/:menuId/categories/:categoryId/items/:itemId/edit"
+                element={
+                  <ProtectedRoute>
+                    <MenuItemEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/organizations/:id/menus/:menuId/preview"
+                element={
+                  <ProtectedRoute>
+                    <MenuPreview />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>
               </TooltipProvider>
+              </MenuProvider>
             </VenueProvider>
           </OrganizationProvider>
         </BrowserRouter>

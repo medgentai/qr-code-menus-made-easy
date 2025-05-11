@@ -16,6 +16,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/components/ui/sonner';
+import { qrCodeService } from '@/services/qrCodeService';
+import QrCodeList from '@/components/qr-codes/QrCodeList';
 import {
   ArrowLeft,
   Building2,
@@ -67,6 +70,8 @@ const VenueDetails = () => {
     deleteVenue
   } = useVenue();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [qrCodes, setQrCodes] = useState<any[]>([]);
+  const [isLoadingQrCodes, setIsLoadingQrCodes] = useState(true);
 
   useEffect(() => {
     if (organizationId) {
@@ -81,6 +86,25 @@ const VenueDetails = () => {
     }
   }, [venueId, fetchVenueById, fetchTablesForVenue]);
 
+  useEffect(() => {
+    const fetchQrCodes = async () => {
+      if (!venueId) return;
+
+      try {
+        setIsLoadingQrCodes(true);
+        const data = await qrCodeService.getQrCodesForVenue(venueId);
+        setQrCodes(data);
+      } catch (error) {
+        console.error('Error fetching QR codes:', error);
+        toast.error('Failed to load QR codes');
+      } finally {
+        setIsLoadingQrCodes(false);
+      }
+    };
+
+    fetchQrCodes();
+  }, [venueId]);
+
   const handleDeleteVenue = async () => {
     if (!venueId) return;
 
@@ -93,6 +117,17 @@ const VenueDetails = () => {
       }
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteQrCode = async (qrCodeId: string) => {
+    try {
+      await qrCodeService.deleteQrCode(qrCodeId);
+      setQrCodes(qrCodes.filter(qrCode => qrCode.id !== qrCodeId));
+      toast.success('QR code deleted successfully');
+    } catch (error) {
+      console.error('Error deleting QR code:', error);
+      toast.error('Failed to delete QR code');
     }
   };
 
@@ -301,7 +336,7 @@ const VenueDetails = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-muted-foreground">QR Codes</div>
-                        <div className="font-medium">0</div>
+                        <div className="font-medium">{isLoadingQrCodes ? '...' : qrCodes.length}</div>
                       </div>
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-muted-foreground">Total Scans</div>
@@ -398,25 +433,22 @@ const VenueDetails = () => {
           </TabsContent>
 
           <TabsContent value="qrcodes">
-            <Card>
-              <CardHeader>
-                <CardTitle>QR Codes</CardTitle>
-                <CardDescription>
-                  Generate and manage QR codes for your venue
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <QrCode className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No QR Codes Yet</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  Generate QR codes for your tables. Customers can scan these to view your digital menus.
-                </p>
-                <Button className="w-full sm:w-auto">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Generate Your First QR Code
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="flex justify-between items-center mb-4">
+              <div></div>
+              <Button
+                onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/qrcodes/create`)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create QR Code
+              </Button>
+            </div>
+            <QrCodeList
+              qrCodes={qrCodes}
+              isLoading={isLoadingQrCodes}
+              onDelete={handleDeleteQrCode}
+              organizationId={organizationId!}
+              venueId={venueId!}
+            />
           </TabsContent>
         </Tabs>
       </div>

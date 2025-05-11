@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
+import { useMenu } from '@/contexts/menu-context';
 import { toast } from '@/components/ui/sonner';
 import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   ArrowLeft,
@@ -58,10 +60,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
+import { qrCodeService, QrCode as QrCodeType } from '@/services/qrCodeService';
 
 const OrganizationDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabFromQuery = queryParams.get('activeTab');
+
   const {
     currentOrganizationDetails,
     fetchOrganizationDetails,
@@ -70,9 +77,14 @@ const OrganizationDetails = () => {
     organizations,
     deleteOrganization
   } = useOrganization();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(tabFromQuery || 'overview');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { venues, fetchVenuesForOrganization } = useVenue();
+  const { menus, fetchMenusForOrganization } = useMenu();
+
+  // QR code related state
+  const [qrCodes, setQrCodes] = useState<QrCodeType[]>([]);
+  const [isLoadingQrCodes, setIsLoadingQrCodes] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -82,10 +94,55 @@ const OrganizationDetails = () => {
         selectOrganization(org);
       }
 
-      // Fetch venues for this organization
+      // Fetch venues and menus for this organization
       fetchVenuesForOrganization(id);
+      fetchMenusForOrganization(id);
     }
-  }, [id, organizations, selectOrganization, fetchVenuesForOrganization]);
+  }, [id, organizations, selectOrganization, fetchVenuesForOrganization, fetchMenusForOrganization]);
+
+  // Function to fetch QR codes for all venues in the organization
+  const fetchQrCodesForOrganization = async () => {
+    if (!id || venues.length === 0) return;
+
+    try {
+      setIsLoadingQrCodes(true);
+
+      // Fetch QR codes for each venue and combine them
+      const allQrCodes: QrCodeType[] = [];
+
+      for (const venue of venues) {
+        const venueQrCodes = await qrCodeService.getQrCodesForVenue(venue.id);
+        allQrCodes.push(...venueQrCodes);
+      }
+
+      setQrCodes(allQrCodes);
+    } catch (error) {
+      console.error('Error fetching QR codes:', error);
+      toast.error('Failed to load QR codes');
+    } finally {
+      setIsLoadingQrCodes(false);
+    }
+  };
+
+  // Function to handle QR code deletion
+  const handleDeleteQrCode = async (qrCodeId: string) => {
+    try {
+      await qrCodeService.deleteQrCode(qrCodeId);
+      toast.success('QR code deleted successfully');
+      // Refresh QR codes
+      fetchQrCodesForOrganization();
+    } catch (error) {
+      console.error('Error deleting QR code:', error);
+      toast.error('Failed to delete QR code');
+    }
+  };
+
+  // Fetch QR codes when venues are loaded or when the active tab changes to QR codes
+  useEffect(() => {
+    if (venues.length > 0 && activeTab === 'qrcodes') {
+      fetchQrCodesForOrganization();
+    }
+  }, [venues, activeTab]);
 
   // Function to get the appropriate icon based on organization type
   const getOrganizationIcon = (type: OrganizationType) => {
@@ -119,27 +176,48 @@ const OrganizationDetails = () => {
   if (isLoading || !currentOrganizationDetails) {
     return (
       <DashboardLayout>
-        <div className="container mx-auto py-6 space-y-6">
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/organizations')}
-              className="mr-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
-            </Button>
-            <div>
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-48 mt-1" />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/organizations')}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-sm breadcrumbs">
+                <Skeleton className="h-5 w-64" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-32" />
+              <Skeleton className="h-9 w-9" />
             </div>
           </div>
           <Separator />
+
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-5 w-32 mt-1" />
+            </div>
+          </div>
+
+          <Separator />
+
+          <Skeleton className="h-10 w-full max-w-md" />
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
               <Card>
                 <CardHeader>
                   <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-64 mt-1" />
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Skeleton className="h-4 w-full" />
@@ -152,6 +230,7 @@ const OrganizationDetails = () => {
               <Card>
                 <CardHeader>
                   <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-48 mt-1" />
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Skeleton className="h-4 w-full" />
@@ -361,7 +440,7 @@ const OrganizationDetails = () => {
                         <span className="text-sm">Menus</span>
                       </div>
                       <Badge variant="outline">
-                        {currentOrganizationDetails.stats.totalMenus || 0}
+                        {menus.length || currentOrganizationDetails.stats.totalMenus || 0}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
@@ -505,47 +584,247 @@ const OrganizationDetails = () => {
           </TabsContent>
 
           <TabsContent value="menus">
-            <Card>
-              <CardHeader>
-                <CardTitle>Menus</CardTitle>
-                <CardDescription>
-                  Manage your digital menus
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Utensils className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Menus Yet</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  Create digital menus for your venues. Add categories, items, and customize your menu appearance.
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-semibold">Menus</h2>
+                <p className="text-sm text-muted-foreground">
+                  Manage your digital menus for {currentOrganizationDetails.name}
                 </p>
-                <Button className="w-full sm:w-auto">
-                  <Utensils className="h-4 w-4 mr-2" />
-                  Create Your First Menu
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={() => navigate(`/organizations/${id}/menus/create`)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Create Menu</span>
+                  <span className="inline sm:hidden">Create</span>
                 </Button>
-              </CardContent>
-            </Card>
+                <Button variant="outline" onClick={() => navigate(`/organizations/${id}/menus`)}>
+                  <Utensils className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">View All</span>
+                  <span className="inline sm:hidden">View</span>
+                </Button>
+              </div>
+            </div>
+
+            {menus.length === 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Digital Menus</CardTitle>
+                  <CardDescription>
+                    Create and manage digital menus for your venues
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <Utensils className="h-16 w-16 text-muted-foreground/60 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Streamline Your Menu Management</h3>
+                    <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+                      Create digital menus for your venues. Add categories, items, and customize your menu appearance.
+                      Customers can scan QR codes to view your menus on their devices.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Button onClick={() => navigate(`/organizations/${id}/menus/create`)}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First Menu
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {menus.map((menu) => (
+                  <Card key={menu.id} className="hover:bg-muted/50 transition-colors">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">{menu.name}</CardTitle>
+                        <Badge variant={menu.isActive ? "default" : "secondary"}>
+                          {menu.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <CardDescription>
+                        {menu.description || 'No description provided'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{menu.categories?.length || 0} categories</span>
+                        <span>•</span>
+                        <span>
+                          {menu.categories?.reduce((total, cat) => total + (cat.items?.length || 0), 0) || 0} items
+                        </span>
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={() => navigate(`/organizations/${id}/menus/${menu.id}`)}
+                      >
+                        View Menu
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="qrcodes">
-            <Card>
-              <CardHeader>
-                <CardTitle>QR Codes</CardTitle>
-                <CardDescription>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-xl font-semibold">QR Codes</h2>
+                <p className="text-sm text-muted-foreground">
                   Generate and manage QR codes for your venues
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <QrCode className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No QR Codes Yet</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  Generate QR codes for your venues and menus. Customers can scan these to view your digital menus.
                 </p>
-                <Button className="w-full sm:w-auto">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Generate Your First QR Code
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
+              <Button
+                onClick={() => {
+                  if (venues.length === 0) {
+                    toast.error('You need to create a venue first before generating QR codes');
+                    navigate(`/organizations/${id}/venues/create`);
+                  } else {
+                    // Navigate to QR code creation page for the first venue
+                    navigate(`/organizations/${id}/venues/${venues[0].id}/qrcodes/create?organizationId=${id}`);
+                  }
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Create QR Code</span>
+                <span className="inline sm:hidden">Create</span>
+              </Button>
+            </div>
+
+            {isLoadingQrCodes ? (
+              <div className="space-y-4">
+                {[...Array(2)].map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader className="pb-2">
+                      <Skeleton className="h-5 w-1/3" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <Skeleton className="h-32 w-32 rounded-md" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-2/3" />
+                          <Skeleton className="h-4 w-1/2" />
+                          <div className="flex gap-2 mt-4">
+                            <Skeleton className="h-9 w-20" />
+                            <Skeleton className="h-9 w-20" />
+                            <Skeleton className="h-9 w-20" />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : qrCodes.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-8">
+                  <QrCode className="h-16 w-16 text-muted-foreground/60 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No QR Codes Yet</h3>
+                  <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
+                    Generate QR codes for your venues and menus. Customers can scan these to view your digital menus.
+                  </p>
+                  <Button
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      if (venues.length === 0) {
+                        toast.error('You need to create a venue first before generating QR codes');
+                        navigate(`/organizations/${id}/venues/create`);
+                      } else {
+                        // Navigate to QR code creation page for the first venue
+                        navigate(`/organizations/${id}/venues/${venues[0].id}/qrcodes/create?organizationId=${id}`);
+                      }
+                    }}
+                  >
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Generate Your First QR Code
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {qrCodes.map((qrCode) => (
+                  <Card key={qrCode.id} className="hover:bg-muted/50 transition-colors">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <CardTitle className="text-lg">{qrCode.name}</CardTitle>
+                        <Badge variant={qrCode.isActive ? "default" : "secondary"}>
+                          {qrCode.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <CardDescription>
+                        {qrCode.description || 'No description provided'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="bg-white p-2 rounded-md border w-24 h-24 flex items-center justify-center">
+                          <img
+                            src={qrCode.qrCodeUrl}
+                            alt={`QR Code for ${qrCode.name}`}
+                            className="max-w-full max-h-full"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <div className="grid grid-cols-1 gap-1 text-sm">
+                            <div>
+                              <span className="font-medium">Venue:</span>{' '}
+                              {venues.find(v => v.id === qrCode.venueId)?.name || 'Unknown venue'}
+                            </div>
+                            <div>
+                              <span className="font-medium">Table:</span>{' '}
+                              {qrCode.table?.name || 'No table (venue QR)'}
+                            </div>
+                            <div>
+                              <span className="font-medium">Scan count:</span>{' '}
+                              {qrCode.scanCount}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(`/organizations/${id}/venues/${qrCode.venueId}/qrcodes/${qrCode.id}?organizationId=${id}`)}
+                      >
+                        View QR Code
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the QR code
+                              and remove it from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteQrCode(qrCode.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="analytics">

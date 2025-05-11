@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrganization } from '@/contexts/organization-context';
 import DashboardLayout from '@/components/layouts/dashboard-layout';
+import { toast } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -83,7 +84,7 @@ const TableEdit = () => {
         try {
           const tableData = await VenueService.getTableById(tableId);
           setTable(tableData);
-          
+
           // Reset form with table data
           form.reset({
             name: tableData.name,
@@ -98,16 +99,16 @@ const TableEdit = () => {
         }
       }
     };
-    
+
     fetchData();
   }, [organizationId, venueId, tableId, fetchOrganizationDetails, fetchVenueById, form]);
 
   // Handle form submission
   const onSubmit = async (data: TableFormValues) => {
     if (!tableId) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const updatedTable = await updateTable(tableId, {
         name: data.name,
@@ -115,8 +116,9 @@ const TableEdit = () => {
         status: data.status,
         location: data.location
       });
-      
+
       if (updatedTable) {
+        toast.success('Table updated successfully! The associated QR code has been preserved.');
         navigate(`/organizations/${organizationId}/venues/${venueId}`);
       }
     } finally {
@@ -242,9 +244,9 @@ const TableEdit = () => {
                       <FormItem>
                         <FormLabel>Capacity</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="4" 
+                          <Input
+                            type="number"
+                            placeholder="4"
                             min={1}
                             {...field}
                             value={field.value === undefined ? '' : field.value}
@@ -265,8 +267,8 @@ const TableEdit = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
+                      <Select
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -297,10 +299,10 @@ const TableEdit = () => {
                     <FormItem>
                       <FormLabel>Location</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Near window, second floor" 
-                          className="min-h-[80px]" 
-                          {...field} 
+                        <Textarea
+                          placeholder="Near window, second floor"
+                          className="min-h-[80px]"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -320,8 +322,8 @@ const TableEdit = () => {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting || isLoading}
                     className="w-full sm:w-auto order-1 sm:order-2"
                   >
