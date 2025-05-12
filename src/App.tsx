@@ -71,6 +71,9 @@ import QrCodeCreate from "./pages/qr-codes/QrCodeCreate";
 import QrCodeDetails from "./pages/qr-codes/QrCodeDetails";
 import QrCodeEdit from "./pages/qr-codes/QrCodeEdit";
 
+// Public Menu pages
+import PublicMenuWrapper from "./pages/public/PublicMenuWrapper";
+
 // Create React Query client with default options
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -108,6 +111,9 @@ const App = () => (
               <Route path="/get-started" element={<GetStarted />} />
               <Route path="/about" element={<About />} />
               <Route path="/blog" element={<Blog />} />
+
+              {/* Public Menu routes */}
+              <Route path="/:slug" element={<PublicMenuWrapper />} />
 
               {/* Authentication routes */}
               <Route path="/login" element={<Login />} />
