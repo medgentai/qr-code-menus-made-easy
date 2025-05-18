@@ -85,7 +85,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const totalAmount = items.reduce((total, item) => {
     const itemPrice = parseFloat(item.menuItem.price);
     const modifiersPrice = item.modifiers?.reduce(
-      (modTotal, mod) => modTotal + parseFloat(mod.price),
+      (modTotal, mod) => {
+        // Cast mod to any type with price property if it exists
+        const modPrice = (mod as any).price ? parseFloat((mod as any).price) : 0;
+        return modTotal + modPrice;
+      },
       0
     ) || 0;
     return total + (itemPrice + modifiersPrice) * item.quantity;

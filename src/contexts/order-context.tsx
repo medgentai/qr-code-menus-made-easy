@@ -71,9 +71,9 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await OrderService.getAll(filters);
-      setOrders(data);
-      return data;
+      const paginatedResponse = await OrderService.getAll(filters);
+      setOrders(paginatedResponse.data);
+      return paginatedResponse.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch orders';
       setError(errorMessage);
@@ -89,9 +89,16 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await OrderService.getAllForVenue(venueId);
-      setOrders(data);
-      return data;
+      const response = await OrderService.getAllForVenue(venueId);
+
+      // Handle both array and paginated response formats
+      if (Array.isArray(response)) {
+        setOrders(response);
+        return response;
+      } else {
+        setOrders(response.data);
+        return response.data;
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch orders for venue';
       setError(errorMessage);
@@ -107,9 +114,16 @@ export const OrderProvider: React.FC<OrderProviderProps> = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await OrderService.getAllForOrganization(organizationId);
-      setOrders(data);
-      return data;
+      const response = await OrderService.getAllForOrganization(organizationId);
+
+      // Handle both array and paginated response formats
+      if (Array.isArray(response)) {
+        setOrders(response);
+        return response;
+      } else {
+        setOrders(response.data);
+        return response.data;
+      }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch orders for organization';
       setError(errorMessage);

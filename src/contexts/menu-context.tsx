@@ -19,18 +19,18 @@ export interface MenuContextType {
   currentMenu: Menu | null;
   isLoading: boolean;
   error: string | null;
-  fetchMenusForOrganization: (organizationId: string) => Promise<void>;
+  fetchMenusForOrganization: (organizationId: string) => Promise<Menu[]>;
   fetchMenuById: (id: string) => Promise<Menu | null>;
   createMenu: (data: CreateMenuDto) => Promise<Menu | null>;
   updateMenu: (id: string, data: UpdateMenuDto) => Promise<Menu | null>;
   deleteMenu: (id: string) => Promise<boolean>;
   selectMenu: (menu: Menu) => void;
-  
+
   // Category operations
   createCategory: (menuId: string, data: CreateCategoryDto) => Promise<Category | null>;
   updateCategory: (id: string, data: UpdateCategoryDto) => Promise<Category | null>;
   deleteCategory: (id: string) => Promise<boolean>;
-  
+
   // MenuItem operations
   createMenuItem: (categoryId: string, data: CreateMenuItemDto) => Promise<MenuItem | null>;
   updateMenuItem: (id: string, data: UpdateMenuItemDto) => Promise<MenuItem | null>;
@@ -162,7 +162,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
     setError(null);
     try {
       const newCategory = await MenuService.createCategory(menuId, data);
-      
+
       // Update menus state with the new category
       setMenus(prev => prev.map(menu => {
         if (menu.id === menuId) {
@@ -173,7 +173,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
         }
         return menu;
       }));
-      
+
       // Update currentMenu if it's the one being modified
       if (currentMenu?.id === menuId) {
         setCurrentMenu({
@@ -181,7 +181,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           categories: [...(currentMenu.categories || []), newCategory]
         });
       }
-      
+
       toast.success('Category created successfully');
       return newCategory;
     } catch (err: any) {
@@ -200,30 +200,30 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
     setError(null);
     try {
       const updatedCategory = await MenuService.updateCategory(id, data);
-      
+
       // Update menus state with the updated category
       setMenus(prev => prev.map(menu => {
         if (menu.categories?.some(cat => cat.id === id)) {
           return {
             ...menu,
-            categories: menu.categories.map(cat => 
+            categories: menu.categories.map(cat =>
               cat.id === id ? updatedCategory : cat
             )
           };
         }
         return menu;
       }));
-      
+
       // Update currentMenu if it contains the category being modified
       if (currentMenu?.categories?.some(cat => cat.id === id)) {
         setCurrentMenu({
           ...currentMenu,
-          categories: currentMenu.categories.map(cat => 
+          categories: currentMenu.categories.map(cat =>
             cat.id === id ? updatedCategory : cat
           )
         });
       }
-      
+
       toast.success('Category updated successfully');
       return updatedCategory;
     } catch (err: any) {
@@ -242,7 +242,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
     setError(null);
     try {
       await MenuService.deleteCategory(id);
-      
+
       // Update menus state by removing the deleted category
       setMenus(prev => prev.map(menu => {
         if (menu.categories?.some(cat => cat.id === id)) {
@@ -253,7 +253,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
         }
         return menu;
       }));
-      
+
       // Update currentMenu if it contains the category being deleted
       if (currentMenu?.categories?.some(cat => cat.id === id)) {
         setCurrentMenu({
@@ -261,7 +261,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           categories: currentMenu.categories.filter(cat => cat.id !== id)
         });
       }
-      
+
       toast.success('Category deleted successfully');
       return true;
     } catch (err: any) {
@@ -280,7 +280,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
     setError(null);
     try {
       const newMenuItem = await MenuService.createMenuItem(categoryId, data);
-      
+
       // Update menus state with the new menu item
       setMenus(prev => prev.map(menu => {
         if (menu.categories?.some(cat => cat.id === categoryId)) {
@@ -299,7 +299,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
         }
         return menu;
       }));
-      
+
       // Update currentMenu if it contains the category being modified
       if (currentMenu?.categories?.some(cat => cat.id === categoryId)) {
         setCurrentMenu({
@@ -315,7 +315,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           })
         });
       }
-      
+
       toast.success('Menu item created successfully');
       return newMenuItem;
     } catch (err: any) {
@@ -334,7 +334,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
     setError(null);
     try {
       const updatedMenuItem = await MenuService.updateMenuItem(id, data);
-      
+
       // Update menus state with the updated menu item
       setMenus(prev => prev.map(menu => {
         let menuUpdated = false;
@@ -343,17 +343,17 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
             menuUpdated = true;
             return {
               ...cat,
-              items: cat.items.map(item => 
+              items: cat.items.map(item =>
                 item.id === id ? updatedMenuItem : item
               )
             };
           }
           return cat;
         });
-        
+
         return menuUpdated ? { ...menu, categories: updatedCategories } : menu;
       }));
-      
+
       // Update currentMenu if it contains the menu item being modified
       if (currentMenu) {
         let menuUpdated = false;
@@ -362,14 +362,14 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
             menuUpdated = true;
             return {
               ...cat,
-              items: cat.items.map(item => 
+              items: cat.items.map(item =>
                 item.id === id ? updatedMenuItem : item
               )
             };
           }
           return cat;
         });
-        
+
         if (menuUpdated) {
           setCurrentMenu({
             ...currentMenu,
@@ -377,7 +377,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           });
         }
       }
-      
+
       toast.success('Menu item updated successfully');
       return updatedMenuItem;
     } catch (err: any) {
@@ -396,7 +396,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
     setError(null);
     try {
       await MenuService.deleteMenuItem(id);
-      
+
       // Update menus state by removing the deleted menu item
       setMenus(prev => prev.map(menu => {
         let menuUpdated = false;
@@ -410,10 +410,10 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           }
           return cat;
         });
-        
+
         return menuUpdated ? { ...menu, categories: updatedCategories } : menu;
       }));
-      
+
       // Update currentMenu if it contains the menu item being deleted
       if (currentMenu) {
         let menuUpdated = false;
@@ -427,7 +427,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           }
           return cat;
         });
-        
+
         if (menuUpdated) {
           setCurrentMenu({
             ...currentMenu,
@@ -435,7 +435,7 @@ export const MenuProvider: React.FC<MenuProviderProps> = ({ children }) => {
           });
         }
       }
-      
+
       toast.success('Menu item deleted successfully');
       return true;
     } catch (err: any) {
