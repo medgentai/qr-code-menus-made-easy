@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { toast } from '@/components/ui/sonner';
 import PublicMenuService, { PublicMenu } from '@/services/public-menu-service';
-import { Category, MenuItem } from '@/services/menu-service';
 
 // Public menu context interface
 export interface PublicMenuContextType {

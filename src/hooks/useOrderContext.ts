@@ -4,7 +4,6 @@ import { toast } from '@/components/ui/sonner';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import {
-  useOrdersQuery,
   useVenueOrdersQuery,
   useOrganizationOrdersQuery,
   useOrderQuery,
@@ -13,7 +12,6 @@ import {
   useUpdateOrderStatusMutation,
   useUpdateOrderItemMutation,
   useDeleteOrderMutation,
-  useInfiniteOrdersQuery,
   useInfiniteVenueOrdersQuery,
   useInfiniteOrganizationOrdersQuery,
   orderKeys
@@ -54,12 +52,20 @@ export const useOrderContext = (): OrderContextType => {
   const infiniteVenueOrdersQuery = useInfiniteVenueOrdersQuery(currentVenue?.id || '');
   const infiniteOrganizationOrdersQuery = useInfiniteOrganizationOrdersQuery(currentOrganization?.id || '');
 
-  // Determine which query to use
+  // Determine which query to use and handle type conversion
   const ordersQuery = currentVenue
     ? venueOrdersQuery
     : currentOrganization
       ? organizationOrdersQuery
-      : { data: [], isLoading: false, error: null };
+      : { data: [] as Order[], isLoading: false, error: null };
+
+  // Extract orders from query data (handles both array and paginated response)
+  const getOrdersFromQueryData = (data: any): Order[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data && 'data' in data) return data.data || [];
+    return [];
+  };
 
   // Determine which infinite query to use
   const infiniteOrdersQuery = currentVenue && currentVenue.id
@@ -126,11 +132,18 @@ export const useOrderContext = (): OrderContextType => {
       // Invalidate and refetch
       await queryClient.invalidateQueries({ queryKey: orderKeys.venue(venueId) });
       // Fetch fresh data
-      const { data } = await queryClient.fetchQuery({
+      const result = await queryClient.fetchQuery({
         queryKey: orderKeys.venue(venueId),
         queryFn: () => OrderService.getAllForVenue(venueId)
       });
-      return data || [];
+
+      // Handle both PaginatedOrdersResponse and Order[] return types
+      if (Array.isArray(result)) {
+        return result;
+      } else if (result && 'data' in result) {
+        return result.data || [];
+      }
+      return [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch orders for venue';
       toast.error(errorMessage);
@@ -144,11 +157,18 @@ export const useOrderContext = (): OrderContextType => {
       // Invalidate and refetch
       await queryClient.invalidateQueries({ queryKey: orderKeys.organization(organizationId) });
       // Fetch fresh data
-      const { data } = await queryClient.fetchQuery({
+      const result = await queryClient.fetchQuery({
         queryKey: orderKeys.organization(organizationId),
         queryFn: () => OrderService.getAllForOrganization(organizationId)
       });
-      return data || [];
+
+      // Handle both PaginatedOrdersResponse and Order[] return types
+      if (Array.isArray(result)) {
+        return result;
+      } else if (result && 'data' in result) {
+        return result.data || [];
+      }
+      return [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch orders for organization';
       toast.error(errorMessage);
@@ -268,12 +288,12 @@ export const useOrderContext = (): OrderContextType => {
   }, []);
 
   // Extract all orders from infinite query pages
-  const extractOrdersFromInfiniteQuery = useCallback(() => {
+  const extractOrdersFromInfiniteQuery = useCallback((): Order[] => {
     if (!infiniteOrdersQuery.data) return [];
 
     return infiniteOrdersQuery.data.pages
-      .flatMap(page => page?.data || [])
-      .filter(order => order && order.id); // Ensure we only include valid orders
+      .flatMap((page: PaginatedOrdersResponse) => page?.data || [])
+      .filter((order: Order) => order && order.id); // Ensure we only include valid orders
   }, [infiniteOrdersQuery.data]);
 
   // Function to fetch next page
@@ -318,7 +338,7 @@ export const useOrderContext = (): OrderContextType => {
   }, [infiniteOrdersQuery.data]);
 
   return {
-    orders: ordersQuery.data || [],
+    orders: getOrdersFromQueryData(ordersQuery.data),
     currentOrder: currentOrderQuery.data || null,
     isLoading: ordersQuery.isLoading || currentOrderQuery.isLoading ||
                createOrderMutation.isPending || updateOrderMutation.isPending ||

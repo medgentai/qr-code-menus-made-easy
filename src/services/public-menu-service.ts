@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { Menu, Category, MenuItem } from './menu-service';
+import { Menu } from './menu-service';
 
 // Public menu service interfaces
 export interface PublicMenu extends Menu {
@@ -32,19 +32,19 @@ const PublicMenuService = {
   ): Promise<PublicMenu> => {
     let url = `/public/organization/${slug}/menu`;
     const params = new URLSearchParams();
-    
+
     if (tableId) {
       params.append('table', tableId);
     }
-    
+
     if (venueId) {
       params.append('venue', venueId);
     }
-    
+
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
-    
+
     const response = await api.get<PublicMenu>(url);
     return response.data;
   },

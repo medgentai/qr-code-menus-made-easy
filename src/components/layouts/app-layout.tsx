@@ -29,17 +29,10 @@ import {
   Users,
   Utensils,
   QrCode,
-  BarChart,
   MapPin,
-  Hotel,
-  Coffee,
-  Truck,
-  Wine,
-  Store,
   ClipboardList,
-  Bell,
 } from 'lucide-react';
-import { OrganizationType } from '@/types/organization';
+import { Organization } from '@/services/organization-service';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -50,34 +43,31 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const {
     organizations,
     currentOrganization,
-    selectOrganization,
-    fetchOrganizations
+    selectOrganization
   } = useOrganization();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Check if the screen is mobile
+  // Close mobile menu on resize to desktop
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      if (window.innerWidth >= 768 && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
     };
 
-    // Initial check
-    checkIfMobile();
-
     // Add event listener for window resize
-    window.addEventListener('resize', checkIfMobile);
+    window.addEventListener('resize', handleResize);
 
     // Cleanup
     return () => {
-      window.removeEventListener('resize', checkIfMobile);
+      window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isMobileMenuOpen]);
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logout();
     navigate('/');
   };
 
@@ -95,27 +85,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       .substring(0, 2);
   };
 
-  // Function to get the appropriate icon based on organization type
-  const getOrganizationIcon = (type: OrganizationType) => {
-    switch (type) {
-      case OrganizationType.RESTAURANT:
-        return <Utensils className="h-4 w-4" />;
-      case OrganizationType.HOTEL:
-        return <Hotel className="h-4 w-4" />;
-      case OrganizationType.CAFE:
-        return <Coffee className="h-4 w-4" />;
-      case OrganizationType.FOOD_TRUCK:
-        return <Truck className="h-4 w-4" />;
-      case OrganizationType.BAR:
-        return <Wine className="h-4 w-4" />;
-      case OrganizationType.OTHER:
-      default:
-        return <Store className="h-4 w-4" />;
-    }
-  };
+
 
   // Handle organization selection
-  const handleSelectOrganization = (org: any) => {
+  const handleSelectOrganization = (org: Organization) => {
     selectOrganization(org);
     navigate(`/organizations/${org.id}`);
   };
