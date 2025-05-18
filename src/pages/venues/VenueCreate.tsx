@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useVenue } from '@/contexts/venue-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,16 +70,25 @@ const VenueCreate = () => {
 
   // Handle form submission
   const onSubmit = async (data: VenueFormValues) => {
-    if (!organizationId) return;
-    
+    if (!organizationId || !data.name) return;
+
     setIsSubmitting(true);
-    
+
     try {
       const venue = await createVenue({
         organizationId,
-        ...data
+        name: data.name, // Ensure name is explicitly provided
+        description: data.description,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        postalCode: data.postalCode,
+        phoneNumber: data.phoneNumber,
+        email: data.email || undefined,
+        imageUrl: data.imageUrl || undefined
       });
-      
+
       if (venue) {
         navigate(`/organizations/${organizationId}/venues`);
       }
@@ -90,7 +98,6 @@ const VenueCreate = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
           <Button
@@ -105,17 +112,23 @@ const VenueCreate = () => {
             <Breadcrumb className="mb-2">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to="/organizations">Organizations</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}`}>
-                    {currentOrganization?.name || 'Organization'}
+                  <BreadcrumbLink asChild>
+                    <Link to="/organizations">Organizations</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}/venues`}>Venues</BreadcrumbLink>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}`}>
+                      {currentOrganization?.name || 'Organization'}
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}/venues`}>Venues</Link>
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
@@ -182,10 +195,10 @@ const VenueCreate = () => {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="A brief description of your venue" 
-                          className="min-h-[100px]" 
-                          {...field} 
+                        <Textarea
+                          placeholder="A brief description of your venue"
+                          className="min-h-[100px]"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -306,8 +319,8 @@ const VenueCreate = () => {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting || isLoading}
                     className="w-full sm:w-auto order-1 sm:order-2"
                   >
@@ -319,7 +332,6 @@ const VenueCreate = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 };
 

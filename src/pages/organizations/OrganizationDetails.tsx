@@ -4,7 +4,6 @@ import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { useMenu } from '@/contexts/menu-context';
 import { toast } from '@/components/ui/sonner';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -175,7 +174,6 @@ const OrganizationDetails = () => {
 
   if (isLoading || !currentOrganizationDetails) {
     return (
-      <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -241,12 +239,11 @@ const OrganizationDetails = () => {
             </div>
           </div>
         </div>
-      </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -883,7 +880,7 @@ const OrganizationDetails = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 };
 

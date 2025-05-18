@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -53,7 +52,7 @@ const OrganizationList = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -181,7 +180,7 @@ const OrganizationList = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

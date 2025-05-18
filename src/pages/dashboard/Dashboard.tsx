@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -324,7 +323,7 @@ const Dashboard = () => {
                 <div className="text-sm text-muted-foreground">Today's Revenue</div>
                 <div className="text-2xl font-bold">${sampleData.revenue.today.toFixed(2)}</div>
               </div>
-              <Badge variant={sampleData.revenue.today > sampleData.revenue.yesterday ? "success" : "destructive"}>
+              <Badge variant={sampleData.revenue.today > sampleData.revenue.yesterday ? "default" : "destructive"}>
                 {sampleData.revenue.today > sampleData.revenue.yesterday ? "↑" : "↓"}
                 {Math.abs(((sampleData.revenue.today - sampleData.revenue.yesterday) / sampleData.revenue.yesterday) * 100).toFixed(1)}%
               </Badge>
@@ -372,7 +371,6 @@ const Dashboard = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -504,7 +502,6 @@ const Dashboard = () => {
             ))}
         </div>
       </div>
-    </DashboardLayout>
   );
 };
 

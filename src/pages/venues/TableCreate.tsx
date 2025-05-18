@@ -5,7 +5,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrganization } from '@/contexts/organization-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { toast } from '@/components/ui/sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,7 +40,10 @@ import { TableStatus, TableStatusLabels } from '@/types/venue';
 // Form schema
 const tableFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(50, 'Name must be less than 50 characters'),
-  capacity: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
+  capacity: z.union([
+    z.string().transform(val => val ? parseInt(val, 10) : undefined),
+    z.number().optional()
+  ]).optional(),
   status: z.nativeEnum(TableStatus).default(TableStatus.AVAILABLE),
   location: z.string().max(200, 'Location must be less than 200 characters').optional()
 });
@@ -100,7 +102,6 @@ const TableCreate = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
           <Button
@@ -115,22 +116,30 @@ const TableCreate = () => {
             <Breadcrumb className="mb-2">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to="/organizations">Organizations</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}`}>
-                    {currentOrganization?.name || 'Organization'}
+                  <BreadcrumbLink asChild>
+                    <Link to="/organizations">Organizations</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}/venues`}>Venues</BreadcrumbLink>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}`}>
+                      {currentOrganization?.name || 'Organization'}
+                    </Link>
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}/venues/${venueId}`}>
-                    {currentVenue?.name || 'Venue'}
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}/venues`}>Venues</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}/venues/${venueId}`}>
+                      {currentVenue?.name || 'Venue'}
+                    </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -271,7 +280,6 @@ const TableCreate = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 };
 

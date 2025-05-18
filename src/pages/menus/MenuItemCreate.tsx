@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useMenu } from '@/contexts/menu-context';
@@ -38,7 +37,6 @@ const MenuItemCreate: React.FC = () => {
 
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -85,7 +83,6 @@ const MenuItemCreate: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 };
 

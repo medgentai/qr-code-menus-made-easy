@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Edit, ArrowLeft, Plus, Clock, Trash2, Eye, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -94,7 +93,6 @@ const MenuDetails: React.FC = () => {
 
   if (isLoading || !currentMenu) {
     return (
-      <DashboardLayout>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -123,12 +121,11 @@ const MenuDetails: React.FC = () => {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -386,7 +383,6 @@ const MenuDetails: React.FC = () => {
       </div>
 
       {/* Delete Dialogs */}
-
       <AlertDialog open={isDeleteCategoryDialogOpen} onOpenChange={setIsDeleteCategoryDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -420,7 +416,7 @@ const MenuDetails: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 };
 

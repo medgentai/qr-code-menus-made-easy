@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -104,7 +103,7 @@ const QrCodeDetails: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -312,7 +311,7 @@ const QrCodeDetails: React.FC = () => {
           </Card>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

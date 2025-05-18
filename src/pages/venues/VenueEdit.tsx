@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useVenue } from '@/contexts/venue-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -103,12 +102,12 @@ const VenueEdit = () => {
   // Handle form submission
   const onSubmit = async (data: VenueFormValues) => {
     if (!venueId) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const venue = await updateVenue(venueId, data);
-      
+
       if (venue) {
         navigate(`/organizations/${organizationId}/venues/${venueId}`);
       }
@@ -119,7 +118,6 @@ const VenueEdit = () => {
 
   if (isLoading && !currentVenue) {
     return (
-      <DashboardLayout>
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
             <Button
@@ -154,12 +152,10 @@ const VenueEdit = () => {
             </CardContent>
           </Card>
         </div>
-      </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
           <Button
@@ -174,22 +170,30 @@ const VenueEdit = () => {
             <Breadcrumb className="mb-2">
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to="/organizations">Organizations</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}`}>
-                    {currentOrganization?.name || 'Organization'}
+                  <BreadcrumbLink asChild>
+                    <Link to="/organizations">Organizations</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}/venues`}>Venues</BreadcrumbLink>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}`}>
+                      {currentOrganization?.name || 'Organization'}
+                    </Link>
+                  </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink as={Link} to={`/organizations/${organizationId}/venues/${venueId}`}>
-                    {currentVenue?.name || 'Venue'}
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}/venues`}>Venues</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link to={`/organizations/${organizationId}/venues/${venueId}`}>
+                      {currentVenue?.name || 'Venue'}
+                    </Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -257,10 +261,10 @@ const VenueEdit = () => {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="A brief description of your venue" 
-                          className="min-h-[100px]" 
-                          {...field} 
+                        <Textarea
+                          placeholder="A brief description of your venue"
+                          className="min-h-[100px]"
+                          {...field}
                         />
                       </FormControl>
                       <FormDescription>
@@ -402,8 +406,8 @@ const VenueEdit = () => {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={isSubmitting || isLoading}
                     className="w-full sm:w-auto order-1 sm:order-2"
                   >
@@ -415,7 +419,6 @@ const VenueEdit = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 };
 

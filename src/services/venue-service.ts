@@ -79,22 +79,22 @@ export interface UpdateTableDto {
 const VenueService = {
   // Venue operations
   getAllForOrganization: async (organizationId: string): Promise<Venue[]> => {
-    const response = await api.get(`/venues/organization/${organizationId}`);
-    return response.data;
+    const response = await api.get<Venue[]>(`/venues/organization/${organizationId}`);
+    return response.data || [];
   },
 
   getById: async (id: string): Promise<Venue> => {
-    const response = await api.get(`/venues/${id}`);
+    const response = await api.get<Venue>(`/venues/${id}`);
     return response.data;
   },
 
   create: async (data: CreateVenueDto): Promise<Venue> => {
-    const response = await api.post('/venues', data);
+    const response = await api.post<Venue>('/venues', data);
     return response.data;
   },
 
   update: async (id: string, data: UpdateVenueDto): Promise<Venue> => {
-    const response = await api.patch(`/venues/${id}`, data);
+    const response = await api.patch<Venue>(`/venues/${id}`, data);
     return response.data;
   },
 
@@ -104,22 +104,22 @@ const VenueService = {
 
   // Table operations
   getAllTablesForVenue: async (venueId: string): Promise<Table[]> => {
-    const response = await api.get(`/venues/venue/${venueId}/tables`);
-    return response.data;
+    const response = await api.get<Table[]>(`/venues/venue/${venueId}/tables`);
+    return response.data || [];
   },
 
   getTableById: async (id: string): Promise<Table> => {
-    const response = await api.get(`/venues/tables/${id}`);
+    const response = await api.get<Table>(`/venues/tables/${id}`);
     return response.data;
   },
 
   createTable: async (data: CreateTableDto): Promise<Table> => {
-    const response = await api.post('/venues/tables', data);
+    const response = await api.post<Table>('/venues/tables', data);
     return response.data;
   },
 
   updateTable: async (id: string, data: UpdateTableDto): Promise<Table> => {
-    const response = await api.patch(`/venues/tables/${id}`, data);
+    const response = await api.patch<Table>(`/venues/tables/${id}`, data);
     return response.data;
   },
 

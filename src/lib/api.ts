@@ -133,6 +133,9 @@ export async function apiRequest<T>(
   const prefixedEndpoint = endpoint.startsWith(API_PREFIX) ? endpoint : `${API_PREFIX}${endpoint}`;
   const url = `${API_BASE_URL}${prefixedEndpoint}`;
 
+  console.log(`API Request: ${method} ${url}`);
+  if (data) console.log('Request data:', data);
+
   try {
     const response = await fetch(url, {
       method,
@@ -140,12 +143,32 @@ export async function apiRequest<T>(
       body: data ? JSON.stringify(data) : undefined,
     });
 
+    console.log(`API Response status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
+      console.error('API Error Response:', response);
       throw await handleApiError(response, mergedOptions);
     }
 
-    return await response.json() as ApiResponse<T>;
+    const responseData = await response.json();
+    console.log('API Response data:', responseData);
+
+    // Handle both direct data and wrapped data formats
+    if (responseData.data !== undefined) {
+      // It's a wrapped response
+      return responseData as ApiResponse<T>;
+    } else {
+      // It's a direct response, wrap it
+      return {
+        data: responseData as T,
+        statusCode: response.status,
+        message: 'Success',
+        timestamp: new Date().toISOString()
+      };
+    }
   } catch (error) {
+    console.error('API Request error:', error);
+
     if ((error as ApiError).statusCode) {
       throw error;
     }

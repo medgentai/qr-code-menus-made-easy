@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { OrganizationProvider } from "@/contexts/organization-context";
 import { VenueProvider } from "@/contexts/venue-context";
 import { MenuProvider } from "@/contexts/menu-context";
+import { NotificationProvider } from "@/contexts/notification-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 
@@ -37,6 +38,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // Dashboard pages
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
+
 
 // Organization pages
 import OrganizationList from "./pages/organizations/OrganizationList";
@@ -71,16 +73,25 @@ import QrCodeCreate from "./pages/qr-codes/QrCodeCreate";
 import QrCodeDetails from "./pages/qr-codes/QrCodeDetails";
 import QrCodeEdit from "./pages/qr-codes/QrCodeEdit";
 
+// Order pages
+import OrderList from "./pages/orders/OrderList";
+import OrderDetails from "./pages/orders/OrderDetails";
+import OrderCreate from "./pages/orders/OrderCreate";
+import OrderEdit from "./pages/orders/OrderEdit";
+
 // Public Menu pages
 import PublicMenuWrapper from "./pages/public/PublicMenuWrapper";
 
-// Create React Query client with default options
+// Create React Query client with optimized options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnMount: true,
+      refetchOnReconnect: true,
     },
   },
 });
@@ -93,9 +104,10 @@ const App = () => (
           <OrganizationProvider>
             <VenueProvider>
               <MenuProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
+                <NotificationProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
               <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -146,6 +158,7 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+
 
               {/* Organization routes */}
               <Route
@@ -360,10 +373,79 @@ const App = () => (
                 }
               />
 
+              {/* Order routes - Organization level */}
+              <Route
+                path="/organizations/:id/orders"
+                element={
+                  <ProtectedRoute>
+                    <OrderList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/orders/create"
+                element={
+                  <ProtectedRoute>
+                    <OrderCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/orders/:orderId"
+                element={
+                  <ProtectedRoute>
+                    <OrderDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/orders/:orderId/edit"
+                element={
+                  <ProtectedRoute>
+                    <OrderEdit />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Order routes - Venue level */}
+              <Route
+                path="/organizations/:id/venues/:venueId/orders"
+                element={
+                  <ProtectedRoute>
+                    <OrderList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/orders/create"
+                element={
+                  <ProtectedRoute>
+                    <OrderCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/orders/:orderId"
+                element={
+                  <ProtectedRoute>
+                    <OrderDetails />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/venues/:venueId/orders/:orderId/edit"
+                element={
+                  <ProtectedRoute>
+                    <OrderEdit />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>
               </TooltipProvider>
+                </NotificationProvider>
               </MenuProvider>
             </VenueProvider>
           </OrganizationProvider>

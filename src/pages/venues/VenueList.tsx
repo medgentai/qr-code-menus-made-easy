@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -45,7 +44,7 @@ const VenueList = () => {
   }, [organizationId, fetchOrganizationDetails, fetchVenuesForOrganization]);
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -228,7 +227,7 @@ const VenueList = () => {
           </div>
         )}
       </div>
-    </DashboardLayout>
+    </>
   );
 };
 

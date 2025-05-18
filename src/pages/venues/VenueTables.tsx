@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrganization } from '@/contexts/organization-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -77,7 +76,6 @@ const VenueTables = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -235,7 +233,6 @@ const VenueTables = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 };
 

@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useOrganization } from '@/contexts/organization-context';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -129,7 +128,6 @@ const OrganizationCreate = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
           <Button
@@ -350,7 +348,6 @@ const OrganizationCreate = () => {
           </div>
         </div>
       </div>
-    </DashboardLayout>
   );
 };
 

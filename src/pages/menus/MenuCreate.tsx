@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -45,13 +44,15 @@ const MenuCreate: React.FC = () => {
 
   // Form submission handler
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!organizationId) {
-      toast.error('Organization ID is missing');
+    if (!organizationId || !values.name) {
+      toast.error('Organization ID or menu name is missing');
       return;
     }
 
     const menuData: CreateMenuDto = {
-      ...values,
+      name: values.name, // Ensure name is explicitly provided
+      description: values.description,
+      isActive: values.isActive,
       organizationId,
     };
 
@@ -62,7 +63,6 @@ const MenuCreate: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Create Menu</h1>
@@ -160,7 +160,6 @@ const MenuCreate: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   );
 };
 

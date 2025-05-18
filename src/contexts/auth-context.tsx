@@ -66,27 +66,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check if the user is authenticated on mount
   useEffect(() => {
     const validateSession = async () => {
+      console.log('Validating session...');
+
       if (state.accessToken) {
         try {
+          console.log('Checking user session with /auth/me endpoint');
           const response = await api.get<User>('/auth/me', {
             showErrorToast: false,
           });
+
+          console.log('Session validation successful');
           setState(prev => ({
             ...prev,
             user: response.data,
             isAuthenticated: true,
             isLoading: false,
           }));
-        } catch (error) {
-          // Try to refresh the token if validation fails
-          const refreshed = await refreshSession();
-          if (!refreshed) {
-            // If refresh fails, clear auth state
-            clearAuthState();
+        } catch (error: any) {
+          console.warn('Session validation failed:', error);
+
+          // Check if it's an authentication error
+          if (error.statusCode === 401) {
+            console.log('Authentication error, attempting to refresh token');
+            // Try to refresh the token if validation fails
+            const refreshed = await refreshSession();
+            if (!refreshed) {
+              console.warn('Token refresh failed, clearing auth state');
+              // If refresh fails, clear auth state
+              clearAuthState();
+
+              // Only show toast if it's not a network error (which would be shown by the API client)
+              if (error.statusCode !== 0) {
+                toast.error('Your session has expired. Please log in again.');
+              }
+            }
+          } else if (error.statusCode >= 500) {
+            console.error('Server error during session validation');
+            toast.error('Server error. Please try again later.');
           }
+
           setState(prev => ({ ...prev, isLoading: false }));
         }
       } else {
+        console.log('No access token found, session not validated');
         setState(prev => ({ ...prev, isLoading: false }));
       }
     };
@@ -260,15 +282,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Refresh session function
   const refreshSession = async (): Promise<boolean> => {
-    if (!state.refreshToken) return false;
+    if (!state.refreshToken) {
+      console.warn('No refresh token available');
+      return false;
+    }
 
     try {
+      console.log('Attempting to refresh token...');
       const response = await api.post(
         '/auth/refresh-token',
         { refreshToken: state.refreshToken },
         { withAuth: false, showErrorToast: false }
       );
 
+      console.log('Token refresh successful');
       setState(prev => ({
         ...prev,
         accessToken: response.data.accessToken,
@@ -280,8 +307,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       saveAuthState(state.user, response.data.accessToken, response.data.refreshToken);
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Token refresh failed:', error);
+
+      // Show a user-friendly message for token refresh failures
+      if (error.statusCode === 401) {
+        toast.error('Your session has expired. Please log in again.');
+      } else if (error.statusCode >= 500) {
+        toast.error('Server error. Please try again later.');
+      }
+
+      // Clear auth state on any refresh error
       clearAuthState();
+
+      // Redirect to login page
+      window.location.href = '/login';
+
       return false;
     }
   };

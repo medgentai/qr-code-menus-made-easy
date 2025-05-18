@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Calendar, Clock, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Eye, EyeOff } from 'lucide-react';
 import { format } from 'date-fns';
-import DashboardLayout from '@/components/layouts/dashboard-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +52,7 @@ const MenuList: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
+    <>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -121,15 +120,12 @@ const MenuList: React.FC = () => {
                     ) : (
                       <p>No categories or items yet</p>
                     )}
-                    {menu.startDate && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        <span>
-                          {format(new Date(menu.startDate), 'MMM d, yyyy')}
-                          {menu.endDate && ` - ${format(new Date(menu.endDate), 'MMM d, yyyy')}`}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex items-center text-muted-foreground">
+                      <Clock className="mr-2 h-4 w-4" />
+                      <span>
+                        Updated {format(new Date(menu.updatedAt), 'MMM d, yyyy')}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
                 <CardFooter className="flex justify-between pt-2">
@@ -167,7 +163,7 @@ const MenuList: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </DashboardLayout>
+    </>
   );
 };
 

@@ -6,6 +6,23 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Format a price string to a currency format
+ * @param price The price string to format
+ * @param currency The currency code (default: USD)
+ * @returns Formatted price string
+ */
+export function formatPrice(price: string | number, currency: string = 'USD'): string {
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(numericPrice);
+}
+
+/**
  * Format a date with a standard format
  * @param date The date to format
  * @param options Optional Intl.DateTimeFormatOptions

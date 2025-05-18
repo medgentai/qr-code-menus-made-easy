@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2 } from 'lucide-react';
+import AppLayout from '@/components/layouts/app-layout';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface ProtectedRouteProps {
  * A wrapper component that protects routes requiring authentication
  * Redirects to login page if user is not authenticated
  * Can also check for specific roles if required
+ * Wraps the content in the AppLayout component
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
@@ -47,8 +49,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  // If all checks pass, render the protected content
-  return <>{children}</>;
+  // If all checks pass, render the protected content within the AppLayout
+  return <AppLayout>{children}</AppLayout>;
 };
 
 export default ProtectedRoute;
