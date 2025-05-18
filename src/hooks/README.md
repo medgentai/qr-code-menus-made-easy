@@ -74,7 +74,7 @@ const handleUpdate = async (data) => {
 
 ## Future Improvements
 
-1. **Pagination**: Implement pagination for large datasets
-2. **Infinite Queries**: Use `useInfiniteQuery` for infinite scrolling
-3. **WebSocket Integration**: Better integrate WebSocket events with React Query's cache
-4. **Selective Refetching**: Implement more granular refetching strategies
+1. **Enhanced Pagination**: Improve pagination UI and experience
+2. **WebSocket Integration**: Better integrate WebSocket events with React Query's cache
+3. **Selective Refetching**: Implement more granular refetching strategies
+4. **Search Optimization**: Improve search functionality with debouncing and filters

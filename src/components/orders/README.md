@@ -6,7 +6,7 @@ This directory contains components for managing orders in the application.
 
 ### PaginatedOrderList
 
-A component that displays a paginated list of orders with infinite scrolling support. It uses the `useOrder` hook to fetch and display orders with pagination controls.
+A component that displays a paginated list of orders with manual pagination controls. It uses the `useOrder` hook to fetch and display orders with Next/Previous buttons.
 
 #### Usage
 
@@ -33,7 +33,7 @@ import { PaginatedOrderList } from '@/components/orders/PaginatedOrderList';
 The order management system now uses React Query's `useInfiniteQuery` for efficient pagination. This provides several benefits:
 
 1. **Reduced API Calls**: Only fetches the data needed for the current page
-2. **Infinite Scrolling**: Supports loading more data as the user scrolls
+2. **Manual Pagination**: Supports loading more data with explicit user actions
 3. **Caching**: Efficiently caches fetched pages to reduce redundant API calls
 4. **Optimistic Updates**: Updates the UI immediately while waiting for API responses
 
@@ -79,28 +79,28 @@ The order management system has been migrated from using React Context API to Re
 import { useOrder } from '@/hooks/useOrder';
 
 function OrderComponent() {
-  const { 
-    orders, 
+  const {
+    orders,
     infiniteOrders,
     fetchNextPage,
     paginationInfo,
-    isLoading 
+    isLoading
   } = useOrder();
-  
+
   // Use orders or infiniteOrders depending on your needs
   // orders: All orders from the current page
   // infiniteOrders: All orders from all fetched pages
-  
+
   return (
     <div>
       {/* Display orders */}
       {infiniteOrders?.map(order => (
         <div key={order.id}>{order.id}</div>
       ))}
-      
+
       {/* Pagination controls */}
-      <button 
-        onClick={() => fetchNextPage()} 
+      <button
+        onClick={() => fetchNextPage()}
         disabled={!paginationInfo?.hasNextPage || isLoading}
       >
         Load More

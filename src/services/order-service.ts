@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { api, ApiResponse } from '@/lib/api';
 
 // Order interfaces
 export enum OrderStatus {
@@ -122,6 +122,7 @@ export interface UpdateOrderItemDto {
 }
 
 export interface FilterOrdersDto {
+  organizationId?: string;
   venueId?: string;
   tableId?: string;
   status?: OrderStatus;
@@ -178,7 +179,12 @@ const OrderService = {
     return response.data;
   },
 
-  getAllForVenue: async (venueId: string, page?: number, limit?: number): Promise<PaginatedOrdersResponse | Order[]> => {
+  getAllForVenue: async (venueId: string, page?: number, limit?: number, status?: OrderStatus): Promise<PaginatedOrdersResponse | Order[]> => {
+    // Return empty array if venueId is empty to prevent 404 errors
+    if (!venueId) {
+      return { data: [], total: 0, page: 1, limit: 10, totalPages: 0, hasNextPage: false, hasPreviousPage: false };
+    }
+
     let url = `/orders/venue/${venueId}`;
     const params = new URLSearchParams();
 
@@ -188,6 +194,10 @@ const OrderService = {
 
     if (limit !== undefined) {
       params.append('limit', String(limit));
+    }
+
+    if (status !== undefined) {
+      params.append('status', status);
     }
 
     if (params.toString()) {
@@ -208,7 +218,12 @@ const OrderService = {
     }
   },
 
-  getAllForOrganization: async (organizationId: string, page?: number, limit?: number): Promise<PaginatedOrdersResponse | Order[]> => {
+  getAllForOrganization: async (organizationId: string, page?: number, limit?: number, status?: OrderStatus): Promise<PaginatedOrdersResponse | Order[]> => {
+    // Return empty array if organizationId is empty to prevent 404 errors
+    if (!organizationId) {
+      return { data: [], total: 0, page: 1, limit: 10, totalPages: 0, hasNextPage: false, hasPreviousPage: false };
+    }
+
     let url = `/orders/organization/${organizationId}`;
     const params = new URLSearchParams();
 
@@ -218,6 +233,10 @@ const OrderService = {
 
     if (limit !== undefined) {
       params.append('limit', String(limit));
+    }
+
+    if (status !== undefined) {
+      params.append('status', status);
     }
 
     if (params.toString()) {
@@ -280,6 +299,40 @@ const OrderService = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/orders/${id}`);
+  },
+
+  // Combined filtering endpoint
+  getFiltered: async (filters: FilterOrdersDto): Promise<ApiResponse<Order[]>> => {
+    // Return empty response if no filters are provided
+    if (!filters.organizationId && !filters.venueId) {
+      return {
+        data: [],
+        statusCode: 200,
+        message: 'Success',
+        timestamp: new Date().toISOString(),
+        path: '/orders/filtered'
+      };
+    }
+
+    let url = '/orders/filtered';
+    const params = new URLSearchParams();
+
+    // Add all non-empty filters to the query params
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    // The API returns a response with the structure:
+    // { data: Order[], statusCode, message, timestamp, path }
+    const response = await api.get<Order[]>(url);
+
+    return response;
   },
 
   // Order item operations

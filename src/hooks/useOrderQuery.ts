@@ -2,15 +2,12 @@ import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tansta
 import { toast } from '@/components/ui/sonner';
 import OrderService, {
   Order,
-  OrderItem,
   OrderStatus,
   CreateOrderDto,
   UpdateOrderDto,
   UpdateOrderItemDto,
-  FilterOrdersDto,
-  PaginatedOrdersResponse
+  FilterOrdersDto
 } from '@/services/order-service';
-import { ApiError } from '@/lib/api';
 
 // Extended error type for API errors
 interface ApiErrorWithResponse extends Error {
@@ -33,6 +30,7 @@ export const orderKeys = {
   detail: (id: string) => [...orderKeys.details(), id] as const,
   venue: (venueId: string) => [...orderKeys.lists(), { venueId }] as const,
   organization: (organizationId: string) => [...orderKeys.lists(), { organizationId }] as const,
+  filtered: (filters: FilterOrdersDto) => [...orderKeys.lists(), 'filtered', filters] as const,
 };
 
 // Fetch all orders with optional filters and pagination
@@ -51,34 +49,13 @@ export const useOrdersQuery = (filters?: FilterOrdersDto) => {
   });
 };
 
-// Fetch all orders with infinite scrolling
-export const useInfiniteOrdersQuery = (filters?: FilterOrdersDto) => {
-  return useInfiniteQuery({
-    queryKey: [...orderKeys.list(filters || {}), 'infinite'],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await OrderService.getAll({
-        ...filters,
-        page: pageParam,
-        limit: 10, // Default limit
-      });
-      return response;
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      return lastPage.hasNextPage ? lastPage.page + 1 : undefined;
-    },
-    getPreviousPageParam: (firstPage) => {
-      return firstPage.hasPreviousPage ? firstPage.page - 1 : undefined;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
-};
+
 
 // Fetch orders for a venue
-export const useVenueOrdersQuery = (venueId: string) => {
+export const useVenueOrdersQuery = (venueId: string, status?: OrderStatus, options = {}) => {
   return useQuery({
-    queryKey: orderKeys.venue(venueId),
-    queryFn: () => OrderService.getAllForVenue(venueId),
+    queryKey: orderKeys.venue(venueId + (status ? `-${status}` : '')),
+    queryFn: () => OrderService.getAllForVenue(venueId, undefined, undefined, status),
     enabled: !!venueId,
     staleTime: 1 * 60 * 1000, // 1 minute - venue orders need fresher data
     retry: (failureCount, error: ApiErrorWithResponse) => {
@@ -88,13 +65,17 @@ export const useVenueOrdersQuery = (venueId: string) => {
       }
       return failureCount < 2; // Retry up to 2 times for other errors
     },
+    ...options
   });
 };
 
 // Fetch orders for a venue with infinite scrolling
 export const useInfiniteVenueOrdersQuery = (venueId: string, options = {}) => {
+  // Extract status from options if provided
+  const { status, ...restOptions } = options as { status?: OrderStatus } & Record<string, any>;
+
   return useInfiniteQuery({
-    queryKey: [...orderKeys.venue(venueId), 'infinite'],
+    queryKey: [...orderKeys.venue(venueId + (status ? `-${status}` : '')), 'infinite'],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         if (!venueId) {
@@ -102,13 +83,13 @@ export const useInfiniteVenueOrdersQuery = (venueId: string, options = {}) => {
             data: [],
             total: 0,
             page: 1,
-            limit: 10,
+            limit: 100,
             totalPages: 0,
             hasNextPage: false,
             hasPreviousPage: false
           };
         }
-        const response = await OrderService.getAllForVenue(venueId, pageParam, 10);
+        const response = await OrderService.getAllForVenue(venueId, pageParam, 100, status);
 
         // Handle case where response is an array instead of paginated response
         if (Array.isArray(response)) {
@@ -129,7 +110,7 @@ export const useInfiniteVenueOrdersQuery = (venueId: string, options = {}) => {
           data: [],
           total: 0,
           page: 1,
-          limit: 10,
+          limit: 100,
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false
@@ -145,15 +126,15 @@ export const useInfiniteVenueOrdersQuery = (venueId: string, options = {}) => {
     },
     enabled: !!venueId,
     staleTime: 1 * 60 * 1000, // 1 minute
-    ...options
+    ...restOptions
   });
 };
 
 // Fetch orders for an organization
-export const useOrganizationOrdersQuery = (organizationId: string) => {
+export const useOrganizationOrdersQuery = (organizationId: string, status?: OrderStatus, options = {}) => {
   return useQuery({
-    queryKey: orderKeys.organization(organizationId),
-    queryFn: () => OrderService.getAllForOrganization(organizationId),
+    queryKey: orderKeys.organization(organizationId + (status ? `-${status}` : '')),
+    queryFn: () => OrderService.getAllForOrganization(organizationId, undefined, undefined, status),
     enabled: !!organizationId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: (failureCount, error: ApiErrorWithResponse) => {
@@ -163,13 +144,17 @@ export const useOrganizationOrdersQuery = (organizationId: string) => {
       }
       return failureCount < 2; // Retry up to 2 times for other errors
     },
+    ...options
   });
 };
 
 // Fetch orders for an organization with infinite scrolling
 export const useInfiniteOrganizationOrdersQuery = (organizationId: string, options = {}) => {
+  // Extract status from options if provided
+  const { status, ...restOptions } = options as { status?: OrderStatus } & Record<string, any>;
+
   return useInfiniteQuery({
-    queryKey: [...orderKeys.organization(organizationId), 'infinite'],
+    queryKey: [...orderKeys.organization(organizationId + (status ? `-${status}` : '')), 'infinite'],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         if (!organizationId) {
@@ -177,13 +162,13 @@ export const useInfiniteOrganizationOrdersQuery = (organizationId: string, optio
             data: [],
             total: 0,
             page: 1,
-            limit: 10,
+            limit: 100,
             totalPages: 0,
             hasNextPage: false,
             hasPreviousPage: false
           };
         }
-        const response = await OrderService.getAllForOrganization(organizationId, pageParam, 10);
+        const response = await OrderService.getAllForOrganization(organizationId, pageParam, 100, status);
 
         // Handle case where response is an array instead of paginated response
         if (Array.isArray(response)) {
@@ -191,9 +176,9 @@ export const useInfiniteOrganizationOrdersQuery = (organizationId: string, optio
             data: response,
             total: response.length,
             page: pageParam,
-            limit: 10,
-            totalPages: Math.ceil(response.length / 10),
-            hasNextPage: response.length === 10, // Assume there's more if we got a full page
+            limit: 100,
+            totalPages: Math.ceil(response.length / 100),
+            hasNextPage: response.length === 100, // Assume there's more if we got a full page
             hasPreviousPage: pageParam > 1
           };
         }
@@ -204,7 +189,7 @@ export const useInfiniteOrganizationOrdersQuery = (organizationId: string, optio
           data: [],
           total: 0,
           page: 1,
-          limit: 10,
+          limit: 100,
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false
@@ -220,7 +205,117 @@ export const useInfiniteOrganizationOrdersQuery = (organizationId: string, optio
     },
     enabled: !!organizationId,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    ...options
+    ...restOptions
+  });
+};
+
+// Fetch orders with combined filtering (organization, venue, status)
+export const useFilteredOrdersQuery = (filters: FilterOrdersDto) => {
+  return useQuery({
+    queryKey: orderKeys.filtered(filters),
+    queryFn: () => OrderService.getFiltered(filters),
+    enabled: !!(filters.organizationId || filters.venueId), // Only run if we have at least one main filter
+    staleTime: 1 * 60 * 1000, // 1 minute
+    retry: (failureCount, error: ApiErrorWithResponse) => {
+      // Don't retry on 404 or 403 errors
+      if (error?.response?.status === 404 || error?.response?.status === 403) {
+        return false;
+      }
+      return failureCount < 2; // Retry up to 2 times for other errors
+    },
+  });
+};
+
+// Fetch orders with combined filtering and pagination
+export const useInfiniteFilteredOrdersQuery = (filters: FilterOrdersDto) => {
+  return useInfiniteQuery({
+    queryKey: [...orderKeys.filtered(filters), 'infinite'],
+    queryFn: async ({ pageParam = 1 }) => {
+      try {
+        // Skip API call if no main filter is provided
+        if (!filters.organizationId && !filters.venueId) {
+          return {
+            data: [],
+            total: 0,
+            page: 1,
+            limit: 100, // Updated to match new page size
+            totalPages: 0,
+            hasNextPage: false,
+            hasPreviousPage: false
+          };
+        }
+
+        // Call the filtered API with pagination - increased page size to 100
+        const apiResponse = await OrderService.getFiltered({
+          ...filters,
+          page: pageParam,
+          limit: 100, // Increased limit to 100
+        });
+
+        // Create a default paginated response
+        const defaultResponse = {
+          data: [],
+          total: 0,
+          page: pageParam,
+          limit: 100, // Increased limit to 100
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false
+        };
+
+        // Check if we have a valid API response
+        if (!apiResponse) {
+          return defaultResponse;
+        }
+
+        // The backend returns orders directly in the data property
+        // The structure is: { data: Order[], statusCode, message, ... }
+        const orders = apiResponse.data;
+
+        if (!Array.isArray(orders)) {
+          return defaultResponse;
+        }
+
+        // Fixed page size - increased to 100
+        const pageSize = 100;
+
+        // If we received fewer than pageSize orders, we know we're on the last page
+        const isLastPage = orders.length < pageSize;
+
+        // Create the paginated response
+        return {
+          data: orders,
+          total: pageParam * pageSize + (isLastPage ? orders.length - pageSize : 0),
+          page: pageParam,
+          limit: pageSize,
+          totalPages: isLastPage ? pageParam : pageParam + 1,
+          hasNextPage: !isLastPage,
+          hasPreviousPage: pageParam > 1
+        };
+      } catch (error) {
+
+        // Return empty response on error
+        return {
+          data: [],
+          total: 0,
+          page: 1,
+          limit: 100, // Updated to match new page size
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false
+        };
+      }
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      // Only return the next page if hasNextPage is true and we have data
+      if (lastPage && lastPage.hasNextPage && lastPage.data.length > 0) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    enabled: !!(filters.organizationId || filters.venueId), // Only run if we have at least one main filter
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 };
 
@@ -258,6 +353,11 @@ export const useCreateOrderMutation = () => {
         });
       }
 
+      // Also invalidate any filtered queries
+      queryClient.invalidateQueries({
+        queryKey: ['orders', 'list', 'filtered']
+      });
+
       toast.success('Order created successfully');
     },
     onError: (error: ApiErrorWithResponse) => {
@@ -273,23 +373,18 @@ export const useUpdateOrderMutation = () => {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateOrderDto }) => {
-      console.log('useUpdateOrderMutation mutationFn called with:', { id, data });
       return OrderService.update(id, data);
     },
-    onMutate: async ({ id, data }) => {
-      console.log('useUpdateOrderMutation onMutate:', { id, data });
-      // Cancel any outgoing refetches
+    onMutate: async ({ id }) => {
+      // Cancel any outgoing requests
       await queryClient.cancelQueries({ queryKey: orderKeys.detail(id) });
 
       // Snapshot the previous value
       const previousOrder = queryClient.getQueryData<Order>(orderKeys.detail(id));
-      console.log('Previous order data from cache:', previousOrder);
 
       return { previousOrder };
     },
-    onSuccess: (updatedOrder, variables) => {
-      console.log('useUpdateOrderMutation onSuccess:', updatedOrder);
-      console.log('Update variables:', variables);
+    onSuccess: (updatedOrder) => {
 
       // Update the order in the cache
       queryClient.setQueryData(
@@ -303,9 +398,6 @@ export const useUpdateOrderMutation = () => {
       toast.success('Order updated successfully');
     },
     onError: (error: ApiErrorWithResponse, variables, context) => {
-      console.error('useUpdateOrderMutation onError:', error);
-      console.log('Error variables:', variables);
-
       // If we have the previous order data, restore it
       if (context?.previousOrder && variables.id) {
         queryClient.setQueryData(
@@ -317,8 +409,7 @@ export const useUpdateOrderMutation = () => {
       const errorMessage = error.response?.data?.message || 'Failed to update order';
       toast.error(errorMessage);
     },
-    onSettled: (data, error, variables) => {
-      console.log('useUpdateOrderMutation onSettled:', { data, error, variables });
+    onSettled: (_, __, variables) => {
 
       // Always refetch to ensure cache is in sync with server
       if (variables.id) {
@@ -336,7 +427,7 @@ export const useUpdateOrderStatusMutation = () => {
     mutationFn: ({ id, status }: { id: string; status: OrderStatus }) =>
       OrderService.updateStatus(id, status),
     onMutate: async ({ id, status }) => {
-      // Cancel any outgoing refetches
+      // Cancel any outgoing requests
       await queryClient.cancelQueries({ queryKey: orderKeys.detail(id) });
 
       // Snapshot the previous value
@@ -417,10 +508,15 @@ export const useUpdateOrderStatusMutation = () => {
         toast.error('An error occurred while updating order status');
       }
     },
-    onSettled: (data, error, { id }) => {
+    onSettled: (_, __, { id }) => {
       // Always refetch after error or success to make sure our local data is in sync with the server
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+
+      // Also invalidate any filtered queries
+      queryClient.invalidateQueries({
+        queryKey: ['orders', 'list', 'filtered']
+      });
     },
   });
 };
@@ -457,9 +553,14 @@ export const useUpdateOrderItemMutation = () => {
       itemId: string;
       data: UpdateOrderItemDto
     }) => OrderService.updateOrderItem(orderId, itemId, data),
-    onSuccess: (updatedItem, { orderId }) => {
+    onSuccess: (_, { orderId }) => {
       // Invalidate the specific order query to refetch with updated item
       queryClient.invalidateQueries({ queryKey: orderKeys.detail(orderId) });
+
+      // Also invalidate any filtered queries
+      queryClient.invalidateQueries({
+        queryKey: ['orders', 'list', 'filtered']
+      });
 
       toast.success('Order item updated successfully');
     },

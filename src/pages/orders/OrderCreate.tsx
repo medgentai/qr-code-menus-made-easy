@@ -12,7 +12,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { useMenu } from '@/contexts/menu-context';
 import { CreateOrderDto, CreateOrderItemDto, OrderStatus } from '@/services/order-service';
@@ -38,8 +37,7 @@ type OrderFormValues = z.infer<typeof orderFormSchema>;
 const OrderCreate: React.FC = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId?: string }>();
   const navigate = useNavigate();
-  const { currentOrganization } = useOrganization();
-  const { currentVenue, venues, tables, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
+  const { venues, tables, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
   const { menus, fetchMenusForOrganization } = useMenu();
   const createOrderMutation = useCreateOrderMutation();
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -16,17 +16,15 @@ import {
   RefreshCw,
   ChevronDown,
   MoreHorizontal,
-  ArrowUpDown,
   CheckCircle2,
   AlertCircle,
   BarChart3,
-  ListFilter,
-  CalendarRange,
   Utensils,
   Table as TableIcon,
-  DollarSign
+  Store,
+  Loader2
 } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -57,7 +55,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   Table,
@@ -68,78 +65,53 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import OrderService, { Order, OrderStatus, FilterOrdersDto } from '@/services/order-service';
 import {
-  useVenueOrdersQuery,
-  useOrganizationOrdersQuery,
-  useInfiniteVenueOrdersQuery,
-  useInfiniteOrganizationOrdersQuery,
+  useInfiniteFilteredOrdersQuery,
   useUpdateOrderStatusMutation,
   useDeleteOrderMutation
 } from '@/hooks/useOrderQuery';
-import { PaginatedOrderList } from '@/components/orders/PaginatedOrderList';
 
 const OrderList: React.FC = () => {
   const { id: organizationId } = useParams<{ id: string }>();
   const { venueId } = useParams<{ venueId: string }>();
   const navigate = useNavigate();
   const { currentOrganization } = useOrganization();
-  const { currentVenue } = useVenue();
+  const { currentVenue, venues, fetchVenuesForOrganization } = useVenue();
 
-  // Use React Query hooks for data fetching
-  const venueOrdersQuery = useVenueOrdersQuery(venueId || '');
-  const organizationOrdersQuery = useOrganizationOrdersQuery(organizationId || '');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
+  const [venueFilter, setVenueFilter] = useState<string>('');
 
-  // Use infinite query hooks for pagination
-  const infiniteVenueOrdersQuery = useInfiniteVenueOrdersQuery(venueId || '', {
-    enabled: !!venueId
+  // Fetch venues for the organization when component mounts
+  useEffect(() => {
+    if (organizationId) {
+      fetchVenuesForOrganization(organizationId);
+    }
+  }, [organizationId, fetchVenuesForOrganization]);
+
+  // Use a simple loading state instead of regular queries
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Combined filters state
+  const [filters, setFilters] = useState<FilterOrdersDto>({
+    organizationId: organizationId || undefined,
+    venueId: venueId || venueFilter || undefined,
+    status: statusFilter || undefined
   });
-  const infiniteOrganizationOrdersQuery = useInfiniteOrganizationOrdersQuery(organizationId || '', {
-    enabled: !!organizationId
-  });
 
+  // Use the new infinite filtered query hook with combined filters
+  const infiniteOrdersQuery = useInfiniteFilteredOrdersQuery(filters);
+
+  // Update mutations
   const updateOrderStatusMutation = useUpdateOrderStatusMutation();
   const deleteOrderMutation = useDeleteOrderMutation();
-
-  // Determine which query to use based on the route
-  const {
-    data: orders = [],
-    isLoading,
-    refetch: refetchOrders
-  } = venueId ? venueOrdersQuery : organizationOrdersQuery;
-
-  // Determine which infinite query to use
-  const infiniteOrdersQuery = venueId
-    ? infiniteVenueOrdersQuery
-    : organizationId
-      ? infiniteOrganizationOrdersQuery
-      : {
-          data: undefined,
-          hasNextPage: false,
-          hasPreviousPage: false,
-          fetchNextPage: async () => {},
-          fetchPreviousPage: async () => {},
-          isFetchingNextPage: false,
-          refetch: async () => {}
-        };
 
   // Extract all orders from infinite query pages
   const infiniteOrders = useMemo(() => {
@@ -147,18 +119,19 @@ const OrderList: React.FC = () => {
       return [];
     }
 
-    // Handle case where pages might be arrays directly
+    // Extract data from the paginated response
     const extractedOrders = infiniteOrdersQuery.data.pages
-      .flatMap(page => {
-        // If page is an array, it means the backend returned an array directly
-        if (Array.isArray(page)) {
-          return page;
+      .flatMap((page: any) => {
+        // Each page is a paginated response with a data property containing orders
+        if (page && Array.isArray(page.data)) {
+          return page.data;
         }
 
-        // Otherwise, extract data from the paginated response
-        return page?.data || [];
+        // Fallback for any other structure
+        return [];
       })
-      .filter(order => order && order.id);
+      .filter((order: any) => order && order.id);
+
 
     return extractedOrders;
   }, [infiniteOrdersQuery.data]);
@@ -166,25 +139,22 @@ const OrderList: React.FC = () => {
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
-  // Order statistics
+  // Order statistics - using infinite query data for consistency
   const orderStats = useMemo(() => {
-    // Handle both array and paginated response types
-    const orderArray = Array.isArray(orders) ? orders : orders.data;
+    // Use the infinite orders data for statistics
+    const total = infiniteOrders.length;
+    const pending = infiniteOrders.filter((o: Order) => o.status === OrderStatus.PENDING).length;
+    const confirmed = infiniteOrders.filter((o: Order) => o.status === OrderStatus.CONFIRMED).length;
+    const preparing = infiniteOrders.filter((o: Order) => o.status === OrderStatus.PREPARING).length;
+    const ready = infiniteOrders.filter((o: Order) => o.status === OrderStatus.READY).length;
+    const delivered = infiniteOrders.filter((o: Order) => o.status === OrderStatus.DELIVERED).length;
+    const completed = infiniteOrders.filter((o: Order) => o.status === OrderStatus.COMPLETED).length;
+    const cancelled = infiniteOrders.filter((o: Order) => o.status === OrderStatus.CANCELLED).length;
 
-    const total = orderArray.length;
-    const pending = orderArray.filter(o => o.status === OrderStatus.PENDING).length;
-    const confirmed = orderArray.filter(o => o.status === OrderStatus.CONFIRMED).length;
-    const preparing = orderArray.filter(o => o.status === OrderStatus.PREPARING).length;
-    const ready = orderArray.filter(o => o.status === OrderStatus.READY).length;
-    const delivered = orderArray.filter(o => o.status === OrderStatus.DELIVERED).length;
-    const completed = orderArray.filter(o => o.status === OrderStatus.COMPLETED).length;
-    const cancelled = orderArray.filter(o => o.status === OrderStatus.CANCELLED).length;
-
-    const totalAmount = orderArray.reduce((sum, order) => {
+    const totalAmount = infiniteOrders.reduce((sum: number, order: Order) => {
       return sum + parseFloat(order.totalAmount);
     }, 0);
 
@@ -199,57 +169,41 @@ const OrderList: React.FC = () => {
       cancelled,
       totalAmount
     };
-  }, [orders]);
+  }, [infiniteOrders]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetchOrders();
-    await infiniteOrdersQuery.refetch();
-    setIsRefreshing(false);
+    setIsLoading(true);
+
+    try {
+      // Refresh the filtered query
+      await infiniteOrdersQuery.refetch();
+    } finally {
+      setIsRefreshing(false);
+      setIsLoading(false);
+    }
   };
 
-  // Function to load more orders
-  const handleLoadMore = async () => {
+  // Function to load more orders - memoized to prevent unnecessary re-renders
+  const handleLoadMore = useCallback(async () => {
     if (infiniteOrdersQuery.hasNextPage && !infiniteOrdersQuery.isFetchingNextPage) {
       await infiniteOrdersQuery.fetchNextPage();
     }
-  };
+  }, [infiniteOrdersQuery.hasNextPage, infiniteOrdersQuery.isFetchingNextPage, infiniteOrdersQuery.fetchNextPage]);
 
-  // Set up intersection observer for infinite scrolling
-  const observerTarget = useRef(null);
-
-  // Set up intersection observer for infinite scrolling
+  // Update filters when route params or filter selections change
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          handleLoadMore();
-        }
-      },
-      { threshold: 0.1 }
-    );
+    setFilters({
+      organizationId: organizationId || undefined,
+      venueId: venueId || venueFilter || undefined,
+      status: statusFilter || undefined
+    });
+  }, [organizationId, venueId, venueFilter, statusFilter]);
 
-    const currentTarget = observerTarget.current;
-    if (currentTarget) {
-      observer.observe(currentTarget);
-    }
-
-    return () => {
-      if (currentTarget) {
-        observer.unobserve(currentTarget);
-      }
-    };
-  }, [infiniteOrdersQuery.hasNextPage, infiniteOrdersQuery.isFetchingNextPage]);
-
-  // Trigger initial data fetch when component mounts
+  // Set loading state when filters change or query is fetching
   useEffect(() => {
-    // Force a refetch of the infinite query
-    if (venueId) {
-      infiniteVenueOrdersQuery.refetch();
-    } else if (organizationId) {
-      infiniteOrganizationOrdersQuery.refetch();
-    }
-  }, [venueId, organizationId]);
+    setIsLoading(infiniteOrdersQuery.isLoading || infiniteOrdersQuery.isFetching);
+  }, [infiniteOrdersQuery.isLoading, infiniteOrdersQuery.isFetching]);
 
   const handleCreateOrder = () => {
     if (venueId) {
@@ -296,41 +250,23 @@ const OrderList: React.FC = () => {
       { id: orderId, status },
       {
         onSuccess: () => {
-          refetchOrders(); // Refresh the order data
+          // Refresh the infinite query data
+          infiniteOrdersQuery.refetch();
         }
       }
     );
   };
 
-  // Filter regular orders
-  const filteredOrders = useMemo(() => {
-    // Handle both array and paginated response types
-    const orderArray = Array.isArray(orders) ? orders : orders.data;
 
-    return orderArray.filter(order => {
-      if (!order || !order.id) return false;
 
-      const matchesSearch =
-        !searchTerm ||
-        (order.customerName ? order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-        (order.customerPhone ? order.customerPhone.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-        (order.customerEmail ? order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (order.table?.name ? order.table.name.toLowerCase().includes(searchTerm.toLowerCase()) : false);
-
-      const matchesStatus = !statusFilter || order.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
-    });
-  }, [orders, searchTerm, statusFilter]);
-
-  // Filter infinite orders
+  // Filter infinite orders - status filtering is now handled by the backend
   const filteredInfiniteOrders = useMemo(() => {
-    return infiniteOrders.filter(order => {
+    return infiniteOrders.filter((order: Order) => {
       if (!order || !order.id) {
         return false;
       }
 
+      // Only filter by search term since status filtering is now done at the backend
       const matchesSearch =
         !searchTerm ||
         (order.customerName ? order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
@@ -339,11 +275,9 @@ const OrderList: React.FC = () => {
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (order.table?.name ? order.table.name.toLowerCase().includes(searchTerm.toLowerCase()) : false);
 
-      const matchesStatus = !statusFilter || order.status === statusFilter;
-
-      return matchesSearch && matchesStatus;
+      return matchesSearch;
     });
-  }, [infiniteOrders, searchTerm, statusFilter]);
+  }, [infiniteOrders, searchTerm]);
 
   const getStatusBadgeClass = (status: OrderStatus) => {
     return OrderService.getStatusColor(status);
@@ -480,6 +414,7 @@ const OrderList: React.FC = () => {
               />
             </div>
 
+            {/* Status Filter Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto">
@@ -491,11 +426,28 @@ const OrderList: React.FC = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setStatusFilter('')}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    // Only update if we're changing from a filtered state
+                    if (statusFilter !== '') {
+                      setStatusFilter('');
+                      // Filter changes are now handled by the useEffect that updates filters
+                    }
+                  }}
+                >
                   All Statuses
                 </DropdownMenuItem>
                 {Object.values(OrderStatus).map((status) => (
-                  <DropdownMenuItem key={status} onClick={() => setStatusFilter(status)}>
+                  <DropdownMenuItem
+                    key={status}
+                    onClick={() => {
+                      // Only update if we're changing to a different status
+                      if (statusFilter !== status) {
+                        setStatusFilter(status);
+                        // Filter changes are now handled by the useEffect that updates filters
+                      }
+                    }}
+                  >
                     <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
                       {status}
                     </Badge>
@@ -504,6 +456,49 @@ const OrderList: React.FC = () => {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Venue Filter Dropdown - Only show on organization page */}
+            {organizationId && !venueId && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    <Store className="mr-2 h-4 w-4" />
+                    {venueFilter ? `Venue: ${venues.find(v => v.id === venueFilter)?.name || 'Selected'}` : 'All Venues'}
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filter by Venue</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => {
+                      // Only update if we're changing from a filtered state
+                      if (venueFilter !== '') {
+                        setVenueFilter('');
+                        // Filter changes are now handled by the useEffect that updates filters
+                      }
+                    }}
+                  >
+                    All Venues
+                  </DropdownMenuItem>
+                  {venues.map((venue) => (
+                    <DropdownMenuItem
+                      key={venue.id}
+                      onClick={() => {
+                        // Only update if we're changing to a different venue
+                        if (venueFilter !== venue.id) {
+                          setVenueFilter(venue.id);
+                          // Filter changes are now handled by the useEffect that updates filters
+                        }
+                      }}
+                    >
+                      <Store className="mr-2 h-4 w-4" />
+                      {venue.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           <div className="flex gap-2">
@@ -587,7 +582,7 @@ const OrderList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredInfiniteOrders.map((order) => (
+                  {filteredInfiniteOrders.map((order: Order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">#{order.id.substring(0, 8)}</TableCell>
                       <TableCell>
@@ -600,7 +595,16 @@ const OrderList: React.FC = () => {
                         <div className="text-sm">{format(new Date(order.createdAt), 'MMM d, yyyy')}</div>
                         <div className="text-xs text-muted-foreground">{format(new Date(order.createdAt), 'h:mm a')}</div>
                       </TableCell>
-                      <TableCell>{order.table?.name || 'N/A'}</TableCell>
+                      <TableCell>
+                        {order.table?.name || 'N/A'}
+                        {/* Show venue name when viewing at organization level */}
+                        {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
+                          <div className="text-xs text-muted-foreground">
+                            <Store className="h-3 w-3 inline mr-1" />
+                            {order.table.venue.name}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>{order.items?.length || 0}</TableCell>
                       <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                       <TableCell>
@@ -653,8 +657,8 @@ const OrderList: React.FC = () => {
               </Table>
             </div>
 
-            {/* Intersection observer target for infinite scrolling */}
-            <div ref={observerTarget} className="h-10 flex items-center justify-center">
+            {/* Loading indicator for fetching next page */}
+            <div className="h-10 flex items-center justify-center">
               {infiniteOrdersQuery.isFetchingNextPage && (
                 <div className="text-sm text-muted-foreground">Loading more orders...</div>
               )}
@@ -663,7 +667,7 @@ const OrderList: React.FC = () => {
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredInfiniteOrders.map((order) => (
+              {filteredInfiniteOrders.map((order: Order) => (
                 <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col min-h-[280px]">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
@@ -704,6 +708,14 @@ const OrderList: React.FC = () => {
                           <div className="flex items-center gap-2 text-sm">
                             <TableIcon className="h-3 w-3 text-muted-foreground" />
                             <span className="font-medium">{order.table.name}</span>
+
+                            {/* Show venue name when viewing at organization level */}
+                            {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                <Store className="h-3 w-3 inline mx-1" />
+                                {order.table.venue.name}
+                              </span>
+                            )}
                           </div>
                         )}
 
@@ -797,12 +809,42 @@ const OrderList: React.FC = () => {
               ))}
             </div>
 
-            {/* Intersection observer target for infinite scrolling */}
-            <div ref={observerTarget} className="h-10 flex items-center justify-center mt-4">
-              {infiniteOrdersQuery.isFetchingNextPage && (
-                <div className="text-sm text-muted-foreground">Loading more orders...</div>
+            {/* Pagination info and View More button */}
+            <div className="mt-6 flex flex-col items-center gap-2">
+              {/* Pagination info */}
+              {filteredInfiniteOrders.length > 0 && (
+                <div className="text-sm text-muted-foreground mb-2">
+                  Showing {filteredInfiniteOrders.length} orders
+                  {infiniteOrdersQuery.hasNextPage && " (more available)"}
+                  {infiniteOrdersQuery.data?.pages && infiniteOrdersQuery.data.pages.length > 0 && (
+                    <span className="ml-1">- Page {infiniteOrdersQuery.data.pages.length} of results</span>
+                  )}
+                </div>
               )}
+
+              {/* View More button or status */}
+              {infiniteOrdersQuery.isFetchingNextPage ? (
+                <div className="flex items-center gap-2 py-4 px-6 bg-muted rounded-md">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Loading next 100 orders...</span>
+                </div>
+              ) : infiniteOrdersQuery.hasNextPage ? (
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={handleLoadMore}
+                  className="px-8"
+                >
+                  View Next 100 Orders
+                </Button>
+              ) : filteredInfiniteOrders.length > 0 ? (
+                <div className="text-sm text-muted-foreground py-4 px-6 bg-muted/50 rounded-md">
+                  You've reached the end of the list
+                </div>
+              ) : null}
             </div>
+
+
           </div>
         )}
       </div>
