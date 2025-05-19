@@ -194,7 +194,7 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
                 <FormLabel>Price</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2">₹</span>
                     <Input className="pl-7" placeholder="9.99" {...field} />
                   </div>
                 </FormControl>
@@ -214,7 +214,7 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
                 <FormLabel>Discount Price (Optional)</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2">₹</span>
                     <Input className="pl-7" placeholder="7.99" {...field} />
                   </div>
                 </FormControl>

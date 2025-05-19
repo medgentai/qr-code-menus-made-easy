@@ -39,9 +39,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderData, categories }) =>
 
   // Format price
   const formatPrice = (price: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
     }).format(price);
   };
 

@@ -8,13 +8,13 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format a price string to a currency format
  * @param price The price string to format
- * @param currency The currency code (default: USD)
+ * @param currency The currency code (default: INR)
  * @returns Formatted price string
  */
-export function formatPrice(price: string | number, currency: string = 'USD'): string {
+export function formatPrice(price: string | number, currency: string = 'INR'): string {
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
 
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
     minimumFractionDigits: 2,
