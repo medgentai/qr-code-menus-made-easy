@@ -333,6 +333,13 @@ export const useOrderQuery = (orderId: string, options = {}) => {
       }
       return failureCount < 2; // Retry up to 2 times for other errors
     },
+    select: (data) => {
+      // Ensure table data is properly included in the response
+      if (data && !data.table && data.tableId) {
+        console.warn('Order has tableId but no table data, this should not happen');
+      }
+      return data;
+    },
     ...options
   });
 };
@@ -474,8 +481,80 @@ export const useUpdateOrderStatusMutation = () => {
           // Return unchanged if we don't know how to handle it
           return data;
         });
+
+        // Also update in infinite queries for immediate UI feedback
+        queryClient.setQueriesData(
+          { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+          (oldData: any) => {
+            if (!oldData) return oldData;
+
+            // Update the order in all pages
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => {
+                if (!page || !page.data) return page;
+
+                return {
+                  ...page,
+                  data: page.data.map((order: Order) =>
+                    order.id === id ? { ...order, status } : order
+                  )
+                };
+              })
+            };
+          }
+        );
+
+        // Also update in venue queries if we have the venue ID
+        if (previousOrder?.table?.venue?.id) {
+          queryClient.setQueriesData(
+            { queryKey: [...orderKeys.venue(previousOrder.table.venue.id), 'infinite'] },
+            (oldData: any) => {
+              if (!oldData) return oldData;
+
+              return {
+                ...oldData,
+                pages: oldData.pages.map((page: any) => {
+                  if (!page || !page.data) return page;
+
+                  return {
+                    ...page,
+                    data: page.data.map((order: Order) =>
+                      order.id === id ? { ...order, status } : order
+                    )
+                  };
+                })
+              };
+            }
+          );
+        }
+
+        // Update in organization queries if we have the organization ID
+        if (previousOrder?.table?.venue?.organizationId) {
+          queryClient.setQueriesData(
+            { queryKey: [...orderKeys.organization(previousOrder.table.venue.organizationId), 'infinite'] },
+            (oldData: any) => {
+              if (!oldData) return oldData;
+
+              return {
+                ...oldData,
+                pages: oldData.pages.map((page: any) => {
+                  if (!page || !page.data) return page;
+
+                  return {
+                    ...page,
+                    data: page.data.map((order: Order) =>
+                      order.id === id ? { ...order, status } : order
+                    )
+                  };
+                })
+              };
+            }
+          );
+        }
       } catch (error) {
         // Silent fail - we'll refetch anyway
+        console.log('Error updating cache in onMutate:', error);
       }
 
       return { previousOrder };
@@ -509,15 +588,91 @@ export const useUpdateOrderStatusMutation = () => {
         toast.error('An error occurred while updating order status');
       }
     },
-    onSettled: (_, __, { id }) => {
-      // Always refetch after error or success to make sure our local data is in sync with the server
-      queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+    onSettled: (updatedOrder, error, { id }) => {
+      if (error) {
+        // Only invalidate on error to ensure we get fresh data
+        queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
+      } else if (updatedOrder) {
+        // On success, we've already updated the cache optimistically and confirmed with server data
+        // No need to invalidate and cause a refetch - this would trigger a page refresh
 
-      // Also invalidate any filtered queries
-      queryClient.invalidateQueries({
-        queryKey: ['orders', 'list', 'filtered']
-      });
+        // Update the order in any infinite queries without triggering a refetch
+        try {
+          // Update the order in infinite queries for organization
+          queryClient.setQueriesData(
+            { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+            (oldData: any) => {
+              if (!oldData) return oldData;
+
+              // Update the order in all pages
+              return {
+                ...oldData,
+                pages: oldData.pages.map((page: any) => {
+                  if (!page || !page.data) return page;
+
+                  return {
+                    ...page,
+                    data: page.data.map((order: Order) =>
+                      order.id === id ? { ...order, status: updatedOrder.status } : order
+                    )
+                  };
+                })
+              };
+            }
+          );
+
+          // Also update in venue and organization queries
+          if (updatedOrder.table?.venue?.id) {
+            queryClient.setQueriesData(
+              { queryKey: [...orderKeys.venue(updatedOrder.table.venue.id), 'infinite'] },
+              (oldData: any) => {
+                if (!oldData) return oldData;
+
+                return {
+                  ...oldData,
+                  pages: oldData.pages.map((page: any) => {
+                    if (!page || !page.data) return page;
+
+                    return {
+                      ...page,
+                      data: page.data.map((order: Order) =>
+                        order.id === id ? { ...order, status: updatedOrder.status } : order
+                      )
+                    };
+                  })
+                };
+              }
+            );
+          }
+
+          // Update in organization queries if we have an organization ID
+          if (updatedOrder.table?.venue?.organizationId) {
+            queryClient.setQueriesData(
+              { queryKey: [...orderKeys.organization(updatedOrder.table.venue.organizationId), 'infinite'] },
+              (oldData: any) => {
+                if (!oldData) return oldData;
+
+                return {
+                  ...oldData,
+                  pages: oldData.pages.map((page: any) => {
+                    if (!page || !page.data) return page;
+
+                    return {
+                      ...page,
+                      data: page.data.map((order: Order) =>
+                        order.id === id ? { ...order, status: updatedOrder.status } : order
+                      )
+                    };
+                  })
+                };
+              }
+            );
+          }
+        } catch (err) {
+          // Silent fail - this is just an optimization
+          console.log('Error updating infinite queries:', err);
+        }
+      }
     },
   });
 };
@@ -544,7 +699,7 @@ export const useDeleteOrderMutation = () => {
   });
 };
 
-// Update an order item
+// Update an order item with optimistic updates
 export const useUpdateOrderItemMutation = () => {
   const queryClient = useQueryClient();
 
@@ -554,20 +709,52 @@ export const useUpdateOrderItemMutation = () => {
       itemId: string;
       data: UpdateOrderItemDto
     }) => OrderService.updateOrderItem(orderId, itemId, data),
-    onSuccess: (_, { orderId }) => {
-      // Invalidate the specific order query to refetch with updated item
-      queryClient.invalidateQueries({ queryKey: orderKeys.detail(orderId) });
+    onMutate: async ({ orderId, itemId, data }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: orderKeys.detail(orderId) });
 
-      // Also invalidate any filtered queries
-      queryClient.invalidateQueries({
-        queryKey: ['orders', 'list', 'filtered']
-      });
+      // Snapshot the previous value
+      const previousOrder = queryClient.getQueryData<Order>(orderKeys.detail(orderId));
+
+      // Return a context object with the snapshotted value
+      return { previousOrder };
+    },
+    onSuccess: (updatedItem, { orderId }) => {
+      // Instead of invalidating, we'll update the cache with the new data
+      // This reduces the number of API calls
+      const order = queryClient.getQueryData<Order>(orderKeys.detail(orderId));
+
+      if (order) {
+        // Update the item in the order
+        const updatedOrder = {
+          ...order,
+          items: order.items?.map(item =>
+            item.id === updatedItem.id ? updatedItem : item
+          )
+        };
+
+        // Update the cache
+        queryClient.setQueryData(orderKeys.detail(orderId), updatedOrder);
+      }
 
       toast.success('Order item updated successfully');
     },
-    onError: (error: ApiErrorWithResponse) => {
+    onError: (error: ApiErrorWithResponse, variables, context) => {
+      // If we have the previous order data, restore it
+      if (context?.previousOrder) {
+        queryClient.setQueryData(
+          orderKeys.detail(variables.orderId),
+          context.previousOrder
+        );
+      }
+
       const errorMessage = error.response?.data?.message || 'Failed to update order item';
       toast.error(errorMessage);
+    },
+    onSettled: (_, __, { orderId }) => {
+      // After success or error, refetch to ensure our cache is in sync
+      // But only refetch the specific order, not all lists
+      queryClient.invalidateQueries({ queryKey: orderKeys.detail(orderId) });
     },
   });
 };

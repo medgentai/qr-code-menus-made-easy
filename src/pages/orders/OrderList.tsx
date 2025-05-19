@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -72,11 +73,14 @@ import {
 } from "@/components/ui/tooltip";
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
+import { useOrder } from '@/hooks/useOrder';
 import OrderService, { Order, OrderStatus, FilterOrdersDto } from '@/services/order-service';
+import { toast } from '@/components/ui/sonner';
 import {
   useInfiniteFilteredOrdersQuery,
   useUpdateOrderStatusMutation,
-  useDeleteOrderMutation
+  useDeleteOrderMutation,
+  orderKeys
 } from '@/hooks/useOrderQuery';
 
 const OrderList: React.FC = () => {
@@ -84,7 +88,9 @@ const OrderList: React.FC = () => {
   const { venueId } = useParams<{ venueId: string }>();
   const navigate = useNavigate();
   const { currentOrganization } = useOrganization();
-  const { currentVenue, venues, fetchVenuesForOrganization } = useVenue();
+  const { currentVenue, venues, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
+  const { selectOrder } = useOrder();
+  const queryClient = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
   const [venueFilter, setVenueFilter] = useState<string>('');
@@ -142,6 +148,9 @@ const OrderList: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
+  // State to track orders with pending status updates - for immediate UI updates
+  const [pendingStatusUpdates, setPendingStatusUpdates] = useState<Record<string, OrderStatus>>({});
+
   // Order statistics - using infinite query data for consistency
   const orderStats = useMemo(() => {
     // Use the infinite orders data for statistics
@@ -179,8 +188,13 @@ const OrderList: React.FC = () => {
     setIsRefreshing(true);
 
     try {
-      // Refresh the filtered query
-      await infiniteOrdersQuery.refetch();
+      // Only refetch if data is stale or if it's been more than 30 seconds since last fetch
+      const lastFetchedAt = infiniteOrdersQuery.dataUpdatedAt;
+      const thirtySecondsAgo = Date.now() - 30 * 1000;
+
+      if (lastFetchedAt < thirtySecondsAgo) {
+        await infiniteOrdersQuery.refetch();
+      }
     } finally {
       // Use setTimeout to prevent UI flicker
       setTimeout(() => {
@@ -218,6 +232,63 @@ const OrderList: React.FC = () => {
   };
 
   const handleEditOrder = (orderId: string) => {
+    // Find the order in our existing data
+    const orderToEdit = filteredInfiniteOrders.find(order => order.id === orderId);
+
+    // If we found the order, set it as the current order to avoid fetching it again
+    if (orderToEdit) {
+      console.log('Using existing order data for edit:', orderToEdit.id);
+
+      // IMPORTANT: Set the order in the cache with the detail query key
+      // This ensures it's available when the edit page loads
+      queryClient.setQueryData(
+        orderKeys.detail(orderToEdit.id),
+        orderToEdit
+      );
+
+      // Also set it in the context
+      selectOrder(orderToEdit);
+
+      // Prefetch tables for the venue if the order has a table
+      if (orderToEdit.table?.venue?.id) {
+        const venueIdToUse = orderToEdit.table.venue.id;
+
+        // Check if tables are already in the cache
+        const tablesQueryKey = ['tables', 'venue', venueIdToUse];
+        const cachedTables = queryClient.getQueryData(tablesQueryKey);
+
+        if (!cachedTables) {
+          console.log('Prefetching tables for venue:', venueIdToUse);
+          // Prefetch tables for this venue to avoid an API call when the edit page loads
+          // Use fetchQuery instead of prefetchQuery to ensure it completes before navigation
+          queryClient.fetchQuery({
+            queryKey: tablesQueryKey,
+            queryFn: () => fetchTablesForVenue(venueIdToUse),
+            staleTime: 10 * 60 * 1000 // 10 minutes
+          });
+        } else {
+          console.log('Tables for venue already in cache:', venueIdToUse);
+        }
+      }
+
+      // Disable automatic refetching for organization orders
+      // This prevents the unnecessary API calls when navigating
+      if (organizationId) {
+        const orgOrdersKey = orderKeys.organization(organizationId);
+        const paginatedOrgOrdersKey = [...orgOrdersKey, { page: 1, limit: 100 }];
+
+        // Set a longer stale time for these queries to prevent automatic refetching
+        queryClient.setQueryDefaults(orgOrdersKey, {
+          staleTime: 10 * 60 * 1000 // 10 minutes
+        });
+
+        queryClient.setQueryDefaults(paginatedOrgOrdersKey, {
+          staleTime: 10 * 60 * 1000 // 10 minutes
+        });
+      }
+    }
+
+    // Navigate to the edit page
     if (venueId) {
       navigate(`/organizations/${organizationId}/venues/${venueId}/orders/${orderId}/edit`);
     } else {
@@ -241,18 +312,6 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const handleStatusChange = useCallback(async (orderId: string, status: OrderStatus) => {
-    updateOrderStatusMutation.mutate(
-      { id: orderId, status },
-      {
-        // No need to manually refetch - the mutation will automatically
-        // invalidate the relevant queries through its onSuccess handler
-      }
-    );
-  }, [updateOrderStatusMutation]);
-
-
-
   // Filter infinite orders - status filtering is now handled by the backend
   const filteredInfiniteOrders = useMemo(() => {
     return infiniteOrders.filter((order: Order) => {
@@ -272,6 +331,110 @@ const OrderList: React.FC = () => {
       return matchesSearch;
     });
   }, [infiniteOrders, searchTerm]);
+
+  // Handle status change - defined after filteredInfiniteOrders to avoid reference error
+  const handleStatusChange = useCallback(async (orderId: string, status: OrderStatus) => {
+    // Find the order in our data to show optimistic UI feedback
+    const orderToUpdate = filteredInfiniteOrders.find(order => order.id === orderId);
+    const oldStatus = orderToUpdate?.status;
+
+    // Show a loading toast that we'll dismiss on success
+    const loadingToastId = toast.loading(`Updating order status to ${status}...`);
+
+    // Immediately update the UI with the new status using React state
+    // This ensures the component re-renders with the new status
+    setPendingStatusUpdates(prev => ({
+      ...prev,
+      [orderId]: status
+    }));
+
+    // Also update the order in the cache directly for immediate UI update
+    if (orderToUpdate) {
+      const updatedOrder = { ...orderToUpdate, status };
+
+      // Update the order in the infinite query cache
+      queryClient.setQueriesData(
+        { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => {
+              if (!page || !page.data) return page;
+
+              return {
+                ...page,
+                data: page.data.map((order: Order) =>
+                  order.id === orderId ? updatedOrder : order
+                )
+              };
+            })
+          };
+        }
+      );
+    }
+
+    // The mutation will handle cache updates through its onMutate/onSuccess/onError handlers
+    updateOrderStatusMutation.mutate(
+      { id: orderId, status },
+      {
+        onSuccess: () => {
+          // Dismiss the loading toast - the success toast is shown by the mutation
+          toast.dismiss(loadingToastId);
+
+          // Keep the updated status in our state to ensure the UI stays updated
+          setPendingStatusUpdates(prev => ({
+            ...prev,
+            [orderId]: status
+          }));
+        },
+        onError: (error) => {
+          // Dismiss the loading toast and show error
+          toast.dismiss(loadingToastId);
+          toast.error(`Failed to update status: ${error.message || 'Unknown error'}`);
+
+          // Log the error for debugging
+          console.error('Error updating order status:', error);
+
+          // Remove the pending status update to revert the UI
+          setPendingStatusUpdates(prev => {
+            const newUpdates = { ...prev };
+            delete newUpdates[orderId];
+            return newUpdates;
+          });
+
+          // Revert the optimistic update in the cache if there was an error
+          if (orderToUpdate && oldStatus) {
+            // Revert the order in the cache
+            const revertedOrder = { ...orderToUpdate, status: oldStatus };
+
+            // Update the order in the infinite query cache
+            queryClient.setQueriesData(
+              { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+              (oldData: any) => {
+                if (!oldData) return oldData;
+
+                return {
+                  ...oldData,
+                  pages: oldData.pages.map((page: any) => {
+                    if (!page || !page.data) return page;
+
+                    return {
+                      ...page,
+                      data: page.data.map((order: Order) =>
+                        order.id === orderId ? revertedOrder : order
+                      )
+                    };
+                  })
+                };
+              }
+            );
+          }
+        }
+      }
+    );
+  }, [updateOrderStatusMutation, filteredInfiniteOrders, toast, queryClient]);
 
   const getStatusBadgeClass = (status: OrderStatus) => {
     return OrderService.getStatusColor(status);
@@ -602,8 +765,8 @@ const OrderList: React.FC = () => {
                       <TableCell>{order.items?.length || 0}</TableCell>
                       <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={getStatusBadgeClass(order.status)}>
-                          {order.status}
+                        <Badge variant="outline" className={getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}>
+                          {pendingStatusUpdates[order.id] || order.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -680,15 +843,15 @@ const OrderList: React.FC = () => {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Badge variant="outline" className={getStatusBadgeClass(order.status)}>
+                            <Badge variant="outline" className={getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}>
                               <div className="flex items-center gap-1">
-                                {getStatusIcon(order.status)}
-                                <span>{order.status}</span>
+                                {getStatusIcon(pendingStatusUpdates[order.id] || order.status)}
+                                <span>{pendingStatusUpdates[order.id] || order.status}</span>
                               </div>
                             </Badge>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Current status: {order.status}</p>
+                            <p>Current status: {pendingStatusUpdates[order.id] || order.status}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

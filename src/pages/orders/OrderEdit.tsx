@@ -4,6 +4,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -16,10 +17,11 @@ import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { useMenu } from '@/contexts/menu-context';
 import { useOrder } from '@/hooks/useOrder';
-import { CreateOrderDto, CreateOrderItemDto, OrderStatus, UpdateOrderDto } from '@/services/order-service';
+import { CreateOrderDto, CreateOrderItemDto, OrderStatus, UpdateOrderDto, Order } from '@/services/order-service';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
 import { toast } from '@/components/ui/sonner';
+import { orderKeys } from '@/hooks/useOrderQuery';
 
 // Form schema
 const orderFormSchema = z.object({
@@ -41,10 +43,11 @@ const OrderEdit: React.FC = () => {
     orderId: string;
   }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { currentOrganization } = useOrganization();
   const { currentVenue, venues, tables, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
   const { menus, fetchMenusForOrganization } = useMenu();
-  const { currentOrder, fetchOrderById, updateOrder, isLoading } = useOrder();
+  const { currentOrder, fetchOrderById, updateOrder, isLoading, selectOrder } = useOrder();
 
   const [selectedItems, setSelectedItems] = useState<CreateOrderItemDto[]>([]);
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
@@ -65,16 +68,123 @@ const OrderEdit: React.FC = () => {
     }
   });
 
-  // Load order data
+  // Load order data - use existing data from context if available and avoid API calls
   useEffect(() => {
     const loadOrderData = async () => {
       if (!orderId) return;
 
       try {
-        console.log('Fetching order data for ID:', orderId);
-        // Force a direct API call instead of using the cache
+        // First check if we already have the order in the context
+        if (currentOrder && currentOrder.id === orderId) {
+          console.log('Using existing order data from context:', currentOrder);
+
+          // Log table information for debugging
+          console.log('Order table data:', {
+            tableId: currentOrder.tableId,
+            tableName: currentOrder.table?.name,
+            venueId: currentOrder.table?.venue?.id,
+            venueName: currentOrder.table?.venue?.name
+          });
+
+          // Set form values immediately since we already have the data
+          const formValues = {
+            tableId: currentOrder.tableId || 'none',
+            customerName: currentOrder.customerName || '',
+            customerEmail: currentOrder.customerEmail || '',
+            customerPhone: currentOrder.customerPhone || '',
+            roomNumber: currentOrder.roomNumber || '',
+            notes: currentOrder.notes || '',
+            status: currentOrder.status
+          };
+
+          console.log('Setting form values from existing data:', formValues);
+          form.reset(formValues);
+
+          // Manually set each field value to ensure they're updated
+          Object.entries(formValues).forEach(([key, value]) => {
+            form.setValue(key as any, value);
+          });
+
+          // Set selected items
+          if (currentOrder.items && currentOrder.items.length > 0) {
+            console.log('Order items found:', currentOrder.items.length);
+            const orderItems: CreateOrderItemDto[] = currentOrder.items.map(item => ({
+              menuItemId: item.menuItemId,
+              quantity: item.quantity,
+              notes: item.notes || '',
+              modifiers: item.modifiers?.map(mod => ({
+                modifierId: mod.modifierId
+              })) || []
+            }));
+            setSelectedItems(orderItems);
+          } else {
+            console.log('No order items found');
+            setSelectedItems([]);
+          }
+
+          return; // Exit early since we already have the data
+        }
+
+        // Check if we have the order in the cache before making an API call
+        const cachedOrder = queryClient.getQueryData<Order>(orderKeys.detail(orderId));
+
+        if (cachedOrder) {
+          console.log('Using cached order data:', cachedOrder.id);
+
+          // Set the current order ID to trigger the context update
+          selectOrder(cachedOrder);
+
+          // Log table information for debugging
+          console.log('Order table data from cache:', {
+            tableId: cachedOrder.tableId,
+            tableName: cachedOrder.table?.name,
+            venueId: cachedOrder.table?.venue?.id,
+            venueName: cachedOrder.table?.venue?.name
+          });
+
+          // Set form values immediately since we already have the data
+          const formValues = {
+            tableId: cachedOrder.tableId || 'none',
+            customerName: cachedOrder.customerName || '',
+            customerEmail: cachedOrder.customerEmail || '',
+            customerPhone: cachedOrder.customerPhone || '',
+            roomNumber: cachedOrder.roomNumber || '',
+            notes: cachedOrder.notes || '',
+            status: cachedOrder.status
+          };
+
+          console.log('Setting form values from cached data:', formValues);
+          form.reset(formValues);
+
+          // Manually set each field value to ensure they're updated
+          Object.entries(formValues).forEach(([key, value]) => {
+            form.setValue(key as any, value);
+          });
+
+          // Set selected items
+          if (cachedOrder.items && cachedOrder.items.length > 0) {
+            console.log('Order items found in cache:', cachedOrder.items.length);
+            const orderItems: CreateOrderItemDto[] = cachedOrder.items.map(item => ({
+              menuItemId: item.menuItemId,
+              quantity: item.quantity,
+              notes: item.notes || '',
+              modifiers: item.modifiers?.map(mod => ({
+                modifierId: mod.modifierId
+              })) || []
+            }));
+            setSelectedItems(orderItems);
+          } else {
+            console.log('No order items found in cache');
+            setSelectedItems([]);
+          }
+
+          return; // Exit early since we already have the data
+        }
+
+        // If we don't have the order in context or cache, fetch it from API
+        // This should rarely happen if our caching is working correctly
+        console.log('No cached data found, fetching order data for ID:', orderId);
         const order = await fetchOrderById(orderId);
-        console.log('Order data received:', order);
 
         if (!order) {
           console.error('Failed to fetch order data or order is null');
@@ -82,29 +192,36 @@ const OrderEdit: React.FC = () => {
           return;
         }
 
-        // Set form values with a slight delay to ensure React has time to process
-        setTimeout(() => {
-          const formValues = {
-            tableId: order.tableId || 'none',
-            customerName: order.customerName || '',
-            customerEmail: order.customerEmail || '',
-            customerPhone: order.customerPhone || '',
-            roomNumber: order.roomNumber || '',
-            notes: order.notes || '',
-            status: order.status
-          };
-          console.log('Setting form values:', formValues);
-          form.reset(formValues);
+        // Log table information for debugging
+        console.log('Order table data from API:', {
+          tableId: order.tableId,
+          tableName: order.table?.name,
+          venueId: order.table?.venue?.id,
+          venueName: order.table?.venue?.name
+        });
 
-          // Manually set each field value to ensure they're updated
-          Object.entries(formValues).forEach(([key, value]) => {
-            form.setValue(key as any, value);
-          });
-        }, 100);
+        // Set form values
+        const formValues = {
+          tableId: order.tableId || 'none',
+          customerName: order.customerName || '',
+          customerEmail: order.customerEmail || '',
+          customerPhone: order.customerPhone || '',
+          roomNumber: order.roomNumber || '',
+          notes: order.notes || '',
+          status: order.status
+        };
+
+        console.log('Setting form values from API data:', formValues);
+        form.reset(formValues);
+
+        // Manually set each field value to ensure they're updated
+        Object.entries(formValues).forEach(([key, value]) => {
+          form.setValue(key as any, value);
+        });
 
         // Set selected items
         if (order.items && order.items.length > 0) {
-          console.log('Order items found:', order.items.length);
+          console.log('Order items found from API:', order.items.length);
           const orderItems: CreateOrderItemDto[] = order.items.map(item => ({
             menuItemId: item.menuItemId,
             quantity: item.quantity,
@@ -115,7 +232,7 @@ const OrderEdit: React.FC = () => {
           }));
           setSelectedItems(orderItems);
         } else {
-          console.log('No order items found');
+          console.log('No order items found from API');
           setSelectedItems([]);
         }
       } catch (error) {
@@ -125,24 +242,85 @@ const OrderEdit: React.FC = () => {
     };
 
     loadOrderData();
-  }, [orderId, fetchOrderById, form]);
+  }, [orderId, currentOrder, fetchOrderById, form, queryClient, selectOrder, orderKeys]);
 
-  // Load venues, menus, and tables
+  // Load venues, menus, and tables - but only if they're not already loaded
   useEffect(() => {
-    if (organizationId) {
-      fetchVenuesForOrganization(organizationId);
-      fetchMenusForOrganization(organizationId);
-    }
-  }, [organizationId, fetchVenuesForOrganization, fetchMenusForOrganization]);
+    if (!organizationId) return;
 
-  // Load tables when venue changes
-  useEffect(() => {
-    if (currentOrder?.table?.venue?.id) {
-      fetchTablesForVenue(currentOrder.table.venue.id);
-    } else if (venueId) {
-      fetchTablesForVenue(venueId);
+    // Check if we already have the necessary data in the cache
+    const venueIdToUse = currentOrder?.table?.venue?.id || venueId;
+
+    // First, check if we need to load venues
+    if (venues.length === 0) {
+      console.log('Checking cache for venues before fetching');
+      // Check if venues are in the cache
+      const venuesQueryKey = ['venues', 'organization', organizationId];
+      const cachedVenues = queryClient.getQueryData(venuesQueryKey);
+
+      if (!cachedVenues) {
+        console.log('No venues in cache, fetching venues for organization:', organizationId);
+        // Use fetchQuery instead of the context function to have more control
+        queryClient.fetchQuery({
+          queryKey: venuesQueryKey,
+          queryFn: () => fetchVenuesForOrganization(organizationId),
+          staleTime: 10 * 60 * 1000 // 10 minutes
+        });
+      } else {
+        console.log('Using cached venues data');
+      }
+    } else {
+      console.log('Using existing venues data from context:', venues.length, 'venues');
     }
-  }, [currentOrder, venueId, fetchTablesForVenue]);
+
+    // Check if we need to load menus
+    if (menus.length === 0) {
+      console.log('Checking cache for menus before fetching');
+      // Check if menus are in the cache
+      const menusQueryKey = ['menus', 'organization', organizationId];
+      const cachedMenus = queryClient.getQueryData(menusQueryKey);
+
+      if (!cachedMenus) {
+        console.log('No menus in cache, fetching menus for organization:', organizationId);
+        // Use fetchQuery instead of the context function to have more control
+        queryClient.fetchQuery({
+          queryKey: menusQueryKey,
+          queryFn: () => fetchMenusForOrganization(organizationId),
+          staleTime: 10 * 60 * 1000 // 10 minutes
+        });
+      } else {
+        console.log('Using cached menus data');
+      }
+    } else {
+      console.log('Using existing menus data from context:', menus.length, 'menus');
+    }
+
+    // Check if we need to load tables
+    if (venueIdToUse) {
+      const hasTablesForVenue = tables.length > 0 && tables[0].venueId === venueIdToUse;
+
+      if (!hasTablesForVenue) {
+        console.log('Checking cache for tables before fetching');
+        // Check if tables are in the cache
+        const tablesQueryKey = ['tables', 'venue', venueIdToUse];
+        const cachedTables = queryClient.getQueryData(tablesQueryKey);
+
+        if (!cachedTables) {
+          console.log('No tables in cache, fetching tables for venue:', venueIdToUse);
+          // Use fetchQuery instead of the context function to have more control
+          queryClient.fetchQuery({
+            queryKey: tablesQueryKey,
+            queryFn: () => fetchTablesForVenue(venueIdToUse),
+            staleTime: 10 * 60 * 1000 // 10 minutes
+          });
+        } else {
+          console.log('Using cached tables data');
+        }
+      } else {
+        console.log('Using existing tables data from context:', tables.length, 'tables');
+      }
+    }
+  }, [organizationId, venueId, currentOrder, venues, menus, tables, queryClient, fetchVenuesForOrganization, fetchMenusForOrganization, fetchTablesForVenue]);
 
   // Handle form submission
   const onSubmit = async (data: OrderFormValues) => {
@@ -289,11 +467,19 @@ const OrderEdit: React.FC = () => {
                             <FormLabel>Table (Optional)</FormLabel>
                             <Select
                               value={field.value || 'none'}
-                              onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+                              onValueChange={(value) => {
+                                console.log('Table selection changed to:', value);
+                                field.onChange(value === 'none' ? '' : value);
+                              }}
+                              disabled={tables.length === 0}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select a table" />
+                                  <SelectValue placeholder={tables.length === 0 ? "Loading tables..." : "Select a table"}>
+                                    {field.value && field.value !== 'none' ?
+                                      tables.find(t => t.id === field.value)?.name || "Loading table..." :
+                                      "No table selected"}
+                                  </SelectValue>
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -303,10 +489,15 @@ const OrderEdit: React.FC = () => {
                                     {table.name}
                                   </SelectItem>
                                 ))}
+                                {tables.length === 0 && (
+                                  <SelectItem value="none" disabled>No tables available</SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                             <FormDescription>
-                              Select a table for dine-in orders
+                              {tables.length > 0 ?
+                                "Select a table for dine-in orders" :
+                                "Tables will appear here once loaded"}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

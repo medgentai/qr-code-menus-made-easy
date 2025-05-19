@@ -46,32 +46,41 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch venues for an organization
+  // Fetch venues for an organization - optimized to avoid unnecessary API calls
   const fetchVenuesForOrganization = useCallback(async (organizationId: string) => {
     if (!isAuthenticated) return;
-    
+
+    // Check if we already have venues for this organization
+    if (venues.length > 0 && venues[0].organizationId === organizationId) {
+      console.log('Using existing venues data for organization:', organizationId);
+      return venues; // Return existing venues without making an API call
+    }
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
+      console.log('Fetching venues for organization:', organizationId);
       const data = await VenueService.getAllForOrganization(organizationId);
       setVenues(data);
+      return data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch venues';
       setError(errorMessage);
       toast.error(errorMessage);
+      return [];
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, venues]);
 
   // Fetch venue by ID
   const fetchVenueById = useCallback(async (id: string): Promise<Venue | null> => {
     if (!isAuthenticated) return null;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const data = await VenueService.getById(id);
       setCurrentVenue(data);
@@ -89,10 +98,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   // Create a new venue
   const createVenue = useCallback(async (data: CreateVenueDto): Promise<Venue | null> => {
     if (!isAuthenticated) return null;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const newVenue = await VenueService.create(data);
       setVenues(prev => [...prev, newVenue]);
@@ -111,10 +120,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   // Update a venue
   const updateVenue = useCallback(async (id: string, data: UpdateVenueDto): Promise<Venue | null> => {
     if (!isAuthenticated) return null;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const updatedVenue = await VenueService.update(id, data);
       setVenues(prev => prev.map(venue => venue.id === id ? updatedVenue : venue));
@@ -136,10 +145,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   // Delete a venue
   const deleteVenue = useCallback(async (id: string): Promise<boolean> => {
     if (!isAuthenticated) return false;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await VenueService.delete(id);
       setVenues(prev => prev.filter(venue => venue.id !== id));
@@ -163,32 +172,41 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
     setCurrentVenue(venue);
   }, []);
 
-  // Fetch tables for a venue
+  // Fetch tables for a venue - optimized to avoid unnecessary API calls
   const fetchTablesForVenue = useCallback(async (venueId: string) => {
     if (!isAuthenticated) return;
-    
+
+    // Check if we already have tables for this venue
+    if (tables.length > 0 && tables[0].venueId === venueId) {
+      console.log('Using existing tables data for venue:', venueId);
+      return tables; // Return existing tables without making an API call
+    }
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
+      console.log('Fetching tables for venue:', venueId);
       const data = await VenueService.getAllTablesForVenue(venueId);
       setTables(data);
+      return data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch tables';
       setError(errorMessage);
       toast.error(errorMessage);
+      return [];
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, tables]);
 
   // Create a new table
   const createTable = useCallback(async (data: CreateTableDto): Promise<Table | null> => {
     if (!isAuthenticated) return null;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const newTable = await VenueService.createTable(data);
       setTables(prev => [...prev, newTable]);
@@ -207,10 +225,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   // Update a table
   const updateTable = useCallback(async (id: string, data: UpdateTableDto): Promise<Table | null> => {
     if (!isAuthenticated) return null;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const updatedTable = await VenueService.updateTable(id, data);
       setTables(prev => prev.map(table => table.id === id ? updatedTable : table));
@@ -229,10 +247,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   // Delete a table
   const deleteTable = useCallback(async (id: string): Promise<boolean> => {
     if (!isAuthenticated) return false;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       await VenueService.deleteTable(id);
       setTables(prev => prev.filter(table => table.id !== id));

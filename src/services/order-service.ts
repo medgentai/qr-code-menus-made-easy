@@ -258,10 +258,14 @@ const OrderService = {
   },
 
   getById: async (id: string): Promise<Order> => {
-    console.log('OrderService.getById called with ID:', id);
     try {
       const response = await api.get<Order>(`/orders/${id}`);
-      console.log('API response for getById:', response);
+
+      // Verify that table data is included if tableId exists
+      if (response.data && response.data.tableId && !response.data.table) {
+        console.warn('Order has tableId but no table data, this should not happen');
+      }
+
       return response.data;
     } catch (error) {
       console.error('Error in OrderService.getById:', error);
