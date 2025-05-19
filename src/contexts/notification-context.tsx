@@ -274,23 +274,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Connect to WebSocket
+    // Connect to WebSocket - only once
     webSocketService.connect();
 
     // Add event listeners
     webSocketService.addEventListener('newOrder', handleNewOrder);
     webSocketService.addEventListener('orderUpdated', handleOrderStatusChange);
     webSocketService.addEventListener('orderItemUpdated', handleOrderItemStatusChange);
-
-    // Join organization room if available
-    if (currentOrganization) {
-      webSocketService.joinRoom('organization', currentOrganization.id);
-    }
-
-    // Join venue room if available
-    if (currentVenue) {
-      webSocketService.joinRoom('venue', currentVenue.id);
-    }
 
     // Cleanup on unmount
     return () => {
@@ -300,12 +290,40 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     };
   }, [
     isAuthenticated,
-    currentOrganization,
-    currentVenue,
     handleNewOrder,
     handleOrderStatusChange,
     handleOrderItemStatusChange
   ]);
+
+  // Separate effect for joining rooms to avoid multiple connections
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Keep track of joined rooms for cleanup
+    const currentOrgId = currentOrganization?.id;
+    const currentVenueId = currentVenue?.id;
+
+    // Join organization room if available
+    if (currentOrgId) {
+      webSocketService.joinRoom('organization', currentOrgId);
+    }
+
+    // Join venue room if available
+    if (currentVenueId) {
+      webSocketService.joinRoom('venue', currentVenueId);
+    }
+
+    // Cleanup: leave rooms when component unmounts or when org/venue changes
+    return () => {
+      if (currentOrgId) {
+        webSocketService.leaveRoom('organization', currentOrgId);
+      }
+
+      if (currentVenueId) {
+        webSocketService.leaveRoom('venue', currentVenueId);
+      }
+    };
+  }, [isAuthenticated, currentOrganization?.id, currentVenue?.id]);
 
   // Request notification permission on mount
   useEffect(() => {

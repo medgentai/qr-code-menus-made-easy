@@ -43,14 +43,37 @@ export const useOrderContext = (): OrderContextType => {
   // State for the current order
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
-  // Get the appropriate query based on the current context
-  const venueOrdersQuery = useVenueOrdersQuery(currentVenue?.id || '');
-  const organizationOrdersQuery = useOrganizationOrdersQuery(currentOrganization?.id || '');
-  const currentOrderQuery = useOrderQuery(currentOrderId || '');
+  // Get the appropriate query based on the current context - only run the query that's needed
+  const venueOrdersQuery = useVenueOrdersQuery(
+    currentVenue?.id || '',
+    undefined,
+    { enabled: !!currentVenue?.id } // Only run if we have a venue ID
+  );
 
-  // Get infinite queries for pagination
-  const infiniteVenueOrdersQuery = useInfiniteVenueOrdersQuery(currentVenue?.id || '');
-  const infiniteOrganizationOrdersQuery = useInfiniteOrganizationOrdersQuery(currentOrganization?.id || '');
+  const organizationOrdersQuery = useOrganizationOrdersQuery(
+    currentOrganization?.id || '',
+    undefined,
+    {
+      enabled: !!currentOrganization?.id && !currentVenue?.id // Only run if we have an org ID and no venue ID
+    }
+  );
+
+  const currentOrderQuery = useOrderQuery(currentOrderId || '', {
+    enabled: !!currentOrderId // Only run if we have an order ID
+  });
+
+  // Get infinite queries for pagination - only run the query that's needed
+  const infiniteVenueOrdersQuery = useInfiniteVenueOrdersQuery(
+    currentVenue?.id || '',
+    undefined,
+    { enabled: !!currentVenue?.id } // Only run if we have a venue ID
+  );
+
+  const infiniteOrganizationOrdersQuery = useInfiniteOrganizationOrdersQuery(
+    currentOrganization?.id || '',
+    undefined,
+    { enabled: !!currentOrganization?.id && !currentVenue?.id } // Only run if we have an org ID and no venue ID
+  );
 
   // Determine which query to use and handle type conversion
   const ordersQuery = currentVenue
@@ -91,22 +114,33 @@ export const useOrderContext = (): OrderContextType => {
   const updateOrderItemMutation = useUpdateOrderItemMutation();
   const deleteOrderMutation = useDeleteOrderMutation();
 
-  // Load orders when organization or venue changes
+  // Load orders when organization or venue changes - optimized to avoid redundant API calls
   useEffect(() => {
-    if (currentVenue?.id) {
-      // Prefetch venue orders
-      queryClient.prefetchQuery({
-        queryKey: orderKeys.venue(currentVenue.id),
-        queryFn: () => venueOrdersQuery.refetch()
-      });
-    } else if (currentOrganization?.id) {
-      // Prefetch organization orders
-      queryClient.prefetchQuery({
-        queryKey: orderKeys.organization(currentOrganization.id),
-        queryFn: () => organizationOrdersQuery.refetch()
-      });
-    }
-  }, [currentOrganization, currentVenue, queryClient, venueOrdersQuery, organizationOrdersQuery]);
+    // Don't prefetch if we don't have an ID
+    if (!currentVenue?.id && !currentOrganization?.id) return;
+
+    // Use a timeout to avoid rapid consecutive prefetches during navigation
+    const timeoutId = setTimeout(() => {
+      if (currentVenue?.id) {
+        // Prefetch venue orders directly from service
+        queryClient.prefetchQuery({
+          queryKey: orderKeys.venue(currentVenue.id),
+          queryFn: () => OrderService.getAllForVenue(currentVenue.id),
+          staleTime: 2 * 60 * 1000 // 2 minutes
+        });
+      } else if (currentOrganization?.id) {
+        // Prefetch organization orders directly from service
+        queryClient.prefetchQuery({
+          queryKey: orderKeys.organization(currentOrganization.id),
+          queryFn: () => OrderService.getAllForOrganization(currentOrganization.id),
+          staleTime: 2 * 60 * 1000 // 2 minutes
+        });
+      }
+    }, 300); // Small delay to avoid rapid consecutive prefetches
+
+    // Clean up timeout on unmount or when dependencies change
+    return () => clearTimeout(timeoutId);
+  }, [currentOrganization?.id, currentVenue?.id, queryClient]);
 
   // Fetch orders with optional filters
   const fetchOrders = useCallback(async (filters?: FilterOrdersDto): Promise<Order[]> => {
@@ -176,20 +210,27 @@ export const useOrderContext = (): OrderContextType => {
     }
   }, [queryClient]);
 
-  // Fetch order by ID
+  // Fetch order by ID - optimized to avoid unnecessary invalidation
   const fetchOrderById = useCallback(async (id: string): Promise<Order | null> => {
     try {
-      console.log('fetchOrderById called with ID:', id);
+      // Set current order ID to trigger the query
       setCurrentOrderId(id);
-      // Invalidate and refetch
-      await queryClient.invalidateQueries({ queryKey: orderKeys.detail(id) });
-      // Fetch fresh data
-      console.log('Fetching order data from API...');
-      const result = await OrderService.getById(id);
-      console.log('API response for order:', result);
-      return result || null;
+
+      // Check if we already have this order in the cache
+      const cachedOrder = queryClient.getQueryData<Order>(orderKeys.detail(id));
+
+      if (cachedOrder) {
+        // If we have a cached order and it's not stale, return it
+        return cachedOrder;
+      }
+
+      // If not in cache or stale, fetch from API without invalidating first
+      return await queryClient.fetchQuery({
+        queryKey: orderKeys.detail(id),
+        queryFn: () => OrderService.getById(id),
+        staleTime: 30 * 1000 // 30 seconds
+      });
     } catch (err: any) {
-      console.error('Error fetching order by ID:', err);
       const errorMessage = err.response?.data?.message || 'Failed to fetch order';
       toast.error(errorMessage);
       return null;

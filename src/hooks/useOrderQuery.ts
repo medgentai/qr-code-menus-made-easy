@@ -57,7 +57,7 @@ export const useVenueOrdersQuery = (venueId: string, status?: OrderStatus, optio
     queryKey: orderKeys.venue(venueId + (status ? `-${status}` : '')),
     queryFn: () => OrderService.getAllForVenue(venueId, undefined, undefined, status),
     enabled: !!venueId,
-    staleTime: 1 * 60 * 1000, // 1 minute - venue orders need fresher data
+    staleTime: 3 * 60 * 1000, // 3 minutes - increased to reduce API calls
     retry: (failureCount, error: ApiErrorWithResponse) => {
       // Don't retry on 404 or 403 errors
       if (error?.response?.status === 404 || error?.response?.status === 403) {
@@ -125,7 +125,7 @@ export const useInfiniteVenueOrdersQuery = (venueId: string, options = {}) => {
       return firstPage.hasPreviousPage ? firstPage.page - 1 : undefined;
     },
     enabled: !!venueId,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 3 * 60 * 1000, // 3 minutes - increased to reduce API calls
     ...restOptions
   });
 };
@@ -136,7 +136,7 @@ export const useOrganizationOrdersQuery = (organizationId: string, status?: Orde
     queryKey: orderKeys.organization(organizationId + (status ? `-${status}` : '')),
     queryFn: () => OrderService.getAllForOrganization(organizationId, undefined, undefined, status),
     enabled: !!organizationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - increased to reduce API calls
     retry: (failureCount, error: ApiErrorWithResponse) => {
       // Don't retry on 404 or 403 errors
       if (error?.response?.status === 404 || error?.response?.status === 403) {
@@ -204,7 +204,7 @@ export const useInfiniteOrganizationOrdersQuery = (organizationId: string, optio
       return firstPage.hasPreviousPage ? firstPage.page - 1 : undefined;
     },
     enabled: !!organizationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes - increased to reduce API calls
     ...restOptions
   });
 };
@@ -215,7 +215,7 @@ export const useFilteredOrdersQuery = (filters: FilterOrdersDto) => {
     queryKey: orderKeys.filtered(filters),
     queryFn: () => OrderService.getFiltered(filters),
     enabled: !!(filters.organizationId || filters.venueId), // Only run if we have at least one main filter
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 3 * 60 * 1000, // 3 minutes - increased to reduce API calls
     retry: (failureCount, error: ApiErrorWithResponse) => {
       // Don't retry on 404 or 403 errors
       if (error?.response?.status === 404 || error?.response?.status === 403) {
@@ -315,17 +315,17 @@ export const useInfiniteFilteredOrdersQuery = (filters: FilterOrdersDto) => {
       return undefined;
     },
     enabled: !!(filters.organizationId || filters.venueId), // Only run if we have at least one main filter
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 3 * 60 * 1000, // 3 minutes - increased to reduce API calls
   });
 };
 
 // Fetch a single order by ID
-export const useOrderQuery = (orderId: string) => {
+export const useOrderQuery = (orderId: string, options = {}) => {
   return useQuery({
     queryKey: orderKeys.detail(orderId),
     queryFn: () => OrderService.getById(orderId),
     enabled: !!orderId,
-    staleTime: 30 * 1000, // 30 seconds - order details need to be fresh
+    staleTime: 60 * 1000, // 60 seconds - increased to reduce API calls
     retry: (failureCount, error: ApiErrorWithResponse) => {
       // Don't retry on 404 or 403 errors
       if (error?.response?.status === 404 || error?.response?.status === 403) {
@@ -333,6 +333,7 @@ export const useOrderQuery = (orderId: string) => {
       }
       return failureCount < 2; // Retry up to 2 times for other errors
     },
+    ...options
   });
 };
 

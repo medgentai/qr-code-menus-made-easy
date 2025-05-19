@@ -99,12 +99,12 @@ const OrderList: React.FC = () => {
   // Use a simple loading state instead of regular queries
   const [isLoading, setIsLoading] = useState(true);
 
-  // Combined filters state
-  const [filters, setFilters] = useState<FilterOrdersDto>({
+  // Combined filters state - memoized to prevent unnecessary re-renders
+  const filters = useMemo<FilterOrdersDto>(() => ({
     organizationId: organizationId || undefined,
     venueId: venueId || venueFilter || undefined,
     status: statusFilter || undefined
-  });
+  }), [organizationId, venueId, venueFilter, statusFilter]);
 
   // Use the new infinite filtered query hook with combined filters
   const infiniteOrdersQuery = useInfiniteFilteredOrdersQuery(filters);
@@ -171,18 +171,23 @@ const OrderList: React.FC = () => {
     };
   }, [infiniteOrders]);
 
-  const handleRefresh = async () => {
+  // Optimized refresh function with debounce to prevent multiple rapid refreshes
+  const handleRefresh = useCallback(async () => {
+    // Prevent refresh if already refreshing
+    if (isRefreshing) return;
+
     setIsRefreshing(true);
-    setIsLoading(true);
 
     try {
       // Refresh the filtered query
       await infiniteOrdersQuery.refetch();
     } finally {
-      setIsRefreshing(false);
-      setIsLoading(false);
+      // Use setTimeout to prevent UI flicker
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 500);
     }
-  };
+  }, [infiniteOrdersQuery, isRefreshing]);
 
   // Function to load more orders - memoized to prevent unnecessary re-renders
   const handleLoadMore = useCallback(async () => {
@@ -190,15 +195,6 @@ const OrderList: React.FC = () => {
       await infiniteOrdersQuery.fetchNextPage();
     }
   }, [infiniteOrdersQuery.hasNextPage, infiniteOrdersQuery.isFetchingNextPage, infiniteOrdersQuery.fetchNextPage]);
-
-  // Update filters when route params or filter selections change
-  useEffect(() => {
-    setFilters({
-      organizationId: organizationId || undefined,
-      venueId: venueId || venueFilter || undefined,
-      status: statusFilter || undefined
-    });
-  }, [organizationId, venueId, venueFilter, statusFilter]);
 
   // Set loading state when filters change or query is fetching
   useEffect(() => {
@@ -245,17 +241,15 @@ const OrderList: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (orderId: string, status: OrderStatus) => {
+  const handleStatusChange = useCallback(async (orderId: string, status: OrderStatus) => {
     updateOrderStatusMutation.mutate(
       { id: orderId, status },
       {
-        onSuccess: () => {
-          // Refresh the infinite query data
-          infiniteOrdersQuery.refetch();
-        }
+        // No need to manually refetch - the mutation will automatically
+        // invalidate the relevant queries through its onSuccess handler
       }
     );
-  };
+  }, [updateOrderStatusMutation]);
 
 
 

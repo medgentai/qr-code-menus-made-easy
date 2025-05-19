@@ -82,16 +82,16 @@ import OrderEdit from "./pages/orders/OrderEdit";
 // Public Menu pages
 import PublicMenuWrapper from "./pages/public/PublicMenuWrapper";
 
-// Create React Query client with optimized options
+// Create React Query client with optimized options to reduce unnecessary API calls
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      refetchOnMount: true,
-      refetchOnReconnect: true,
+      refetchOnWindowFocus: false, // Don't refetch when window regains focus
+      retry: 1, // Only retry failed queries once
+      staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh for 5 minutes
+      gcTime: 15 * 60 * 1000, // 15 minutes - keep unused data in cache for 15 minutes
+      refetchOnMount: 'always', // Always refetch on mount for consistency
+      refetchOnReconnect: false, // Don't refetch on reconnect to reduce API calls
     },
   },
 });

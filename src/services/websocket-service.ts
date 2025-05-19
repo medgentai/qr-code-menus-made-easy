@@ -36,7 +36,7 @@ class WebSocketService {
     }
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-    
+
     this.socket = io(`${API_URL}/orders`, {
       transports: ['websocket'],
       autoConnect: true,
@@ -66,7 +66,7 @@ class WebSocketService {
     this.socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
       this.reconnectAttempts++;
-      
+
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
         console.error('Max reconnect attempts reached, giving up');
         this.socket?.disconnect();
@@ -85,36 +85,83 @@ class WebSocketService {
     this.socket.on('newOrder', (data: OrderEvent) => {
       this.notifyListeners('newOrder', data);
     });
+
+    // Setup cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      this.disconnect();
+    });
   }
+
+  // Track joined rooms to prevent duplicate joins
+  private joinedRooms = new Set<string>();
 
   // Join a room to receive specific events
   joinRoom(room: string, id: string) {
+    if (!id) {
+      console.warn('Attempted to join room with empty ID');
+      return;
+    }
+
+    // Create a unique room identifier
+    const roomKey = `${room}:${id}`;
+
+    // Skip if already joined this room
+    if (this.joinedRooms.has(roomKey)) {
+      console.log(`Already joined room: ${roomKey}`);
+      return;
+    }
+
+    // Connect if not already connected
     if (!this.socket || !this.connected) {
       this.connect();
     }
 
-    switch (room) {
-      case 'order':
-        this.socket?.emit('joinOrderRoom', id);
-        break;
-      case 'venue':
-        this.socket?.emit('joinVenueRoom', id);
-        break;
-      case 'table':
-        this.socket?.emit('joinTableRoom', id);
-        break;
-      case 'organization':
-        this.socket?.emit('joinOrganizationRoom', id);
-        break;
-      default:
-        console.error(`Unknown room type: ${room}`);
-    }
+    // Wait for connection before joining
+    const joinRoomWhenConnected = () => {
+      if (!this.socket || !this.connected) {
+        setTimeout(joinRoomWhenConnected, 100);
+        return;
+      }
+
+      switch (room) {
+        case 'order':
+          this.socket.emit('joinOrderRoom', id);
+          break;
+        case 'venue':
+          this.socket.emit('joinVenueRoom', id);
+          break;
+        case 'table':
+          this.socket.emit('joinTableRoom', id);
+          break;
+        case 'organization':
+          this.socket.emit('joinOrganizationRoom', id);
+          break;
+        default:
+          console.error(`Unknown room type: ${room}`);
+          return; // Don't mark as joined if room type is unknown
+      }
+
+      // Mark as joined
+      this.joinedRooms.add(roomKey);
+      console.log(`Joined room: ${roomKey}`);
+    };
+
+    joinRoomWhenConnected();
   }
 
   // Leave a room
-  leaveRoom(room: string) {
+  leaveRoom(room: string, id: string) {
     if (!this.socket || !this.connected) return;
-    this.socket.emit('leaveRoom', room);
+
+    // Create the room key
+    const roomKey = `${room}:${id}`;
+
+    // Only emit if we've actually joined this room
+    if (this.joinedRooms.has(roomKey)) {
+      this.socket.emit('leaveRoom', roomKey);
+      this.joinedRooms.delete(roomKey);
+      console.log(`Left room: ${roomKey}`);
+    }
   }
 
   // Add event listener
@@ -146,6 +193,8 @@ class WebSocketService {
     this.socket = null;
     this.connected = false;
     this.listeners.clear();
+    this.joinedRooms.clear(); // Clear joined rooms on disconnect
+    console.log('WebSocket disconnected and rooms cleared');
   }
 }
 
