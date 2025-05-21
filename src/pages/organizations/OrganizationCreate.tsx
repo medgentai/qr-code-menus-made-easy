@@ -118,7 +118,10 @@ const OrganizationCreate = () => {
       });
 
       if (newOrg) {
-        navigate(`/organizations/${newOrg.id}`);
+        // Add a small delay to allow context state to update before navigation
+        setTimeout(() => {
+          navigate(`/organizations/${newOrg.id}`);
+        }, 100);
       }
     } catch (error) {
       console.error('Error creating organization:', error);

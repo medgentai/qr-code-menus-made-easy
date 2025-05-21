@@ -20,11 +20,8 @@ const MenuList: React.FC = () => {
   const [menuToDelete, setMenuToDelete] = useState<Menu | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (organizationId) {
-      fetchMenusForOrganization(organizationId);
-    }
-  }, [organizationId, fetchMenusForOrganization]);
+  // No need to fetch menus here - the MenuContext will handle this automatically
+  // when the currentOrganization changes
 
   const handleCreateMenu = () => {
     navigate(`/organizations/${organizationId}/menus/create`);

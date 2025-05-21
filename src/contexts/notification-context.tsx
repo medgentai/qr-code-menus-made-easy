@@ -295,30 +295,59 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     handleOrderItemStatusChange
   ]);
 
+  // Track previous organization and venue IDs to prevent unnecessary room joins/leaves
+  const [prevOrgId, setPrevOrgId] = useState<string | null>(null);
+  const [prevVenueId, setPrevVenueId] = useState<string | null>(null);
+
   // Separate effect for joining rooms to avoid multiple connections
   useEffect(() => {
     if (!isAuthenticated) return;
 
     // Keep track of joined rooms for cleanup
-    const currentOrgId = currentOrganization?.id;
-    const currentVenueId = currentVenue?.id;
+    const currentOrgId = currentOrganization?.id || null;
+    const currentVenueId = currentVenue?.id || null;
 
-    // Join organization room if available
-    if (currentOrgId) {
-      webSocketService.joinRoom('organization', currentOrgId);
+    // Only join/leave rooms if the IDs have changed
+    if (currentOrgId !== prevOrgId) {
+      // Leave previous organization room if it exists
+      if (prevOrgId) {
+        console.log('Leaving organization room:', prevOrgId);
+        webSocketService.leaveRoom('organization', prevOrgId);
+      }
+
+      // Join new organization room if it exists
+      if (currentOrgId) {
+        console.log('Joining organization room:', currentOrgId);
+        webSocketService.joinRoom('organization', currentOrgId);
+      }
+
+      // Update the state
+      setPrevOrgId(currentOrgId);
     }
 
-    // Join venue room if available
-    if (currentVenueId) {
-      webSocketService.joinRoom('venue', currentVenueId);
+    // Only join/leave venue rooms if the IDs have changed
+    if (currentVenueId !== prevVenueId) {
+      // Leave previous venue room if it exists
+      if (prevVenueId) {
+        console.log('Leaving venue room:', prevVenueId);
+        webSocketService.leaveRoom('venue', prevVenueId);
+      }
+
+      // Join new venue room if it exists
+      if (currentVenueId) {
+        console.log('Joining venue room:', currentVenueId);
+        webSocketService.joinRoom('venue', currentVenueId);
+      }
+
+      // Update the state
+      setPrevVenueId(currentVenueId);
     }
 
-    // Cleanup: leave rooms when component unmounts or when org/venue changes
+    // Cleanup: leave rooms when component unmounts
     return () => {
       if (currentOrgId) {
         webSocketService.leaveRoom('organization', currentOrgId);
       }
-
       if (currentVenueId) {
         webSocketService.leaveRoom('venue', currentVenueId);
       }

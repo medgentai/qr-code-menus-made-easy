@@ -95,12 +95,8 @@ const OrderList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
   const [venueFilter, setVenueFilter] = useState<string>('');
 
-  // Fetch venues for the organization when component mounts
-  useEffect(() => {
-    if (organizationId) {
-      fetchVenuesForOrganization(organizationId);
-    }
-  }, [organizationId, fetchVenuesForOrganization]);
+  // No need to fetch venues here - the VenueContext will handle this automatically
+  // when the currentOrganization changes
 
   // Use a simple loading state instead of regular queries
   const [isLoading, setIsLoading] = useState(true);

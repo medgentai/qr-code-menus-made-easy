@@ -89,8 +89,9 @@ const queryClient = new QueryClient({
       retry: 1, // Only retry failed queries once
       staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh for 5 minutes
       gcTime: 15 * 60 * 1000, // 15 minutes - keep unused data in cache for 15 minutes
-      refetchOnMount: 'always', // Always refetch on mount for consistency
+      refetchOnMount: false, // Don't automatically refetch on mount to prevent cascading API calls
       refetchOnReconnect: false, // Don't refetch on reconnect to reduce API calls
+      refetchInterval: false, // Disable periodic refetching
     },
   },
 });

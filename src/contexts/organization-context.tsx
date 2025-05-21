@@ -55,14 +55,31 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   // Track if organizations have been fetched
   const hasLoadedRef = useRef(false);
 
-  // Fetch organization details
+  // Track the last organization ID we fetched details for
+  const [lastFetchedDetailsId, setLastFetchedDetailsId] = useState<string | null>(null);
+
+  // Fetch organization details with caching and duplicate request prevention
   const fetchOrganizationDetails = useCallback(async (id: string): Promise<OrganizationDetails | null> => {
     if (!isAuthenticated) return null;
 
+    // Prevent duplicate API calls for the same organization ID in rapid succession
+    if (lastFetchedDetailsId === id && isLoading) {
+      console.log('Already fetching details for organization:', id);
+      return currentOrganizationDetails; // Return current details if already fetching
+    }
+
+    // If we already have details for this organization, return them
+    if (currentOrganizationDetails && currentOrganizationDetails.id === id) {
+      console.log('Using existing details for organization:', id);
+      return currentOrganizationDetails;
+    }
+
+    setLastFetchedDetailsId(id);
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log('Fetching details for organization:', id);
       const data = await OrganizationService.getDetails(id);
       setCurrentOrganizationDetails(data);
       return data;
@@ -74,7 +91,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLoading, currentOrganizationDetails, lastFetchedDetailsId]);
 
   // Fetch organizations
   const fetchOrganizations = useCallback(async (force: boolean = false): Promise<void> => {
@@ -133,8 +150,18 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       const newOrg = await OrganizationService.create(data);
       setOrganizations(prev => [...prev, newOrg]);
 
-      // Set as current if it's the first one
-      if (organizations.length === 0) {
+      // Set as current if it's the first one or always set as current
+      if (organizations.length === 0 || true) {
+        // Also pre-fetch organization details to avoid additional API calls
+        try {
+          const details = await OrganizationService.getDetails(newOrg.id);
+          setCurrentOrganizationDetails(details);
+          setLastFetchedDetailsId(newOrg.id);
+        } catch (detailsErr) {
+          console.error('Error pre-fetching organization details:', detailsErr);
+          // Continue even if details fetch fails
+        }
+
         setCurrentOrganization(newOrg);
         localStorage.setItem(CURRENT_ORGANIZATION_KEY, newOrg.id);
       }
@@ -366,9 +393,13 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   // Fetch organization details when current organization changes
   useEffect(() => {
     if (currentOrganization && isAuthenticated) {
-      fetchOrganizationDetails(currentOrganization.id);
+      // Only fetch if we don't already have details for this organization
+      if (!currentOrganizationDetails || currentOrganizationDetails.id !== currentOrganization.id) {
+        console.log('Organization changed, fetching details for:', currentOrganization.id);
+        fetchOrganizationDetails(currentOrganization.id);
+      }
     }
-  }, [currentOrganization?.id, isAuthenticated, fetchOrganizationDetails]);
+  }, [currentOrganization?.id, isAuthenticated, currentOrganizationDetails]);
 
   // Context value
   const value: OrganizationContextType = {
