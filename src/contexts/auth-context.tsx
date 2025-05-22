@@ -16,11 +16,32 @@ export interface User {
   lastLoginAt?: string;
 }
 
+// Login response interfaces
+export interface LoginResponseWithOtp {
+  message: string;
+  requiresOtp: true;
+  userId: string;
+  email: string;
+}
+
+export interface LoginResponseWithToken {
+  message: string;
+  accessToken: string;
+  refreshToken: string;
+  sessionId: string;
+  expiresAt: Date;
+  user: User;
+  requiresOtp?: false;
+}
+
+export type LoginResponse = LoginResponseWithOtp | LoginResponseWithToken;
+
 // Auth state interface
 export interface AuthState {
   user: User | null;
   accessToken: string | null;
-  refreshToken: string | null;
+  refreshToken: string | null; // Will be stored only in memory, not in localStorage
+  sessionId: string | null;    // Used to identify the session on the server
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -49,15 +70,16 @@ interface AuthProviderProps {
 
 // Local storage keys
 const ACCESS_TOKEN_KEY = 'accessToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'user';
+const SESSION_ID_KEY = 'sessionId';
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Initialize state from local storage if available
   const [state, setState] = useState<AuthState>({
     user: JSON.parse(localStorage.getItem(USER_KEY) || 'null'),
     accessToken: localStorage.getItem(ACCESS_TOKEN_KEY),
-    refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY),
+    refreshToken: null, // Don't store refresh token in localStorage
+    sessionId: localStorage.getItem(SESSION_ID_KEY),
     isAuthenticated: !!localStorage.getItem(ACCESS_TOKEN_KEY),
     isLoading: true,
     error: null,
@@ -116,28 +138,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     validateSession();
   }, []);
 
-  // Save auth state to local storage
-  const saveAuthState = (user: User | null, accessToken: string | null, refreshToken: string | null) => {
+  // Save auth state to local storage (but not refresh token)
+  const saveAuthState = (
+    user: User | null,
+    accessToken: string | null,
+    refreshToken: string | null,
+    sessionId: string | null
+  ) => {
     if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
     else localStorage.removeItem(USER_KEY);
 
     if (accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
     else localStorage.removeItem(ACCESS_TOKEN_KEY);
 
-    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-    else localStorage.removeItem(REFRESH_TOKEN_KEY);
+    if (sessionId) localStorage.setItem(SESSION_ID_KEY, sessionId);
+    else localStorage.removeItem(SESSION_ID_KEY);
+
+    // Don't store refresh token in localStorage
+    // It will only be kept in memory (React state)
   };
 
   // Clear auth state from local storage
   const clearAuthState = () => {
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(SESSION_ID_KEY);
 
     setState({
       user: null,
       accessToken: null,
       refreshToken: null,
+      sessionId: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -147,7 +178,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await api.post('/auth/login', { email, password }, { withAuth: false });
+      const response = await api.post<LoginResponse>('/auth/login', { email, password }, { withAuth: false });
 
       // Check if OTP verification is required
       if (response.data.requiresOtp) {
@@ -155,17 +186,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
+      // At this point, we know it's a LoginResponseWithToken
+      const loginResponse = response.data as LoginResponseWithToken;
+
+      // Extract sessionId from the response
+      const sessionId = loginResponse.sessionId;
+
       // Save auth state
       setState({
-        user: response.data.user,
-        accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
+        user: loginResponse.user,
+        accessToken: loginResponse.accessToken,
+        refreshToken: loginResponse.refreshToken, // Store in memory only
+        sessionId: sessionId,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       });
 
-      saveAuthState(response.data.user, response.data.accessToken, response.data.refreshToken);
+      // Save to localStorage (except refresh token)
+      saveAuthState(
+        loginResponse.user,
+        loginResponse.accessToken,
+        null, // Don't pass refresh token to localStorage
+        sessionId
+      );
+
       return true;
     } catch (error) {
       setState(prev => ({ ...prev, error: 'Login failed', isLoading: false }));
@@ -188,19 +233,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Verify OTP function
   const verifyOtp = async (email: string, otpCode: string): Promise<boolean> => {
     try {
-      const response = await api.post('/auth/verify-otp', { email, otpCode }, { withAuth: false });
+      // Define a response type for OTP verification
+      interface VerifyOtpResponse {
+        user: User;
+        accessToken: string;
+        refreshToken: string;
+        sessionId: string;
+      }
+
+      const response = await api.post<VerifyOtpResponse>('/auth/verify-otp', { email, otpCode }, { withAuth: false });
 
       // Save auth state
       setState({
         user: response.data.user,
         accessToken: response.data.accessToken,
         refreshToken: response.data.refreshToken,
+        sessionId: response.data.sessionId,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       });
 
-      saveAuthState(response.data.user, response.data.accessToken, response.data.refreshToken);
+      saveAuthState(
+        response.data.user,
+        response.data.accessToken,
+        null, // Don't pass refresh token to localStorage
+        response.data.sessionId
+      );
       return true;
     } catch (error) {
       setState(prev => ({ ...prev, error: 'OTP verification failed', isLoading: false }));
@@ -245,7 +304,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({}) // Send empty object as body
-          }).catch(e => {
+          }).catch(() => {
             // Silently ignore any errors - user is already logged out on the client
             console.log('Backend logout notification attempted');
           });
@@ -282,16 +341,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Refresh session function
   const refreshSession = async (): Promise<boolean> => {
-    if (!state.refreshToken) {
-      console.warn('No refresh token available');
+    if (!state.sessionId) {
+      console.warn('No session ID available');
       return false;
     }
 
     try {
-      console.log('Attempting to refresh token...');
-      const response = await api.post(
-        '/auth/refresh-token',
-        { refreshToken: state.refreshToken },
+      // Define a response type for session refresh
+      interface RefreshSessionResponse {
+        accessToken: string;
+        refreshToken: string;
+        sessionId: string;
+        expiresAt: Date;
+      }
+
+      console.log('Attempting to refresh token using session ID...');
+      const response = await api.post<RefreshSessionResponse>(
+        '/auth/refresh-session',
+        {
+          sessionId: state.sessionId,
+          // Include device fingerprint for additional security
+          fingerprint: navigator.userAgent
+        },
         { withAuth: false, showErrorToast: false }
       );
 
@@ -299,13 +370,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setState(prev => ({
         ...prev,
         accessToken: response.data.accessToken,
-        refreshToken: response.data.refreshToken,
+        refreshToken: response.data.refreshToken, // Store in memory only
+        sessionId: response.data.sessionId || prev.sessionId,
         isAuthenticated: true,
         isLoading: false,
         error: null,
       }));
 
-      saveAuthState(state.user, response.data.accessToken, response.data.refreshToken);
+      // Save to localStorage (except refresh token)
+      saveAuthState(
+        state.user,
+        response.data.accessToken,
+        null, // Don't pass refresh token to localStorage
+        response.data.sessionId || state.sessionId
+      );
+
       return true;
     } catch (error: any) {
       console.error('Token refresh failed:', error);
@@ -333,7 +412,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const updatedUser = { ...state.user, ...userData };
     setState(prev => ({ ...prev, user: updatedUser }));
-    saveAuthState(updatedUser, state.accessToken, state.refreshToken);
+
+    // Save to localStorage (except refresh token)
+    saveAuthState(
+      updatedUser,
+      state.accessToken,
+      null, // Don't pass refresh token to localStorage
+      state.sessionId
+    );
   };
 
   // Context value
