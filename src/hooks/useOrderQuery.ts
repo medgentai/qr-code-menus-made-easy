@@ -334,10 +334,7 @@ export const useOrderQuery = (orderId: string, options = {}) => {
       return failureCount < 2; // Retry up to 2 times for other errors
     },
     select: (data) => {
-      // Ensure table data is properly included in the response
-      if (data && !data.table && data.tableId) {
-        console.warn('Order has tableId but no table data, this should not happen');
-      }
+      // Return the data as is
       return data;
     },
     ...options

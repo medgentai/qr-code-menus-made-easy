@@ -21,7 +21,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   redirectTo = '/login',
 }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { state: { isAuthenticated, isLoading, user } } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication

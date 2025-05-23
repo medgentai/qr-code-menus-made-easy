@@ -10,6 +10,7 @@ import { MenuProvider } from "@/contexts/menu-context";
 import { NotificationProvider } from "@/contexts/notification-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
+import TokenRefreshManager from "@/components/TokenRefreshManager";
 
 // Public pages
 import Index from "./pages/Index";
@@ -100,6 +101,7 @@ const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <TokenRefreshManager />
         <BrowserRouter>
           <OrganizationProvider>
             <VenueProvider>

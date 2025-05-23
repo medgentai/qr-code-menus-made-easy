@@ -36,7 +36,8 @@ export const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';
  * Log debug information if debug mode is enabled
  */
 export function debugLog(...args: any[]): void {
-  if (DEBUG_MODE) {
-    console.log('[DEBUG]', ...args);
+  // Debug logging disabled in production
+  if (DEBUG_MODE && process.env.NODE_ENV === 'development') {
+    // Only log in development mode
   }
 }

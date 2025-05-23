@@ -17,7 +17,7 @@ import { PaginatedOrderList } from '@/components/orders/PaginatedOrderList';
 <PaginatedOrderList />
 
 // With order selection callback
-<PaginatedOrderList onSelectOrder={(order) => console.log('Selected order:', order)} />
+<PaginatedOrderList onSelectOrder={(order) => handleOrderSelection(order)} />
 
 // With status filter
 <PaginatedOrderList filterStatus={OrderStatus.PENDING} />

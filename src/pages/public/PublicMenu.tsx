@@ -84,12 +84,7 @@ const PublicMenu: React.FC = () => {
       setCartTableId(tableId);
     }
 
-    // Log the venue ID for debugging
-    if (venueId) {
-      console.log('Venue ID from URL:', venueId);
-    } else {
-      console.warn('No venue ID found in URL');
-    }
+    // Use venue ID from URL if available
   }, [tableId, venueId, setCartTableId]);
 
   useEffect(() => {
@@ -217,7 +212,6 @@ const PublicMenu: React.FC = () => {
       setViewState(ViewState.CONFIRMATION);
 
     } catch (error) {
-      console.error('Error placing order:', error);
       toast.error('Failed to place order. Please try again.');
     } finally {
       setIsSubmitting(false);

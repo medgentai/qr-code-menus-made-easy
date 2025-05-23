@@ -41,8 +41,19 @@ interface VenueProviderProps {
 
 // Venue provider component
 export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { state: authState } = useAuth();
+  const { user, isAuthenticated } = authState;
   const { currentOrganization } = useOrganization();
+
+  // Fallback authentication check - if auth context user is missing, check localStorage
+  const isUserAuthenticated = isAuthenticated || (() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return !!storedUser;
+    } catch {
+      return false;
+    }
+  })();
   const queryClient = useQueryClient();
   const [currentVenue, setCurrentVenue] = useState<Venue | null>(null);
   const [tables, setTables] = useState<Table[]>([]);
@@ -56,11 +67,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   } = useQuery({
     queryKey: ['venues', 'organization', currentOrganization?.id],
     queryFn: async () => {
-      if (!isAuthenticated || !currentOrganization) return [];
-      console.log('Fetching venues for organization:', currentOrganization.id);
+      if (!isUserAuthenticated || !currentOrganization) return [];
       return await VenueService.getAllForOrganization(currentOrganization.id);
     },
-    enabled: !!isAuthenticated && !!currentOrganization,
+    enabled: !!isUserAuthenticated && !!currentOrganization,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1
@@ -68,7 +78,7 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
 
   // Fetch venues for an organization - now just a wrapper around the React Query refetch
   const fetchVenuesForOrganization = useCallback(async (organizationId: string) => {
-    if (!isAuthenticated) return [];
+    if (!isUserAuthenticated) return [];
 
     // If the organization ID matches the current one, use the refetch function
     if (currentOrganization?.id === organizationId) {
@@ -77,7 +87,6 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
 
     // Otherwise, manually fetch and update the cache
     try {
-      console.log('Fetching venues for organization:', organizationId);
       const data = await VenueService.getAllForOrganization(organizationId);
       queryClient.setQueryData(['venues', 'organization', organizationId], data);
       return data;
@@ -87,11 +96,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return [];
     }
-  }, [isAuthenticated, currentOrganization, queryClient, refetchVenues]);
+  }, [isUserAuthenticated, currentOrganization, queryClient, refetchVenues]);
 
   // Fetch venue by ID
   const fetchVenueById = useCallback(async (id: string): Promise<Venue | null> => {
-    if (!isAuthenticated) return null;
+    if (!isUserAuthenticated) return null;
 
     setError(null);
 
@@ -115,11 +124,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return null;
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isUserAuthenticated, queryClient]);
 
   // Create a new venue
   const createVenue = useCallback(async (data: CreateVenueDto): Promise<Venue | null> => {
-    if (!isAuthenticated) return null;
+    if (!isUserAuthenticated) return null;
 
     setError(null);
 
@@ -138,11 +147,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return null;
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isUserAuthenticated, queryClient]);
 
   // Update a venue
   const updateVenue = useCallback(async (id: string, data: UpdateVenueDto): Promise<Venue | null> => {
-    if (!isAuthenticated) return null;
+    if (!isUserAuthenticated) return null;
 
     setError(null);
 
@@ -170,11 +179,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return null;
     }
-  }, [isAuthenticated, currentVenue, queryClient]);
+  }, [isUserAuthenticated, currentVenue, queryClient]);
 
   // Delete a venue
   const deleteVenue = useCallback(async (id: string): Promise<boolean> => {
-    if (!isAuthenticated) return false;
+    if (!isUserAuthenticated) return false;
 
     setError(null);
 
@@ -203,7 +212,7 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return false;
     }
-  }, [isAuthenticated, currentVenue, queryClient]);
+  }, [isUserAuthenticated, currentVenue, queryClient]);
 
   // Select a venue
   const selectVenue = useCallback((venue: Venue) => {
@@ -212,18 +221,16 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
 
   // Fetch tables for a venue using React Query patterns
   const fetchTablesForVenue = useCallback(async (venueId: string) => {
-    if (!isAuthenticated) return [];
+    if (!isUserAuthenticated) return [];
 
     // Check if we already have data in the cache
     const cachedTables = queryClient.getQueryData<Table[]>(['tables', 'venue', venueId]);
     if (cachedTables) {
-      console.log('Using cached tables data for venue:', venueId);
       setTables(cachedTables);
       return cachedTables;
     }
 
     try {
-      console.log('Fetching tables for venue:', venueId);
       const data = await VenueService.getAllTablesForVenue(venueId);
       setTables(data);
       // Update the cache
@@ -235,11 +242,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return [];
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isUserAuthenticated, queryClient]);
 
   // Create a new table
   const createTable = useCallback(async (data: CreateTableDto): Promise<Table | null> => {
-    if (!isAuthenticated) return null;
+    if (!isUserAuthenticated) return null;
 
     setError(null);
 
@@ -261,11 +268,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return null;
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isUserAuthenticated, queryClient]);
 
   // Update a table
   const updateTable = useCallback(async (id: string, data: UpdateTableDto): Promise<Table | null> => {
-    if (!isAuthenticated) return null;
+    if (!isUserAuthenticated) return null;
 
     setError(null);
 
@@ -289,11 +296,11 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return null;
     }
-  }, [isAuthenticated, queryClient]);
+  }, [isUserAuthenticated, queryClient]);
 
   // Delete a table
   const deleteTable = useCallback(async (id: string): Promise<boolean> => {
-    if (!isAuthenticated) return false;
+    if (!isUserAuthenticated) return false;
 
     setError(null);
 
@@ -319,7 +326,7 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       toast.error(errorMessage);
       return false;
     }
-  }, [isAuthenticated, tables, queryClient]);
+  }, [isUserAuthenticated, tables, queryClient]);
 
   // No need for the useEffect to load venues - React Query handles this automatically
 

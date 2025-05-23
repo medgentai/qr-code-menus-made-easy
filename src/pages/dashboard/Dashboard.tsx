@@ -93,7 +93,7 @@ const sampleData = {
 };
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { state: { user } } = useAuth();
   const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
   const [activeTab, setActiveTab] = useState('overview');
   const [draggingWidget, setDraggingWidget] = useState<string | null>(null);

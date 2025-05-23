@@ -89,7 +89,8 @@ type FormValues = z.infer<typeof updateOrganizationSchema>;
 const OrganizationSettings = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { state: authState } = useAuth();
+  const { user } = authState;
   const {
     currentOrganization,
     currentOrganizationDetails,
@@ -142,9 +143,36 @@ const OrganizationSettings = () => {
 
   // Check if current user is the owner
   useEffect(() => {
-    if (currentOrganizationDetails && user) {
-      setIsOwner(currentOrganizationDetails.owner.id === user.id);
-    }
+    const checkOwnership = () => {
+      // Try to get user from auth context first, then fallback to localStorage
+      let currentUser = user;
+
+      // If auth context user is missing, try to get from localStorage
+      if (!currentUser) {
+        try {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            currentUser = JSON.parse(storedUser);
+          }
+        } catch (error) {
+          // Silently handle localStorage parsing errors
+        }
+      }
+
+      if (!currentOrganizationDetails || !currentUser || !currentOrganizationDetails.owner) {
+        setIsOwner(false);
+        return;
+      }
+
+      // Convert both IDs to strings for comparison (handles string vs number issues)
+      const userId = String(currentUser.id);
+      const ownerId = String(currentOrganizationDetails.owner.id);
+      const isUserOwner = userId === ownerId;
+
+      setIsOwner(isUserOwner);
+    };
+
+    checkOwnership();
   }, [currentOrganizationDetails, user]);
 
   // Handle form submission

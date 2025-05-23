@@ -18,7 +18,7 @@ const Contact = () => {
     message: '',
     helpType: 'general'
   });
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormState(prev => ({
@@ -26,17 +26,16 @@ const Contact = () => {
       [name]: value
     }));
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formState);
-    
+
     // Show success toast
     toast({
       title: "Message Sent!",
       description: "We've received your message and will get back to you shortly.",
     });
-    
+
     // Reset form
     setFormState({
       name: '',
@@ -47,11 +46,11 @@ const Contact = () => {
       helpType: 'general'
     });
   };
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -66,7 +65,7 @@ const Contact = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Contact Options Section */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -85,7 +84,7 @@ const Contact = () => {
                   support@scanserve.com
                 </a>
               </div>
-              
+
               <div className="feature-card text-center">
                 <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
                   <Phone className="h-8 w-8 text-orange-500" />
@@ -100,7 +99,7 @@ const Contact = () => {
                   1-800-555-1234
                 </a>
               </div>
-              
+
               <div className="feature-card text-center">
                 <div className="mx-auto mb-4 w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
                   <ClipboardCheck className="h-8 w-8 text-orange-500" />
@@ -116,23 +115,23 @@ const Contact = () => {
                 </a>
               </div>
             </div>
-            
+
             {/* Contact Form */}
             <div className="max-w-3xl mx-auto">
               <div className="bg-sky-50 rounded-xl p-8 shadow-sm" id="contactForm">
                 <h2 className="text-2xl font-bold text-navy-800 mb-6 text-center">
                   Send Us a Message
                 </h2>
-                
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                         Your Name *
                       </label>
-                      <Input 
-                        id="name" 
-                        name="name" 
+                      <Input
+                        id="name"
+                        name="name"
                         value={formState.name}
                         onChange={handleChange}
                         placeholder="John Doe"
@@ -140,14 +139,14 @@ const Contact = () => {
                         className="w-full"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                         Email Address *
                       </label>
-                      <Input 
-                        id="email" 
-                        name="email" 
+                      <Input
+                        id="email"
+                        name="email"
                         type="email"
                         value={formState.email}
                         onChange={handleChange}
@@ -156,28 +155,28 @@ const Contact = () => {
                         className="w-full"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                         Phone Number
                       </label>
-                      <Input 
-                        id="phone" 
-                        name="phone" 
+                      <Input
+                        id="phone"
+                        name="phone"
                         value={formState.phone}
                         onChange={handleChange}
                         placeholder="(123) 456-7890"
                         className="w-full"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
                         Business Name
                       </label>
-                      <Input 
-                        id="businessName" 
-                        name="businessName" 
+                      <Input
+                        id="businessName"
+                        name="businessName"
                         value={formState.businessName}
                         onChange={handleChange}
                         placeholder="Your Restaurant Name"
@@ -185,7 +184,7 @@ const Contact = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="helpType" className="block text-sm font-medium text-gray-700">
                       How can we help you? *
@@ -205,14 +204,14 @@ const Contact = () => {
                       <option value="partnership">Partnership Opportunity</option>
                     </select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label htmlFor="message" className="block text-sm font-medium text-gray-700">
                       Message *
                     </label>
-                    <Textarea 
-                      id="message" 
-                      name="message" 
+                    <Textarea
+                      id="message"
+                      name="message"
                       value={formState.message}
                       onChange={handleChange}
                       placeholder="Tell us how we can help you..."
@@ -220,8 +219,8 @@ const Contact = () => {
                       className="min-h-[120px] w-full"
                     />
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     type="submit"
                     className="bg-orange-500 hover:bg-orange-600 text-white w-full"
                     size="lg"
@@ -233,7 +232,7 @@ const Contact = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Office Location */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -241,7 +240,7 @@ const Contact = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Our Office
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div>
                   <div className="bg-white p-8 rounded-xl shadow-sm">
@@ -270,11 +269,11 @@ const Contact = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="rounded-xl overflow-hidden shadow-sm">
-                  <img 
-                    src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop" 
-                    alt="ScanServe office" 
+                  <img
+                    src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop"
+                    alt="ScanServe office"
                     className="w-full h-auto"
                   />
                 </div>
@@ -283,7 +282,7 @@ const Contact = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

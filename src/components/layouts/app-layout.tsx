@@ -39,7 +39,7 @@ interface AppLayoutProps {
 }
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { state: { user }, logout } = useAuth();
   const {
     organizations,
     currentOrganization,

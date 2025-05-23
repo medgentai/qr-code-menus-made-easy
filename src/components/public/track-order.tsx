@@ -58,7 +58,6 @@ const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
       const order = await publicOrderService.getOrderStatus(orderNumber);
       setOrderDetails(order);
     } catch (error) {
-      console.error('Error tracking order:', error);
       setError('Order not found. Please check your order number and try again.');
       setOrderDetails(null);
     } finally {
@@ -88,7 +87,6 @@ const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
         setOrderDetails(null);
       }
     } catch (error) {
-      console.error('Error tracking order:', error);
       setError('No orders found. Please check your phone number and try again.');
       setOrderDetails(null);
     } finally {

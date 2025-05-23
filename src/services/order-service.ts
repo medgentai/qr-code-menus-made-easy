@@ -261,14 +261,8 @@ const OrderService = {
     try {
       const response = await api.get<Order>(`/orders/${id}`);
 
-      // Verify that table data is included if tableId exists
-      if (response.data && response.data.tableId && !response.data.table) {
-        console.warn('Order has tableId but no table data, this should not happen');
-      }
-
       return response.data;
     } catch (error) {
-      console.error('Error in OrderService.getById:', error);
       throw error;
     }
   },

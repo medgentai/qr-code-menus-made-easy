@@ -63,7 +63,7 @@ type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 type NotificationFormValues = z.infer<typeof notificationFormSchema>;
 
 const Profile = () => {
-  const { user, updateUser, logout } = useAuth();
+  const { state: { user }, updateUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('general');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);

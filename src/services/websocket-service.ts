@@ -98,7 +98,6 @@ class WebSocketService {
   // Join a room to receive specific events
   joinRoom(room: string, id: string) {
     if (!id) {
-      console.warn('Attempted to join room with empty ID');
       return;
     }
 
@@ -107,7 +106,6 @@ class WebSocketService {
 
     // Skip if already joined this room
     if (this.joinedRooms.has(roomKey)) {
-      console.log(`Already joined room: ${roomKey}`);
       return;
     }
 

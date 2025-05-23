@@ -42,7 +42,7 @@ interface OrganizationProviderProps {
 const CURRENT_ORGANIZATION_KEY = 'currentOrganization';
 
 export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { state: { isAuthenticated } } = useAuth();
   const navigate = useNavigate();
 
   // State
@@ -79,12 +79,10 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     setError(null);
 
     try {
-      console.log('Fetching details for organization:', id);
       const data = await OrganizationService.getDetails(id);
       setCurrentOrganizationDetails(data);
       return data;
     } catch (err) {
-      console.error('Error fetching organization details:', err);
       setError('Failed to fetch organization details');
       toast.error('Failed to fetch organization details');
       return null;
@@ -125,7 +123,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         localStorage.setItem(CURRENT_ORGANIZATION_KEY, data[0].id);
       }
     } catch (err) {
-      console.error('Error fetching organizations:', err);
       setError('Failed to fetch organizations');
       toast.error('Failed to fetch organizations');
     } finally {
@@ -158,7 +155,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
           setCurrentOrganizationDetails(details);
           setLastFetchedDetailsId(newOrg.id);
         } catch (detailsErr) {
-          console.error('Error pre-fetching organization details:', detailsErr);
           // Continue even if details fetch fails
         }
 
@@ -169,7 +165,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       toast.success('Organization created successfully');
       return newOrg;
     } catch (err) {
-      console.error('Error creating organization:', err);
       setError('Failed to create organization');
       toast.error('Failed to create organization');
       return null;
@@ -201,7 +196,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       toast.success('Organization updated successfully');
       return updatedOrg;
     } catch (err) {
-      console.error('Error updating organization:', err);
       setError('Failed to update organization');
       toast.error('Failed to update organization');
       return null;
@@ -241,7 +235,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       toast.success('Organization deleted successfully');
       return true;
     } catch (err) {
-      console.error('Error deleting organization:', err);
       setError('Failed to delete organization');
       toast.error('Failed to delete organization');
       return false;
@@ -270,7 +263,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
       return true;
     } catch (err) {
-      console.error('Error adding member:', err);
       setError('Failed to add member');
       toast.error('Failed to add member');
       return false;
@@ -301,7 +293,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
       return true;
     } catch (err) {
-      console.error('Error updating member role:', err);
       setError('Failed to update member role');
       toast.error('Failed to update member role');
       return false;
@@ -328,7 +319,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
       return true;
     } catch (err) {
-      console.error('Error removing member:', err);
       setError('Failed to remove member');
       toast.error('Failed to remove member');
       return false;
@@ -368,7 +358,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       toast.success('Left organization successfully');
       return true;
     } catch (err) {
-      console.error('Error leaving organization:', err);
       setError('Failed to leave organization');
       toast.error('Failed to leave organization');
       return false;
@@ -395,7 +384,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     if (currentOrganization && isAuthenticated) {
       // Only fetch if we don't already have details for this organization
       if (!currentOrganizationDetails || currentOrganizationDetails.id !== currentOrganization.id) {
-        console.log('Organization changed, fetching details for:', currentOrganization.id);
         fetchOrganizationDetails(currentOrganization.id);
       }
     }

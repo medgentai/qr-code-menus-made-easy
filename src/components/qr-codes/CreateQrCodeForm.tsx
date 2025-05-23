@@ -111,7 +111,6 @@ const CreateQrCodeForm: React.FC<CreateQrCodeFormProps> = ({
         onSuccess(result.id);
       }
     } catch (error) {
-      console.error('Error creating QR code:', error);
       toast.error('Failed to create QR code');
     } finally {
       setIsSubmitting(false);
