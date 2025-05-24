@@ -20,7 +20,7 @@ import { useOrder } from '@/hooks/useOrder';
 import { CreateOrderDto, CreateOrderItemDto, OrderStatus, UpdateOrderDto, Order } from '@/services/order-service';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { orderKeys } from '@/hooks/useOrderQuery';
 
 // Form schema
@@ -353,7 +353,7 @@ const OrderEdit: React.FC = () => {
       console.log('Update order response:', updatedOrder);
 
       if (updatedOrder) {
-        toast.success('Order updated successfully');
+        // Toast is already handled by the React Query mutation success callback
         if (venueId) {
           navigate(`/organizations/${organizationId}/venues/${venueId}/orders/${orderId}`);
         } else {

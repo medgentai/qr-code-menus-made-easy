@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { refreshAccessToken } from '@/lib/api';
 import { useAuth } from '@/contexts/auth-context';
+import { useRouteType } from '@/hooks/useRouteType';
 
 /**
  * TokenRefreshManager is a component that handles token refresh on app initialization
@@ -10,10 +11,18 @@ import { useAuth } from '@/contexts/auth-context';
  */
 const TokenRefreshManager: React.FC = () => {
   const { state } = useAuth();
+  const { isPublic } = useRouteType();
   const [isInitialRefreshDone, setIsInitialRefreshDone] = useState(false);
 
   // Refresh token on mount and set up periodic refresh
   useEffect(() => {
+    // Check if we're on a public route - if so, skip token refresh
+    if (isPublic) {
+      // For public routes, mark initial refresh as done and don't set up periodic refresh
+      setIsInitialRefreshDone(true);
+      return;
+    }
+
     // Function to refresh the token
     const refreshToken = async () => {
       try {
@@ -47,7 +56,7 @@ const TokenRefreshManager: React.FC = () => {
         clearInterval(refreshInterval);
       };
     }
-  }, [state.user, state.sessionId, state.accessToken, isInitialRefreshDone]);
+  }, [state.user, state.sessionId, state.accessToken, isInitialRefreshDone, isPublic]);
 
   // This component doesn't render anything
   return null;

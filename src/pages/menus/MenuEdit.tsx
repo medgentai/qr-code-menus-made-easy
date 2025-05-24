@@ -15,7 +15,7 @@ import { useMenu } from '@/contexts/menu-context';
 import { useOrganization } from '@/contexts/organization-context';
 import { UpdateMenuDto } from '@/services/menu-service';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 // Form schema

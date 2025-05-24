@@ -16,7 +16,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 // Form validation schema
 const registerSchema = z.object({

@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api, API_BASE_URL, API_PREFIX } from '@/lib/api';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
+import { isPublicRoute } from '@/config/routes';
 
 // Declare global variables for TypeScript
 declare global {
@@ -104,6 +106,8 @@ const getCookie = (name: string): string | null => {
 };
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const location = useLocation();
+
   // Initialize state from cookies and memory
   const [state, setState] = useState<AuthState>(() => {
     // Access token should only be in memory, not localStorage
@@ -150,9 +154,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, 0);
     }
 
-    // Consider the user authenticated if we have both user data and a session ID
-    // OR if we just have user data (we'll try to refresh the token)
-    const initiallyAuthenticated = !!(user && (sessionId || true));
+    // Consider the user authenticated if we have user data
+    // We'll validate the session and refresh tokens as needed
+    const initiallyAuthenticated = !!user;
 
     return {
       user,
@@ -168,6 +172,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Check if the user is authenticated on mount
   useEffect(() => {
     const validateSession = async () => {
+      // Check if we're on a public route - if so, skip session validation
+      const isPublic = isPublicRoute(location.pathname);
+
+      if (isPublic) {
+        // For public routes, just set loading to false and don't validate session
+        setState(prev => ({ ...prev, isLoading: false }));
+        return;
+      }
+
       console.log('Validating session...');
 
       // Check for access token, session ID, and user data
@@ -182,10 +195,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isAuthenticated: state.isAuthenticated
       });
 
-      // Always try to refresh the token on page load
-      // This ensures we have a valid token for API requests
-      if (!accessToken) {
-        await refreshSession();
+      // If we have user data but no access token, try to refresh
+      if (user && !accessToken) {
+        console.log('🔄 User data found but no access token, attempting refresh...');
+        const refreshed = await refreshSession();
+        if (refreshed) {
+          console.log('✅ Token refresh successful - user should stay logged in');
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            isAuthenticated: true
+          }));
+          return;
+        } else {
+          console.log('❌ Token refresh failed, but keeping user authenticated');
+          // Keep user authenticated but set loading to false
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            isAuthenticated: true // Keep authenticated if we have user data
+          }));
+          return;
+        }
       }
 
       // Case 1: We have both access token and session ID - validate with /auth/me
@@ -209,8 +240,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Try to refresh the token if validation fails
             const refreshed = await refreshSession();
             if (!refreshed) {
-              // If refresh fails, clear auth state
-              clearAuthState();
+              // If refresh fails but we have user data, don't clear auth state
+              // Just set loading to false and let the API handle token refresh
+              setState(prev => ({
+                ...prev,
+                isLoading: false,
+                // Keep authenticated if we have user data
+                isAuthenticated: !!user
+              }));
 
               // Don't show error messages for session validation failures
               // This prevents confusing new users
@@ -229,7 +266,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   isLoading: false,
                 }));
               } catch (retryError) {
-                clearAuthState();
+                // If retry fails, don't clear auth state if we have user data
+                setState(prev => ({
+                  ...prev,
+                  isLoading: false,
+                  isAuthenticated: !!user
+                }));
               }
             }
           } else if (error.statusCode >= 500) {
@@ -253,14 +295,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
       // Case 3: We don't have user data, token, or session ID
+      else if (!user) {
+        // Only set unauthenticated if we truly have no user data
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          isAuthenticated: false
+        }));
+      }
+      // Case 4: We have user data and access token - user is authenticated
       else {
-        clearAuthState();
-        setState(prev => ({ ...prev, isLoading: false }));
+        console.log('✅ User has data and access token - keeping authenticated');
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          isAuthenticated: true
+        }));
       }
     };
 
     validateSession();
-  }, []);
+  }, []); // Only run once on mount
 
   // Save auth state to local storage (user only)
   const saveAuthState = (
@@ -718,11 +773,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         toast.error('Server error. Please try again later.');
       }
 
-      // Clear auth state on any refresh error
-      clearAuthState();
+      // Only clear auth state and redirect if we don't have user data
+      // This prevents losing authentication on temporary network issues
+      const hasUserData = state.user || localStorage.getItem(USER_KEY);
 
-      // Redirect to login page
-      window.location.href = '/login';
+      if (!hasUserData) {
+        // Clear auth state only if we have no user data
+        clearAuthState();
+
+        // Only redirect to login if we're not on a public route
+        const isPublic = isPublicRoute(location.pathname);
+
+        if (!isPublic) {
+          // Redirect to login page only for protected routes
+          window.location.href = '/login';
+        }
+      } else {
+        // If we have user data but refresh failed, just set loading to false
+        // The user can continue using the app and API will handle token refresh
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          // Keep the user authenticated if we have user data
+          isAuthenticated: true
+        }));
+      }
 
       return false;
     }
@@ -760,6 +835,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+
 
 // Custom hook to use the auth context
 export const useAuth = (): AuthContextType => {

@@ -4,11 +4,10 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ArrowRight, CheckCircle } from 'lucide-react';
 
 const GetStarted = () => {
-  const { toast } = useToast();
   const [formState, setFormState] = useState({
     firstName: '',
     lastName: '',
@@ -30,8 +29,7 @@ const GetStarted = () => {
     e.preventDefault();
 
     // Show success toast
-    toast({
-      title: "Request Received!",
+    toast.success("Request Received!", {
       description: "Thank you for booking a demo with ScanServe! We'll contact you shortly.",
     });
 

@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { qrCodeService } from '@/services/qrCodeService';
 import QrCodeList from '@/components/qr-codes/QrCodeList';
 import {

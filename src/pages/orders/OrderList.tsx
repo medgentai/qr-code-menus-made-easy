@@ -75,7 +75,7 @@ import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrder } from '@/hooks/useOrder';
 import OrderService, { Order, OrderStatus, FilterOrdersDto } from '@/services/order-service';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import {
   useInfiniteFilteredOrdersQuery,
   useUpdateOrderStatusMutation,

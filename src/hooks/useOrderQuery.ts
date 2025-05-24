@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import OrderService, {
   Order,
   OrderStatus,
@@ -527,9 +527,9 @@ export const useUpdateOrderStatusMutation = () => {
         }
 
         // Update in organization queries if we have the organization ID
-        if (previousOrder?.table?.venue?.organizationId) {
+        if (previousOrder?.table?.venue) {
           queryClient.setQueriesData(
-            { queryKey: [...orderKeys.organization(previousOrder.table.venue.organizationId), 'infinite'] },
+            { queryKey: [...orderKeys.organization(previousOrder.table.venue.id), 'infinite'] },
             (oldData: any) => {
               if (!oldData) return oldData;
 
@@ -640,12 +640,10 @@ export const useUpdateOrderStatusMutation = () => {
                 };
               }
             );
-          }
-
-          // Update in organization queries if we have an organization ID
-          if (updatedOrder.table?.venue?.organizationId) {
-            queryClient.setQueriesData(
-              { queryKey: [...orderKeys.organization(updatedOrder.table.venue.organizationId), 'infinite'] },
+          }        // Update in organization queries if we have an organization ID
+        if (updatedOrder.table?.venue) {
+          queryClient.setQueriesData(
+            { queryKey: [...orderKeys.organization(updatedOrder.table.venue.id), 'infinite'] },
               (oldData: any) => {
                 if (!oldData) return oldData;
 

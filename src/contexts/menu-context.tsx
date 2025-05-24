@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { useOrganization } from './organization-context';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import MenuService, {

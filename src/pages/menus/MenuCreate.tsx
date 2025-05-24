@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { useMenu } from '@/contexts/menu-context';
 import { CreateMenuDto } from '@/services/menu-service';
 import { Loader2 } from 'lucide-react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 // Form schema
 const formSchema = z.object({

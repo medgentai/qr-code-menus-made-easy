@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import CreateQrCodeForm from '@/components/qr-codes/CreateQrCodeForm';
 import { useVenue } from '@/contexts/venue-context';

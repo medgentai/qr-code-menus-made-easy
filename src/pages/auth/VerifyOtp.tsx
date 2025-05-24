@@ -19,7 +19,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 // Form validation schema
 const otpSchema = z.object({

@@ -1,4 +1,4 @@
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 // Declare global variables for TypeScript
 declare global {
@@ -9,9 +9,31 @@ declare global {
 }
 
 /**
- * Base API URL from environment variables or default to localhost
+ * Get the appropriate API base URL based on the current environment
+ * This automatically handles localhost vs network IP for mobile access
  */
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const getApiBaseUrl = (): string => {
+  // If VITE_API_URL is explicitly set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // Auto-detect based on current hostname
+  const currentHost = window.location.hostname;
+
+  // If accessing via network IP, use the same IP for API
+  if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+    return `http://${currentHost}:3000`;
+  }
+
+  // Default to localhost for local development
+  return 'http://localhost:3000';
+};
+
+/**
+ * Base API URL - dynamically determined
+ */
+export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * API prefix for all endpoints

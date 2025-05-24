@@ -5,11 +5,10 @@ import Footer from '../components/Footer';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { ClipboardCheck, Phone, Settings } from 'lucide-react';
 
 const Contact = () => {
-  const { toast } = useToast();
   const [formState, setFormState] = useState({
     name: '',
     email: '',
@@ -31,8 +30,7 @@ const Contact = () => {
     e.preventDefault();
 
     // Show success toast
-    toast({
-      title: "Message Sent!",
+    toast.success("Message Sent!", {
       description: "We've received your message and will get back to you shortly.",
     });
 

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { qrCodeService, QrCode, UpdateQrCodeData } from '@/services/qrCodeService';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,26 +81,26 @@ const EditQrCodeForm: React.FC<EditQrCodeFormProps> = ({
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
-      
+
       const data: UpdateQrCodeData = {
         menuId: values.menuId,
         name: values.name,
         isActive: values.isActive,
       };
-      
+
       // Only add tableId if it's a valid table ID (not "none")
       if (values.tableId && values.tableId !== 'none') {
         data.tableId = values.tableId;
       }
-      
+
       if (values.description) {
         data.description = values.description;
       }
-      
+
       await qrCodeService.updateQrCode(qrCode.id, data);
-      
+
       toast.success('QR code updated successfully');
-      
+
       if (onSuccess) {
         onSuccess();
       }

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Clock, ArrowLeft } from 'lucide-react';
+import { Search, Clock, ArrowLeft, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { formatPrice } from '@/lib/utils';
 import { publicOrderService } from '@/services/public-order-service';
 import { OrderStatus } from '@/services/order-service';
@@ -14,6 +14,51 @@ import { OrderStatus } from '@/services/order-service';
 interface TrackOrderProps {
   onBackToMenu: () => void;
 }
+
+// Mobile Header Component for Track Order
+interface MobileHeaderProps {
+  title: string;
+  showBackButton?: boolean;
+  onBackClick?: () => void;
+  rightAction?: React.ReactNode;
+  subtitle?: string;
+}
+
+const MobileHeader: React.FC<MobileHeaderProps> = ({
+  title,
+  showBackButton = false,
+  onBackClick,
+  rightAction,
+  subtitle
+}) => (
+  <div className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {showBackButton && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBackClick}
+            className="h-9 w-9 rounded-full hover:bg-gray-100 active:scale-95 transition-all"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        )}
+        <div>
+          <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+          {subtitle && (
+            <p className="text-sm text-gray-500">{subtitle}</p>
+          )}
+        </div>
+      </div>
+      {rightAction && (
+        <div className="flex items-center">
+          {rightAction}
+        </div>
+      )}
+    </div>
+  </div>
+);
 
 const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
   const [activeTab, setActiveTab] = useState<string>('orderNumber');
@@ -94,41 +139,59 @@ const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
     }
   };
 
-  return (
-    <div className="container max-w-2xl mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={onBackToMenu}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Menu
-      </Button>
+  const handleRefresh = () => {
+    if (orderDetails) {
+      if (activeTab === 'orderNumber' && orderNumber) {
+        handleTrackByOrderNumber();
+      } else if (activeTab === 'phoneNumber' && phoneNumber) {
+        handleTrackByPhoneNumber();
+      }
+    }
+  };
 
-      <Card className="w-full flex flex-col min-h-[280px]">
-        <CardHeader>
-          <CardTitle>Track Your Order</CardTitle>
-          <CardDescription>
-            Enter your order number or phone number to check your order status
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-grow">
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16">
+      {/* Mobile Header */}
+      <MobileHeader
+        title="Track Your Order"
+        subtitle="Check your order status"
+        showBackButton={true}
+        onBackClick={onBackToMenu}
+        rightAction={
+          orderDetails ? (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="h-9 w-9 rounded-full hover:bg-gray-100"
+            >
+              <RefreshCw className={`h-5 w-5 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          ) : null
+        }
+      />
+
+      <div className="container mx-auto px-4 py-4 max-w-md">
+        {/* Search Form */}
+        <div className="bg-white rounded-xl p-4 shadow-sm mb-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="orderNumber">Order Number</TabsTrigger>
-              <TabsTrigger value="phoneNumber">Phone Number</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 rounded-full">
+              <TabsTrigger value="orderNumber" className="rounded-full">Order Number</TabsTrigger>
+              <TabsTrigger value="phoneNumber" className="rounded-full">Phone Number</TabsTrigger>
             </TabsList>
             <TabsContent value="orderNumber" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="orderNumber">Order Number</Label>
+              <div className="space-y-3">
+                <Label htmlFor="orderNumber" className="text-sm font-medium">Order Number</Label>
                 <div className="flex gap-2">
                   <Input
                     id="orderNumber"
                     placeholder="Enter your order number"
                     value={orderNumber}
                     onChange={(e) => setOrderNumber(e.target.value)}
+                    className="rounded-xl border-gray-200"
                   />
-                  <Button onClick={handleTrackByOrderNumber} disabled={isLoading}>
+                  <Button onClick={handleTrackByOrderNumber} disabled={isLoading} className="rounded-full px-6">
                     <Search className="mr-2 h-4 w-4" />
                     Track
                   </Button>
@@ -136,16 +199,17 @@ const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
               </div>
             </TabsContent>
             <TabsContent value="phoneNumber" className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="phoneNumber">Phone Number</Label>
+              <div className="space-y-3">
+                <Label htmlFor="phoneNumber" className="text-sm font-medium">Phone Number</Label>
                 <div className="flex gap-2">
                   <Input
                     id="phoneNumber"
                     placeholder="Enter your phone number"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="rounded-xl border-gray-200"
                   />
-                  <Button onClick={handleTrackByPhoneNumber} disabled={isLoading}>
+                  <Button onClick={handleTrackByPhoneNumber} disabled={isLoading} className="rounded-full px-6">
                     <Search className="mr-2 h-4 w-4" />
                     Track
                   </Button>
@@ -153,69 +217,67 @@ const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
 
-          {isLoading && (
-            <div className="text-center py-8">
-              <p>Loading order details...</p>
-            </div>
-          )}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="bg-white rounded-xl p-8 text-center shadow-sm">
+            <p className="text-gray-600">Loading order details...</p>
+          </div>
+        )}
 
-          {error && !isLoading && (
-            <div className="bg-red-50 text-red-800 p-4 rounded-lg mt-4">
-              {error}
-            </div>
-          )}
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="bg-red-50 text-red-800 p-4 rounded-xl border border-red-200">
+            {error}
+          </div>
+        )}
 
-          {orderDetails && !isLoading && (
-            <div className="mt-6 space-y-4">
-              <div className="rounded-lg border p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <div className="text-sm text-muted-foreground">Order Number</div>
-                    <div className="font-medium">{orderDetails.id.substring(0, 8).toUpperCase()}</div>
-                  </div>
-                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(orderDetails.status)}`}>
-                    {orderDetails.status}
-                  </div>
+        {/* Order Details */}
+        {orderDetails && !isLoading && (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="flex justify-between items-center mb-3">
+                <div>
+                  <div className="text-xs text-gray-500">Order Number</div>
+                  <div className="font-semibold text-lg">{orderDetails.id.substring(0, 8).toUpperCase()}</div>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
-                    Ordered: {new Date(orderDetails.createdAt).toLocaleString()}
-                  </span>
+                <div className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(orderDetails.status)}`}>
+                  {orderDetails.status}
                 </div>
               </div>
-
-              {orderDetails.items && orderDetails.items.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="font-medium">Order Summary</h3>
-                  <div className="space-y-2">
-                    {orderDetails.items.map((item: any, index: number) => (
-                      <div key={index} className="flex justify-between">
-                        <div className="flex gap-2">
-                          <span>{item.quantity}x</span>
-                          <span>{item.menuItem.name}</span>
-                        </div>
-                        <span>{formatPrice(item.totalPrice)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <Separator className="my-2" />
-                  <div className="flex justify-between font-bold">
-                    <span>Total</span>
-                    <span>{formatPrice(orderDetails.totalAmount)}</span>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  Ordered: {new Date(orderDetails.createdAt).toLocaleString()}
+                </span>
+              </div>
             </div>
-          )}
-        </CardContent>
-        <CardFooter className="mt-auto">
-          <Button variant="outline" className="w-full" onClick={onBackToMenu}>
-            Return to Menu
-          </Button>
-        </CardFooter>
-      </Card>
+
+            {orderDetails.items && orderDetails.items.length > 0 && (
+              <div className="bg-white rounded-xl p-4 shadow-sm">
+                <h3 className="font-semibold mb-3">Order Summary</h3>
+                <div className="space-y-3">
+                  {orderDetails.items.map((item: any, index: number) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <div className="flex gap-2">
+                        <span className="font-medium">{item.quantity}x</span>
+                        <span className="text-gray-900">{item.menuItem.name}</span>
+                      </div>
+                      <span className="font-semibold">{formatPrice(item.totalPrice)}</span>
+                    </div>
+                  ))}
+                </div>
+                <Separator className="my-3" />
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total</span>
+                  <span className="text-primary">{formatPrice(orderDetails.totalAmount)}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

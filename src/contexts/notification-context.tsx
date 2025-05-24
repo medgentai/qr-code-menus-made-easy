@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { useOrganization } from './organization-context';
 import { useVenue } from './venue-context';
 import { useAuth } from './auth-context';
@@ -164,7 +164,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
 
     // Show toast notification
-    toast(`New order received: ${event.message}`, {
+    toast.info(`New order received: ${event.message}`, {
       description: new Date(event.timestamp).toLocaleTimeString(),
     });
 
@@ -212,7 +212,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     notifiedOrderIds.add(statusChangeKey);
 
     // Show toast notification
-    toast(event.message, {
+    toast.info(event.message, {
       description: new Date(event.timestamp).toLocaleTimeString(),
     });
 
@@ -248,7 +248,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     notifiedOrderIds.add(itemStatusChangeKey);
 
     // Show toast notification
-    toast(event.message, {
+    toast.info(event.message, {
       description: new Date(event.timestamp).toLocaleTimeString(),
     });
 

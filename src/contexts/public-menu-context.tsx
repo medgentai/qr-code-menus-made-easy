@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import PublicMenuService, { PublicMenu } from '@/services/public-menu-service';
 
 // Public menu context interface
@@ -39,7 +39,7 @@ export const PublicMenuProvider: React.FC<PublicMenuProviderProps> = ({ children
     try {
       const data = await PublicMenuService.getMenuByOrganizationAndTable(slug, tableId, venueId);
       setMenu(data);
-      
+
       // Set the first category as active if there are categories
       if (data.categories && data.categories.length > 0) {
         setActiveCategory(data.categories[0].id);
@@ -60,7 +60,7 @@ export const PublicMenuProvider: React.FC<PublicMenuProviderProps> = ({ children
     try {
       const data = await PublicMenuService.getMenuById(id);
       setMenu(data);
-      
+
       // Set the first category as active if there are categories
       if (data.categories && data.categories.length > 0) {
         setActiveCategory(data.categories[0].id);

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { qrCodeService, CreateQrCodeData } from '@/services/qrCodeService';
 import { useNavigate } from 'react-router-dom';
 

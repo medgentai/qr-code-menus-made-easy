@@ -10,7 +10,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { ChevronLeft, Edit, Trash2, BarChart, ArrowLeft } from 'lucide-react';
 import QrCodeDisplay from '@/components/qr-codes/QrCodeDisplay';
 import { qrCodeService } from '@/services/qrCodeService';

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import {
@@ -283,8 +283,7 @@ export const useOrderContext = (): OrderContextType => {
       const result = await createOrderMutation.mutateAsync(data);
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to create order';
-      toast.error(errorMessage);
+      // Don't show error toast here since the mutation already handles it
       return null;
     }
   }, [createOrderMutation]);
@@ -296,11 +295,10 @@ export const useOrderContext = (): OrderContextType => {
       // The mutation already has optimistic updates and proper error handling
       const result = await updateOrderMutation.mutateAsync({ id, data });
 
-      // The mutation's onSuccess handler will update the cache
+      // The mutation's onSuccess handler will update the cache and show success toast
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update order';
-      toast.error(errorMessage);
+      // Don't show error toast here since the mutation already handles it
       return null;
     }
   }, [updateOrderMutation]);
@@ -311,8 +309,7 @@ export const useOrderContext = (): OrderContextType => {
       const result = await updateOrderStatusMutation.mutateAsync({ id, status });
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update order status';
-      toast.error(errorMessage);
+      // Don't show error toast here since the mutation already handles it
       return null;
     }
   }, [updateOrderStatusMutation]);
@@ -330,8 +327,7 @@ export const useOrderContext = (): OrderContextType => {
       // The mutation's onSuccess handler will handle cache updates
       return result;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update order item';
-      toast.error(errorMessage);
+      // Don't show error toast here since the mutation already handles it
       return null;
     }
   }, [updateOrderItemMutation]);
@@ -345,8 +341,7 @@ export const useOrderContext = (): OrderContextType => {
       }
       return true;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to delete order';
-      toast.error(errorMessage);
+      // Don't show error toast here since the mutation already handles it
       return false;
     }
   }, [deleteOrderMutation, currentOrderId]);

@@ -18,7 +18,7 @@ import { CreateOrderDto, CreateOrderItemDto, OrderStatus } from '@/services/orde
 import { useCreateOrderMutation } from '@/hooks/useOrderQuery';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 // Form schema
 const orderFormSchema = z.object({

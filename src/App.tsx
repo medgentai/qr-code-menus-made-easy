@@ -100,9 +100,9 @@ const queryClient = new QueryClient({
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TokenRefreshManager />
-        <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <TokenRefreshManager />
           <OrganizationProvider>
             <VenueProvider>
               <MenuProvider>
@@ -450,8 +450,8 @@ const App = () => (
               </MenuProvider>
             </VenueProvider>
           </OrganizationProvider>
-        </BrowserRouter>
-      </AuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   </ErrorBoundary>
 );
