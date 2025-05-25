@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { OrderStatus, OrderItemStatus } from './order-service';
+import { API_BASE_URL } from '@/lib/api';
 
 // WebSocket event interfaces
 export interface OrderEvent {
@@ -28,24 +29,58 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 2000; // 2 seconds
+  private currentToken: string | null = null;
 
-  // Initialize the socket connection
-  connect() {
+  // Initialize the socket connection with optional authentication token
+  connect(token?: string) {
     if (this.socket) {
-      return;
+      // If we already have a socket but the token changed, disconnect and reconnect
+      if (token && token !== this.currentToken) {
+        console.log('Token changed, reconnecting WebSocket...');
+        this.disconnect();
+      } else {
+        return;
+      }
     }
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    this.currentToken = token || null;
 
-    this.socket = io(`${API_URL}/orders`, {
+    // Prepare connection options
+    const connectionOptions: any = {
       transports: ['websocket'],
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: this.reconnectDelay,
-    });
+    };
+
+    // Add authentication if token is provided
+    if (this.currentToken) {
+      connectionOptions.auth = {
+        token: this.currentToken
+      };
+      // Also add as header for compatibility
+      connectionOptions.extraHeaders = {
+        'Authorization': `Bearer ${this.currentToken}`
+      };
+    }
+
+    this.socket = io(`${API_BASE_URL}/orders`, connectionOptions);
 
     this.setupEventListeners();
+  }
+
+  // Update authentication token for existing connection
+  updateToken(token: string | null) {
+    if (token !== this.currentToken) {
+      this.currentToken = token;
+
+      // If we have an active connection, reconnect with new token
+      if (this.socket && this.connected) {
+        this.disconnect();
+        this.connect(token);
+      }
+    }
   }
 
   // Setup socket event listeners
@@ -53,22 +88,18 @@ class WebSocketService {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
-      console.log('WebSocket connected');
       this.connected = true;
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('disconnect', (reason) => {
-      console.log(`WebSocket disconnected: ${reason}`);
+    this.socket.on('disconnect', () => {
       this.connected = false;
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
+    this.socket.on('connect_error', () => {
       this.reconnectAttempts++;
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('Max reconnect attempts reached, giving up');
         this.socket?.disconnect();
       }
     });
@@ -96,7 +127,7 @@ class WebSocketService {
   private joinedRooms = new Set<string>();
 
   // Join a room to receive specific events
-  joinRoom(room: string, id: string) {
+  joinRoom(room: string, id: string, token?: string) {
     if (!id) {
       return;
     }
@@ -109,9 +140,9 @@ class WebSocketService {
       return;
     }
 
-    // Connect if not already connected
+    // Connect if not already connected, with token if provided
     if (!this.socket || !this.connected) {
-      this.connect();
+      this.connect(token || this.currentToken);
     }
 
     // Wait for connection before joining
@@ -135,13 +166,11 @@ class WebSocketService {
           this.socket.emit('joinOrganizationRoom', id);
           break;
         default:
-          console.error(`Unknown room type: ${room}`);
           return; // Don't mark as joined if room type is unknown
       }
 
       // Mark as joined
       this.joinedRooms.add(roomKey);
-      console.log(`Joined room: ${roomKey}`);
     };
 
     joinRoomWhenConnected();
@@ -158,7 +187,6 @@ class WebSocketService {
     if (this.joinedRooms.has(roomKey)) {
       this.socket.emit('leaveRoom', roomKey);
       this.joinedRooms.delete(roomKey);
-      console.log(`Left room: ${roomKey}`);
     }
   }
 
@@ -192,7 +220,17 @@ class WebSocketService {
     this.connected = false;
     this.listeners.clear();
     this.joinedRooms.clear(); // Clear joined rooms on disconnect
-    console.log('WebSocket disconnected and rooms cleared');
+    this.currentToken = null; // Clear the current token
+  }
+
+  // Get connection status
+  isConnected(): boolean {
+    return this.connected;
+  }
+
+  // Get current token
+  getCurrentToken(): string | null {
+    return this.currentToken;
   }
 }
 

@@ -72,7 +72,7 @@ const parseStoredNotifiedOrderIds = (storedIds: string | null): Set<string> => {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const { currentOrganization } = useOrganization();
   const { currentVenue } = useVenue();
-  const { isAuthenticated } = useAuth();
+  const { state: { isAuthenticated, accessToken } } = useAuth();
 
   // State for notifications from API
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -272,10 +272,22 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Connect to WebSocket and join rooms when organization or venue changes
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      // Disconnect WebSocket if not authenticated
+      webSocketService.disconnect();
+      return;
+    }
 
-    // Connect to WebSocket - only once
-    webSocketService.connect();
+    // Use both auth state token and window token for maximum compatibility
+    const currentAccessToken = accessToken || (window as any).accessToken || null;
+
+    // Connect to WebSocket with authentication token
+    webSocketService.connect(currentAccessToken);
+
+    // Update token if it changes
+    if (currentAccessToken) {
+      webSocketService.updateToken(currentAccessToken);
+    }
 
     // Add event listeners
     webSocketService.addEventListener('newOrder', handleNewOrder);
@@ -290,6 +302,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     };
   }, [
     isAuthenticated,
+    accessToken,
     handleNewOrder,
     handleOrderStatusChange,
     handleOrderItemStatusChange
@@ -303,6 +316,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    // Use both auth state token and window token for maximum compatibility
+    const currentAccessToken = accessToken || (window as any).accessToken || null;
+
     // Keep track of joined rooms for cleanup
     const currentOrgId = currentOrganization?.id || null;
     const currentVenueId = currentVenue?.id || null;
@@ -311,14 +327,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     if (currentOrgId !== prevOrgId) {
       // Leave previous organization room if it exists
       if (prevOrgId) {
-        console.log('Leaving organization room:', prevOrgId);
         webSocketService.leaveRoom('organization', prevOrgId);
       }
 
       // Join new organization room if it exists
       if (currentOrgId) {
-        console.log('Joining organization room:', currentOrgId);
-        webSocketService.joinRoom('organization', currentOrgId);
+        webSocketService.joinRoom('organization', currentOrgId, currentAccessToken);
       }
 
       // Update the state
@@ -329,14 +343,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     if (currentVenueId !== prevVenueId) {
       // Leave previous venue room if it exists
       if (prevVenueId) {
-        console.log('Leaving venue room:', prevVenueId);
         webSocketService.leaveRoom('venue', prevVenueId);
       }
 
       // Join new venue room if it exists
       if (currentVenueId) {
-        console.log('Joining venue room:', currentVenueId);
-        webSocketService.joinRoom('venue', currentVenueId);
+        webSocketService.joinRoom('venue', currentVenueId, currentAccessToken);
       }
 
       // Update the state
@@ -352,7 +364,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         webSocketService.leaveRoom('venue', currentVenueId);
       }
     };
-  }, [isAuthenticated, currentOrganization?.id, currentVenue?.id]);
+  }, [isAuthenticated, accessToken, currentOrganization?.id, currentVenue?.id]);
+
+  // Effect to handle token updates when auth state changes
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const currentAccessToken = accessToken || (window as any).accessToken || null;
+
+    // Update WebSocket token if it has changed
+    if (currentAccessToken && webSocketService.getCurrentToken() !== currentAccessToken) {
+      webSocketService.updateToken(currentAccessToken);
+    }
+  }, [isAuthenticated, accessToken]);
 
   // Request notification permission on mount
   useEffect(() => {
