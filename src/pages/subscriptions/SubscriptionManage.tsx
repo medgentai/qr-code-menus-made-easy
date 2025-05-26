@@ -41,7 +41,7 @@ const SubscriptionManage = () => {
   const navigate = useNavigate();
   const { state: { user } } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const [activeTab, setActiveTab] = useState('overview');
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showReactivateDialog, setShowReactivateDialog] = useState(false);
@@ -61,12 +61,11 @@ const SubscriptionManage = () => {
 
   // Cancel subscription mutation
   const cancelMutation = useMutation({
-    mutationFn: (cancelAtPeriodEnd: boolean) => 
-      SubscriptionService.cancel(id!, { cancelAtPeriodEnd }),
+    mutationFn: () => SubscriptionService.cancel(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription', id] });
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-      toast.success('Subscription cancelled successfully');
+      toast.success('Subscription will be cancelled at the end of the current billing period');
       setShowCancelDialog(false);
     },
     onError: (error: any) => {
@@ -90,7 +89,7 @@ const SubscriptionManage = () => {
 
   // Update billing cycle mutation
   const updateBillingCycleMutation = useMutation({
-    mutationFn: (billingCycle: BillingCycle) => 
+    mutationFn: (billingCycle: BillingCycle) =>
       SubscriptionService.updateBillingCycle(id!, { billingCycle }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription', id] });
@@ -131,8 +130,8 @@ const SubscriptionManage = () => {
     return `${formatPrice(amount)}${cycle}`;
   };
 
-  const handleCancelSubscription = (cancelAtPeriodEnd: boolean) => {
-    cancelMutation.mutate(cancelAtPeriodEnd);
+  const handleCancelSubscription = () => {
+    cancelMutation.mutate(); // Always cancel at period end
   };
 
   const handleReactivateSubscription = () => {
@@ -288,7 +287,7 @@ const SubscriptionManage = () => {
                     Cancel Subscription
                   </Button>
                 )}
-                
+
                 {(subscription.status === 'CANCELLED' || subscription.cancelAtPeriodEnd) && (
                   <Button
                     onClick={() => setShowReactivateDialog(true)}
@@ -349,7 +348,7 @@ const SubscriptionManage = () => {
           <DialogHeader>
             <DialogTitle>Cancel Subscription</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel this subscription? You can choose to cancel immediately or at the end of the current billing period.
+              Are you sure you want to cancel this subscription? Your subscription will remain active until the end of the current billing period.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2">
@@ -358,17 +357,10 @@ const SubscriptionManage = () => {
             </Button>
             <Button
               variant="destructive"
-              onClick={() => handleCancelSubscription(true)}
+              onClick={handleCancelSubscription}
               disabled={cancelMutation.isPending}
             >
-              Cancel at Period End
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => handleCancelSubscription(false)}
-              disabled={cancelMutation.isPending}
-            >
-              Cancel Immediately
+              Cancel Subscription
             </Button>
           </DialogFooter>
         </DialogContent>

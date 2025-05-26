@@ -32,15 +32,15 @@ const SubscriptionService = {
     return response.data;
   },
 
-  // Cancel subscription
-  cancel: async (subscriptionId: string, data: { cancelAtPeriodEnd: boolean }): Promise<Subscription> => {
-    const response = await api.post<Subscription>(`/subscriptions/${subscriptionId}/cancel`, data);
+  // Cancel subscription (always cancels at period end)
+  cancel: async (subscriptionId: string): Promise<Subscription> => {
+    const response = await api.post<Subscription>(`/subscriptions/${subscriptionId}/cancel`, {});
     return response.data;
   },
 
   // Reactivate subscription
   reactivate: async (subscriptionId: string): Promise<Subscription> => {
-    const response = await api.post<Subscription>(`/subscriptions/${subscriptionId}/reactivate`);
+    const response = await api.post<Subscription>(`/subscriptions/${subscriptionId}/reactivate`, {});
     return response.data;
   },
 
