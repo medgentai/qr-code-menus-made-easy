@@ -10,7 +10,7 @@ const RestaurantUseCase = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -26,7 +26,7 @@ const RestaurantUseCase = () => {
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Button className="btn-primary text-base flex items-center gap-2 group" size="lg" asChild>
                     <Link to="/get-started">
-                      Start Free Trial 
+                      Start Free Trial
                       <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
@@ -35,15 +35,15 @@ const RestaurantUseCase = () => {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="relative">
                 <div className="absolute -top-8 -right-8 w-40 h-40 bg-orange-500/10 rounded-full blur-xl"></div>
                 <div className="absolute -bottom-12 -left-12 w-56 h-56 bg-sky-200/30 rounded-full blur-xl"></div>
-                
+
                 <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-                  <img 
-                    src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&auto=format&fit=crop" 
-                    alt="Restaurant using ScanServe" 
+                  <img
+                    src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&auto=format&fit=crop"
+                    alt="Restaurant using ScanServe"
                     className="w-full h-auto rounded-t-xl"
                   />
                   <div className="p-6">
@@ -55,7 +55,7 @@ const RestaurantUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Pain Points & Solutions */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -67,7 +67,7 @@ const RestaurantUseCase = () => {
                 See how ScanServe addresses the unique challenges faced by restaurants.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
               {[
                 {
@@ -94,14 +94,14 @@ const RestaurantUseCase = () => {
                 <div key={index} className="flex flex-col md:flex-row gap-6">
                   <div className="w-full md:w-1/3">
                     <div className="rounded-xl overflow-hidden shadow-sm">
-                      <img 
-                        src={item.image} 
-                        alt={item.challenge} 
+                      <img
+                        src={item.image}
+                        alt={item.challenge}
                         className="w-full h-auto aspect-square object-cover"
                       />
                     </div>
                   </div>
-                  
+
                   <div className="w-full md:w-2/3">
                     <h3 className="text-xl font-bold text-navy-800 mb-2">
                       {item.challenge}
@@ -116,7 +116,7 @@ const RestaurantUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Key Benefits */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -128,7 +128,7 @@ const RestaurantUseCase = () => {
                 Transform your restaurant operations and customer experience.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 {
@@ -182,7 +182,7 @@ const RestaurantUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Success Story */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -190,7 +190,7 @@ const RestaurantUseCase = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Success Story
               </h2>
-              
+
               <div className="bg-sky-50 rounded-xl overflow-hidden shadow-md">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="p-8 md:p-10">
@@ -204,9 +204,9 @@ const RestaurantUseCase = () => {
                       "ScanServe transformed our operations. Our customers appreciate the visual menu, and the ability to order at their own pace has significantly increased our average check size."
                     </p>
                     <div className="flex items-center">
-                      <img 
-                        src="https://randomuser.me/api/portraits/men/45.jpg" 
-                        alt="Michael Chen" 
+                      <img
+                        src="https://randomuser.me/api/portraits/men/45.jpg"
+                        alt="Michael Chen"
                         className="w-12 h-12 rounded-full mr-4"
                       />
                       <div>
@@ -235,11 +235,11 @@ const RestaurantUseCase = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
-                    <img 
-                      src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=600&auto=format&fit=crop" 
-                      alt="Urban Spice Restaurant" 
+                    <img
+                      src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=600&auto=format&fit=crop"
+                      alt="Urban Spice Restaurant"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -248,7 +248,7 @@ const RestaurantUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Features for Restaurants */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -260,7 +260,7 @@ const RestaurantUseCase = () => {
                 Specialized solutions to meet the unique needs of restaurant operations.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {[
                 {
@@ -300,15 +300,15 @@ const RestaurantUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Demo CTA */}
         <section className="py-24 bg-gradient-to-br from-orange-500 to-orange-600 relative overflow-hidden">
           <div className="absolute inset-0 bg-pattern opacity-10"></div>
-          
+
           {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
-          
+
           <div className="container-custom relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
@@ -317,19 +317,19 @@ const RestaurantUseCase = () => {
               <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
                 Join hundreds of restaurants already using ScanServe to modernize their operations and delight their customers.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
+                <Button
                   className="bg-white text-orange-500 hover:bg-gray-100 text-base flex items-center gap-2 group"
                   size="lg"
                   asChild
                 >
                   <Link to="/get-started">
-                    Start Your Free Trial
+                    Get Started Now
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button 
+                <Button
                   className="bg-transparent border-2 border-white text-white hover:bg-white/10 text-base"
                   size="lg"
                   asChild
@@ -337,15 +337,15 @@ const RestaurantUseCase = () => {
                   <Link to="/contact">Schedule a Demo</Link>
                 </Button>
               </div>
-              
+
               <p className="text-white/80 mt-6">
-                No credit card required. 14-day free trial.
+                Start managing your restaurant today.
               </p>
             </div>
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

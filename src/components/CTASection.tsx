@@ -51,7 +51,7 @@ CustomerAvatars.displayName = 'CustomerAvatars';
 
 // Main component with optimization using React.memo
 const CTASection = memo(() => {
-  const { isAuthenticated } = useAuth();
+  const { state: { isAuthenticated } } = useAuth();
   const navigate = useNavigate();
   return (
     <section className="py-24 relative overflow-hidden">
@@ -99,7 +99,7 @@ const CTASection = memo(() => {
 
           {!isAuthenticated && (
             <p className="text-white/80 mt-6">
-              No credit card required. 14-day free trial.
+              Start managing your venue today.
             </p>
           )}
         </div>

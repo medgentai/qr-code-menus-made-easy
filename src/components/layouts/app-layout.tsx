@@ -31,6 +31,7 @@ import {
   QrCode,
   MapPin,
   ClipboardList,
+  CreditCard,
 } from 'lucide-react';
 import { Organization } from '@/services/organization-service';
 
@@ -175,6 +176,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         </>
                       )}
                       <Link
+                        to="/subscriptions"
+                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/subscriptions') ? 'text-primary' : 'text-muted-foreground'}`}
+                        onClick={closeMobileMenu}
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        Subscriptions
+                      </Link>
+                      <Link
                         to="/profile"
                         className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`}
                         onClick={closeMobileMenu}
@@ -277,6 +286,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     <Building2 className="mr-2 h-4 w-4" />
                     Organizations
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/subscriptions')}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Subscriptions
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     Profile
@@ -313,6 +326,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 >
                   <Building2 className="h-4 w-4" />
                   Organizations
+                </Link>
+                <Link
+                  to="/subscriptions"
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/subscriptions') ? 'text-primary' : 'text-muted-foreground'}`}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  Subscriptions
                 </Link>
                 <Link
                   to="/profile"

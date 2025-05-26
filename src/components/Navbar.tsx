@@ -10,7 +10,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { state: { isAuthenticated, user }, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +20,9 @@ const Navbar = () => {
         setScrolled(false);
       }
     };
+
+    // Check initial scroll position on mount
+    handleScroll();
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);

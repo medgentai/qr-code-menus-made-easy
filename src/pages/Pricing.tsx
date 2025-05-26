@@ -11,7 +11,7 @@ const Pricing = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -21,15 +21,15 @@ const Pricing = () => {
                 Simple, <span className="text-orange-500">Transparent</span> Pricing
               </h1>
               <p className="text-xl text-gray-700 mb-8">
-                Choose the plan that's right for your business. All plans include a 14-day free trial.
+                Choose the plan that's right for your business. Start managing your venue today.
               </p>
             </div>
           </div>
         </section>
-        
+
         {/* Pricing Plans Section */}
         <PricingSection />
-        
+
         {/* FAQ Section */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -37,12 +37,12 @@ const Pricing = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Frequently Asked Questions
               </h2>
-              
+
               <div className="space-y-6">
                 {[
                   {
-                    question: "What's included in the free trial?",
-                    answer: "Our 14-day free trial includes full access to all features of the plan you select. You can create your menu, generate QR codes, and test the full order management system. No credit card is required to start the trial."
+                    question: "How do I get started?",
+                    answer: "Simply choose your plan, create your organization, and start setting up your venue. You'll have immediate access to all features and can begin creating your menu and QR codes right away."
                   },
                   {
                     question: "Can I change plans later?",
@@ -74,10 +74,10 @@ const Pricing = () => {
             </div>
           </div>
         </section>
-        
-      
+
+
       </main>
-      
+
       <Footer />
     </div>
   );

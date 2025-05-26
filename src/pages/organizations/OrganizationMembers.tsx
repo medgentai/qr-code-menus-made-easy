@@ -102,7 +102,7 @@ type UpdateRoleFormValues = z.infer<typeof updateRoleSchema>;
 const OrganizationMembers = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { state: { user } } = useAuth();
   const {
     currentOrganization,
     currentOrganizationDetails,

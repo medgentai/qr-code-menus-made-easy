@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -33,8 +34,27 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 const VenueList = () => {
   const { id: organizationId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const { currentOrganization, fetchOrganizationDetails } = useOrganization();
   const { venues, isLoading, fetchVenuesForOrganization } = useVenue();
+
+  // Check if we're coming from payment success and force refresh
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const fromPayment = searchParams.get('from') === 'payment';
+
+    if (fromPayment && organizationId) {
+      // Force refresh venue data when coming from payment
+      queryClient.invalidateQueries({
+        queryKey: ['venues', 'organization', organizationId]
+      });
+
+      // Remove the query parameter to prevent repeated refreshes
+      const newUrl = location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location, organizationId, queryClient]);
 
   // Only fetch organization details if needed - no venue fetching here
   useEffect(() => {

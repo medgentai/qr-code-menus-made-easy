@@ -8,7 +8,7 @@ import { ArrowRight, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 
 const HowItWorks = () => {
-  const { isAuthenticated } = useAuth();
+  const { state: { isAuthenticated } } = useAuth();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -278,7 +278,7 @@ const HowItWorks = () => {
                 Ready to Transform Your Menu Experience?
               </h2>
               <p className="text-xl mb-8">
-                Start your free 14-day trial today. No credit card required.
+                Start managing your venue today with our comprehensive solution.
               </p>
               {isAuthenticated ? (
                 <Button

@@ -6,7 +6,7 @@ import { ArrowRight, Scan, Smartphone, Utensils, LayoutDashboard } from 'lucide-
 import { useAuth } from '@/contexts/auth-context';
 
 const Hero = () => {
-  const { isAuthenticated } = useAuth();
+  const { state: { isAuthenticated } } = useAuth();
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-white to-sky-50 pt-24">
       {/* Background patterns and shapes */}
@@ -59,7 +59,7 @@ const Hero = () => {
             </div>
             {!isAuthenticated && (
               <div className="mt-6 text-gray-600 text-sm animate-fade-in [animation-delay:0.4s]">
-                No credit card required. Free 14-day trial.
+                Start managing your venue today.
               </div>
             )}
           </div>

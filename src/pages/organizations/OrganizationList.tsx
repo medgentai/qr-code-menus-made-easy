@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -26,6 +27,25 @@ import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
 const OrganizationList = () => {
   const { organizations, isLoading, fetchOrganizations } = useOrganization();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+
+  // Check if we're coming from payment success and force refresh
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const fromPayment = searchParams.get('from') === 'payment';
+
+    if (fromPayment) {
+      // Force refresh organization data when coming from payment
+      queryClient.invalidateQueries({
+        queryKey: ['organizations']
+      });
+
+      // Remove the query parameter to prevent repeated refreshes
+      const newUrl = location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location, queryClient]);
 
   // Force refresh organizations when this component mounts
   useEffect(() => {

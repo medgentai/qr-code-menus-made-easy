@@ -89,7 +89,7 @@ const useCases = [
 ];
 
 const UseCases = () => {
-  const { isAuthenticated } = useAuth();
+  const { state: { isAuthenticated } } = useAuth();
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

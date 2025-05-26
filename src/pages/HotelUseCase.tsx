@@ -10,7 +10,7 @@ const HotelUseCase = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -33,9 +33,9 @@ const HotelUseCase = () => {
                 </div>
               </div>
               <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop" 
-                  alt="Hotel guest using QR code menu" 
+                <img
+                  src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop"
+                  alt="Hotel guest using QR code menu"
                   className="rounded-lg shadow-lg w-full"
                 />
                 <div className="absolute -bottom-6 -left-6 bg-orange-500 w-32 h-32 rounded-lg opacity-20"></div>
@@ -44,7 +44,7 @@ const HotelUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Benefits Section */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -54,7 +54,7 @@ const HotelUseCase = () => {
                 ScanServe transforms hotel dining operations and guest experiences
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
@@ -93,7 +93,7 @@ const HotelUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* How It Works Section */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -104,7 +104,7 @@ const HotelUseCase = () => {
                   Our simplified process gets your hotel up and running with digital menus in no time
                 </p>
               </div>
-              
+
               <div className="space-y-8">
                 {[
                   {
@@ -147,7 +147,7 @@ const HotelUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Success Story */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -155,7 +155,7 @@ const HotelUseCase = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Hotel Success Story
               </h2>
-              
+
               <div className="bg-gradient-to-r from-sky-50 to-orange-50 rounded-xl overflow-hidden shadow-md">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="p-8 md:p-10">
@@ -169,9 +169,9 @@ const HotelUseCase = () => {
                       "ScanServe has revolutionized our in-room dining and restaurant operations. Guests love the convenience of ordering from their mobile devices, and our staff can focus on delivering exceptional service instead of taking orders over the phone."
                     </p>
                     <div className="flex items-center">
-                      <img 
-                        src="https://randomuser.me/api/portraits/women/45.jpg" 
-                        alt="Rebecca Thompson" 
+                      <img
+                        src="https://randomuser.me/api/portraits/women/45.jpg"
+                        alt="Rebecca Thompson"
                         className="w-12 h-12 rounded-full mr-4"
                       />
                       <div>
@@ -183,11 +183,11 @@ const HotelUseCase = () => {
                       <Link to="/success-stories">Read Full Story</Link>
                     </Button>
                   </div>
-                  
+
                   <div>
-                    <img 
-                      src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop" 
-                      alt="Grand Plaza Hotel" 
+                    <img
+                      src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600&auto=format&fit=crop"
+                      alt="Grand Plaza Hotel"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -196,7 +196,7 @@ const HotelUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="section bg-navy-800 text-white">
           <div className="container-custom">
@@ -208,17 +208,17 @@ const HotelUseCase = () => {
                 Join leading hotels already using ScanServe to delight their guests and streamline operations.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
+                <Button
                   className="bg-orange-500 hover:bg-orange-600 text-white text-base flex items-center gap-2 group"
                   size="lg"
                   asChild
                 >
                   <Link to="/get-started">
-                    Start Your Free Trial 
+                    Get Started Now
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button 
+                <Button
                   className="bg-transparent border-2 border-white hover:bg-white/10 text-white text-base"
                   size="lg"
                   asChild
@@ -230,7 +230,7 @@ const HotelUseCase = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

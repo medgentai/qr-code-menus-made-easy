@@ -197,10 +197,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // If we have user data but no access token, try to refresh
       if (user && !accessToken) {
-        console.log('🔄 User data found but no access token, attempting refresh...');
         const refreshed = await refreshSession();
         if (refreshed) {
-          console.log('✅ Token refresh successful - user should stay logged in');
           setState(prev => ({
             ...prev,
             isLoading: false,
@@ -208,7 +206,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }));
           return;
         } else {
-          console.log('❌ Token refresh failed, but keeping user authenticated');
           // Keep user authenticated but set loading to false
           setState(prev => ({
             ...prev,

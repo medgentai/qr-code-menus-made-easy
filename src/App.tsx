@@ -38,11 +38,14 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // Dashboard pages
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
+import Subscriptions from "./pages/subscriptions/Subscriptions";
+import SubscriptionManage from "./pages/subscriptions/SubscriptionManage";
 
 
 // Organization pages
 import OrganizationList from "./pages/organizations/OrganizationList";
 import OrganizationCreate from "./pages/organizations/OrganizationCreate";
+import OrganizationCreateWithPayment from "./pages/organizations/OrganizationCreateWithPayment";
 import OrganizationDetails from "./pages/organizations/OrganizationDetails";
 import OrganizationSettings from "./pages/organizations/OrganizationSettings";
 import OrganizationMembers from "./pages/organizations/OrganizationMembers";
@@ -50,6 +53,7 @@ import OrganizationMembers from "./pages/organizations/OrganizationMembers";
 // Venue pages
 import VenueList from "./pages/venues/VenueList";
 import VenueCreate from "./pages/venues/VenueCreate";
+import VenueCreateWithPayment from "./pages/venues/VenueCreateWithPayment";
 import VenueDetails from "./pages/venues/VenueDetails";
 import VenueEdit from "./pages/venues/VenueEdit";
 import VenueTables from "./pages/venues/VenueTables";
@@ -159,6 +163,22 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/subscriptions"
+                element={
+                  <ProtectedRoute>
+                    <Subscriptions />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/subscriptions/:id/manage"
+                element={
+                  <ProtectedRoute>
+                    <SubscriptionManage />
+                  </ProtectedRoute>
+                }
+              />
 
 
               {/* Organization routes */}
@@ -172,6 +192,14 @@ const App = () => (
               />
               <Route
                 path="/organizations/create"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationCreateWithPayment />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/create-simple"
                 element={
                   <ProtectedRoute>
                     <OrganizationCreate />
@@ -216,7 +244,7 @@ const App = () => (
                 path="/organizations/:id/venues/create"
                 element={
                   <ProtectedRoute>
-                    <VenueCreate />
+                    <VenueCreateWithPayment />
                   </ProtectedRoute>
                 }
               />

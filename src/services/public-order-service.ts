@@ -51,7 +51,6 @@ class PublicOrderService {
       const response = await api.post<PublicOrderResponse>(endpoint, orderData, { withAuth: false });
       return response.data;
     } catch (error) {
-      console.error('Error creating order:', error);
       throw error;
     }
   }
@@ -84,7 +83,6 @@ class PublicOrderService {
       const response = await api.get<{ status: OrderStatus }>(`/public/orders/${orderId}/status`, { withAuth: false });
       return response.data;
     } catch (error) {
-      console.error('Error getting order status:', error);
       throw error;
     }
   }
@@ -99,7 +97,6 @@ class PublicOrderService {
       const response = await api.get<PublicOrderResponse[]>(`/public/orders/phone/${phoneNumber}`, { withAuth: false });
       return response.data;
     } catch (error) {
-      console.error('Error getting orders by phone:', error);
       throw error;
     }
   }

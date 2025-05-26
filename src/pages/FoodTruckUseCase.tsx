@@ -10,7 +10,7 @@ const FoodTruckUseCase = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow pt-24">
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-white to-sky-50 py-16 md:py-24">
@@ -33,9 +33,9 @@ const FoodTruckUseCase = () => {
                 </div>
               </div>
               <div className="relative">
-                <img 
-                  src="https://images.unsplash.com/photo-1509315811345-672d83ef2fbc?w=800&auto=format&fit=crop" 
-                  alt="Food truck with customers" 
+                <img
+                  src="https://images.unsplash.com/photo-1509315811345-672d83ef2fbc?w=800&auto=format&fit=crop"
+                  alt="Food truck with customers"
                   className="rounded-lg shadow-lg w-full"
                 />
                 <div className="absolute -bottom-6 -left-6 bg-orange-500 w-32 h-32 rounded-lg opacity-20"></div>
@@ -44,7 +44,7 @@ const FoodTruckUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Benefits Section */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -54,7 +54,7 @@ const FoodTruckUseCase = () => {
                 ScanServe helps food trucks overcome unique challenges and operate more efficiently
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[
                 {
@@ -93,7 +93,7 @@ const FoodTruckUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* How It Works Section */}
         <section className="section bg-sky-50">
           <div className="container-custom">
@@ -104,7 +104,7 @@ const FoodTruckUseCase = () => {
                   Get your food truck set up with digital menus quickly and easily
                 </p>
               </div>
-              
+
               <div className="space-y-8">
                 {[
                   {
@@ -147,7 +147,7 @@ const FoodTruckUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Success Story */}
         <section className="section bg-white">
           <div className="container-custom">
@@ -155,7 +155,7 @@ const FoodTruckUseCase = () => {
               <h2 className="text-3xl font-bold text-navy-800 mb-12 text-center">
                 Food Truck Success Story
               </h2>
-              
+
               <div className="bg-gradient-to-r from-sky-50 to-orange-50 rounded-xl overflow-hidden shadow-md">
                 <div className="grid grid-cols-1 md:grid-cols-2">
                   <div className="p-8 md:p-10">
@@ -169,9 +169,9 @@ const FoodTruckUseCase = () => {
                       "Before ScanServe, we could only handle a few orders at a time. Now our customers scan the QR code while in line and their orders are ready when they reach the window. We've dramatically increased our capacity without adding staff."
                     </p>
                     <div className="flex items-center">
-                      <img 
-                        src="https://randomuser.me/api/portraits/men/75.jpg" 
-                        alt="Carlos Mendez" 
+                      <img
+                        src="https://randomuser.me/api/portraits/men/75.jpg"
+                        alt="Carlos Mendez"
                         className="w-12 h-12 rounded-full mr-4"
                       />
                       <div>
@@ -183,11 +183,11 @@ const FoodTruckUseCase = () => {
                       <Link to="/success-stories">Read Full Story</Link>
                     </Button>
                   </div>
-                  
+
                   <div>
-                    <img 
-                      src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=600&auto=format&fit=crop" 
-                      alt="Taco Revolution food truck" 
+                    <img
+                      src="https://images.unsplash.com/photo-1565123409695-7b5ef63a2efb?w=600&auto=format&fit=crop"
+                      alt="Taco Revolution food truck"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -196,7 +196,7 @@ const FoodTruckUseCase = () => {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="section bg-navy-800 text-white">
           <div className="container-custom">
@@ -208,17 +208,17 @@ const FoodTruckUseCase = () => {
                 Join successful food trucks already using ScanServe to streamline operations and serve more customers.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button 
+                <Button
                   className="bg-orange-500 hover:bg-orange-600 text-white text-base flex items-center gap-2 group"
                   size="lg"
                   asChild
                 >
                   <Link to="/get-started">
-                    Start Your Free Trial 
+                    Get Started Now
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button 
+                <Button
                   className="bg-transparent border-2 border-white hover:bg-white/10 text-white text-base"
                   size="lg"
                   asChild
@@ -230,7 +230,7 @@ const FoodTruckUseCase = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );
