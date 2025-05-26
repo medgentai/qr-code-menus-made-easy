@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { Subscription, SubscriptionSummary } from '@/types/subscription';
+import { Subscription, SubscriptionSummary, BillingHistoryItem } from '@/types/subscription';
 
 const SubscriptionService = {
   // Get all subscriptions for the current user
@@ -51,8 +51,8 @@ const SubscriptionService = {
   },
 
   // Get billing history
-  getBillingHistory: async (subscriptionId: string): Promise<any[]> => {
-    const response = await api.get<any[]>(`/subscriptions/${subscriptionId}/billing-history`);
+  getBillingHistory: async (subscriptionId: string): Promise<BillingHistoryItem[]> => {
+    const response = await api.get<BillingHistoryItem[]>(`/subscriptions/${subscriptionId}/billing-history`);
     return response.data;
   },
 

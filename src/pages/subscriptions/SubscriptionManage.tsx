@@ -35,6 +35,7 @@ import {
   BillingCycle
 } from '@/types/subscription';
 import { formatPrice } from '@/lib/utils';
+import BillingHistory from '@/components/subscriptions/BillingHistory';
 
 const SubscriptionManage = () => {
   const { id } = useParams<{ id: string }>();
@@ -198,8 +199,7 @@ const SubscriptionManage = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="usage">Usage</TabsTrigger>
+          <TabsTrigger value="billing">Billing History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -308,37 +308,7 @@ const SubscriptionManage = () => {
         </TabsContent>
 
         <TabsContent value="billing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Calendar className="h-16 w-16 text-muted-foreground/60 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Billing History</h3>
-                <p className="text-sm text-muted-foreground">
-                  Billing history will be available here once implemented.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="usage">
-          <Card>
-            <CardHeader>
-              <CardTitle>Usage Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Settings className="h-16 w-16 text-muted-foreground/60 mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Usage Analytics</h3>
-                <p className="text-sm text-muted-foreground">
-                  Detailed usage analytics will be available here once implemented.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <BillingHistory subscriptionId={subscription.id} />
         </TabsContent>
       </Tabs>
 

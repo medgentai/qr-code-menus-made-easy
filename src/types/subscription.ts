@@ -18,7 +18,7 @@ export interface Subscription {
   metadata?: any;
   createdAt: string;
   updatedAt: string;
-  
+
   // Relations
   organization?: {
     id: string;
@@ -80,6 +80,31 @@ export interface SubscriptionSummary {
   canUpgrade: boolean;
   canDowngrade: boolean;
   canCancel: boolean;
+}
+
+export interface BillingHistoryItem {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentType: string;
+  paymentMethod: string;
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  receipt?: string;
+  notes?: string;
+  createdAt: string;
+  organization?: {
+    id: string;
+    name: string;
+    type: string;
+  };
+  venue?: {
+    id: string;
+    name: string;
+  };
+  metadata?: any;
+  description: string;
 }
 
 // Status labels for display

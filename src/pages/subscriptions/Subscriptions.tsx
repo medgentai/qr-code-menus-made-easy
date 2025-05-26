@@ -14,7 +14,7 @@ import {
   Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -177,7 +177,6 @@ const Subscriptions = () => {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="billing">Billing History</TabsTrigger>
-            <TabsTrigger value="usage">Usage Details</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -280,31 +279,15 @@ const Subscriptions = () => {
           <TabsContent value="billing">
             <Card>
               <CardHeader>
-                <CardTitle>Billing History</CardTitle>
+                <CardTitle>All Billing History</CardTitle>
+                <CardDescription>Combined billing history for all your subscriptions</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8">
                   <Calendar className="h-16 w-16 text-muted-foreground/60 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Billing History</h3>
+                  <h3 className="text-lg font-medium mb-2">Combined Billing History</h3>
                   <p className="text-sm text-muted-foreground">
-                    Billing history will be available here once implemented.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="usage">
-            <Card>
-              <CardHeader>
-                <CardTitle>Usage Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Users className="h-16 w-16 text-muted-foreground/60 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Usage Analytics</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Detailed usage analytics will be available here once implemented.
+                    View individual subscription billing history in the manage section.
                   </p>
                 </div>
               </CardContent>
