@@ -26,6 +26,7 @@ interface VenueStepData {
     phoneNumber?: string;
     email?: string;
     imageUrl?: string;
+    billingCycle?: 'MONTHLY' | 'ANNUAL';
   };
 }
 
@@ -122,7 +123,6 @@ const VenueCreateWithPayment = () => {
       setPaymentResult(result);
       toast.success('Venue created successfully!');
     } catch (error: any) {
-      console.error('Error completing venue payment:', error);
       toast.error(error?.response?.data?.message || 'Payment verification failed');
     } finally {
       setIsProcessing(false);
@@ -131,7 +131,6 @@ const VenueCreateWithPayment = () => {
 
   // Handle payment failure
   const handlePaymentFailure = (error: any) => {
-    console.error('Venue payment failed:', error);
     toast.error('Payment failed. Please try again.');
   };
 
@@ -230,3 +229,4 @@ const VenueCreateWithPayment = () => {
 };
 
 export default VenueCreateWithPayment;
+

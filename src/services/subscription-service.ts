@@ -1,4 +1,4 @@
-import { api } from '@/lib/api';
+import { api, API_BASE_URL, API_PREFIX } from '@/lib/api';
 import { Subscription, SubscriptionSummary, BillingHistoryItem } from '@/types/subscription';
 
 const SubscriptionService = {
@@ -62,12 +62,34 @@ const SubscriptionService = {
     return response.data;
   },
 
-  // Download invoice
-  downloadInvoice: async (subscriptionId: string, invoiceId: string): Promise<Blob> => {
-    const response = await api.get(`/subscriptions/${subscriptionId}/invoices/${invoiceId}/download`, {
-      responseType: 'blob',
+  // Download receipt
+  downloadReceipt: async (subscriptionId: string, paymentId: string): Promise<Blob> => {
+    // Use fetch directly for blob responses since the custom API client doesn't support blob responseType
+    const token = window.accessToken;
+
+    if (!token) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+
+    const response = await fetch(`${API_BASE_URL}${API_PREFIX}/subscriptions/${subscriptionId}/payments/${paymentId}/receipt/download`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      credentials: 'include',
     });
-    return response.data;
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      }
+      if (response.status === 404) {
+        throw new Error('Receipt not found or not accessible.');
+      }
+      throw new Error(`Failed to download receipt: ${response.statusText}`);
+    }
+
+    return response.blob();
   },
 };
 

@@ -345,12 +345,8 @@ const OrderEdit: React.FC = () => {
       removeItemIds: itemsToRemove
     };
 
-    console.log('Update data being sent to API:', updateData);
-
     try {
-      console.log('Calling updateOrder with orderId:', orderId);
       const updatedOrder = await updateOrder(orderId!, updateData);
-      console.log('Update order response:', updatedOrder);
 
       if (updatedOrder) {
         // Toast is already handled by the React Query mutation success callback
@@ -360,11 +356,9 @@ const OrderEdit: React.FC = () => {
           navigate(`/organizations/${organizationId}/orders/${orderId}`);
         }
       } else {
-        console.error('Updated order is null');
         toast.error('Failed to update order. Please try again.');
       }
     } catch (error) {
-      console.error('Failed to update order:', error);
       toast.error('Error updating order: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsSubmitting(false);

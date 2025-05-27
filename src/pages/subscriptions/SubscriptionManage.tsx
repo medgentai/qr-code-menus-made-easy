@@ -300,7 +300,7 @@ const SubscriptionManage = () => {
 
                 <Button variant="outline">
                   <Download className="mr-2 h-4 w-4" />
-                  Download Invoice
+                  Download Receipt
                 </Button>
               </div>
             </CardContent>

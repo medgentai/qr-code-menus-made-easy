@@ -30,6 +30,7 @@ import {
   Clock,
   RefreshCw
 } from 'lucide-react';
+import { toast } from 'sonner';
 import SubscriptionService from '@/services/subscription-service';
 import { BillingHistoryItem } from '@/types/subscription';
 import { formatPrice } from '@/lib/utils';
@@ -93,9 +94,27 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscriptionId }) => {
     }
   };
 
-  const handleDownloadReceipt = (payment: BillingHistoryItem) => {
-    // TODO: Implement receipt download
-    console.log('Download receipt for payment:', payment.id);
+  const handleDownloadReceipt = async (payment: BillingHistoryItem) => {
+    try {
+      const blob = await SubscriptionService.downloadReceipt(subscriptionId, payment.id);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt-${payment.id.substring(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error('Failed to download receipt:', error);
+      toast.error('Failed to download receipt. Please try again.');
+    }
   };
 
   if (isLoading) {
@@ -143,7 +162,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscriptionId }) => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Billing History</CardTitle>
-              <CardDescription>Your payment history and invoices</CardDescription>
+              <CardDescription>Your payment history and receipts</CardDescription>
             </div>
             <Button
               variant="outline"
@@ -177,7 +196,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscriptionId }) => {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Billing History</CardTitle>
-              <CardDescription>Your payment history and invoices</CardDescription>
+              <CardDescription>Your payment history and receipts</CardDescription>
             </div>
             <Button
               variant="outline"
@@ -210,7 +229,7 @@ const BillingHistory: React.FC<BillingHistoryProps> = ({ subscriptionId }) => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Billing History</CardTitle>
-            <CardDescription>Your payment history and invoices</CardDescription>
+            <CardDescription>Your payment history and receipts</CardDescription>
           </div>
           <Button
             variant="outline"
