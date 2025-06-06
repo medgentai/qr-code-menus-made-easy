@@ -121,7 +121,7 @@ const TableEdit = () => {
 
       if (updatedTable) {
         toast.success('Table updated successfully! The associated QR code has been preserved.');
-        navigate(`/organizations/${organizationId}/venues/${venueId}`);
+        navigate(`/organizations/${organizationId}/venues/${venueId}/tables`);
       }
     } finally {
       setIsSubmitting(false);
@@ -169,7 +169,7 @@ const TableEdit = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}`)}
+            onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables`)}
             className="self-start mb-2 sm:mb-0 md:mb-0 sm:mr-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
@@ -324,7 +324,7 @@ const TableEdit = () => {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}`)}
+                    onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables`)}
                     className="w-full sm:w-auto order-2 sm:order-1"
                   >
                     Cancel

@@ -64,7 +64,7 @@ const QrCodeEdit: React.FC = () => {
       } catch (error) {
         console.error('Error fetching data:', error);
         toast.error('Failed to load required data');
-        navigate(`/organizations/${organizationId}?activeTab=qrcodes`);
+        navigate(`/organizations/${organizationId}/qrcodes`);
       } finally {
         setIsLoading(false);
       }

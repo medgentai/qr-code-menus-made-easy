@@ -27,6 +27,8 @@ export interface CartContextType {
   setTableId: (tableId: string | null) => void;
   roomNumber: string;
   setRoomNumber: (roomNumber: string) => void;
+  partySize: number | undefined;
+  setPartySize: (partySize: number | undefined) => void;
 }
 
 // Create the cart context
@@ -46,6 +48,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [customerPhone, setCustomerPhone] = useState<string>('');
   const [tableId, setTableId] = useState<string | null>(null);
   const [roomNumber, setRoomNumber] = useState<string>('');
+  const [partySize, setPartySize] = useState<number | undefined>(undefined);
 
   // Load cart from local storage on mount
   useEffect(() => {
@@ -59,6 +62,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         setCustomerPhone(parsedCart.customerPhone || '');
         setTableId(parsedCart.tableId || null);
         setRoomNumber(parsedCart.roomNumber || '');
+        setPartySize(parsedCart.partySize || undefined);
       } catch (error) {
         console.error('Error parsing cart from local storage:', error);
       }
@@ -74,9 +78,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       customerPhone,
       tableId,
       roomNumber,
+      partySize,
     };
     localStorage.setItem('cart', JSON.stringify(cartData));
-  }, [items, customerName, customerEmail, customerPhone, tableId, roomNumber]);
+  }, [items, customerName, customerEmail, customerPhone, tableId, roomNumber, partySize]);
 
   // Calculate total items
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
@@ -159,6 +164,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setCustomerPhone('');
     setTableId(null);
     setRoomNumber('');
+    setPartySize(undefined);
   };
 
   // Context value
@@ -181,6 +187,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setTableId,
     roomNumber,
     setRoomNumber,
+    partySize,
+    setPartySize,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

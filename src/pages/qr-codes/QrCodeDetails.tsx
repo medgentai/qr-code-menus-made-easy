@@ -67,7 +67,7 @@ const QrCodeDetails: React.FC = () => {
     const fetchQrCode = async () => {
       if (!qrCodeId) {
         toast.error('Missing QR code ID');
-        navigate(`/organizations/${organizationId}?activeTab=qrcodes`);
+        navigate(`/organizations/${organizationId}/qrcodes`);
         return;
       }
 
@@ -78,7 +78,7 @@ const QrCodeDetails: React.FC = () => {
       } catch (error) {
         console.error('Error fetching QR code:', error);
         toast.error('Failed to load QR code details');
-        navigate(`/organizations/${organizationId}?activeTab=qrcodes`);
+        navigate(`/organizations/${organizationId}/qrcodes`);
       } finally {
         setIsLoading(false);
       }
@@ -94,7 +94,7 @@ const QrCodeDetails: React.FC = () => {
       setIsDeleting(true);
       await qrCodeService.deleteQrCode(qrCodeId);
       toast.success('QR code deleted successfully');
-      navigate(`/organizations/${organizationId}?activeTab=qrcodes`);
+      navigate(`/organizations/${organizationId}/qrcodes`);
     } catch (error) {
       console.error('Error deleting QR code:', error);
       toast.error('Failed to delete QR code');

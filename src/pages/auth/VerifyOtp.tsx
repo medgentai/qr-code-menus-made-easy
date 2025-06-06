@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { useAuth } from '@/contexts/auth-context';
 import AuthLayout from '@/components/layouts/auth-layout';
 import { Button } from '@/components/ui/button';
+import OrganizationService from '@/services/organization-service';
 import {
   Form,
   FormControl,
@@ -35,8 +36,9 @@ const VerifyOtp = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
 
-  // Get email from location state
+  // Get email and redirect URL from location state
   const email = (location.state as any)?.email;
+  const redirectUrl = (location.state as any)?.redirectUrl;
 
   // If no email is provided, redirect to login
   if (!email) {
@@ -61,7 +63,28 @@ const VerifyOtp = () => {
 
       if (success) {
         toast.success('Email verified successfully!');
-        navigate('/dashboard', { replace: true });
+
+        // If there's a redirect URL (e.g., from invitation flow), use it
+        if (redirectUrl) {
+          navigate(redirectUrl, { replace: true });
+          return;
+        }
+
+        // Otherwise, check if user has any organizations
+        try {
+          const organizations = await OrganizationService.getAll();
+          if (organizations.length === 0) {
+            // New user with no organizations - redirect to create organization
+            navigate('/organizations/create', { replace: true });
+          } else {
+            // User has organizations - redirect to dashboard
+            navigate('/dashboard', { replace: true });
+          }
+        } catch (orgError) {
+          // If we can't fetch organizations, default to dashboard
+          // The organization context will handle the redirect if needed
+          navigate('/dashboard', { replace: true });
+        }
       } else {
         toast.error('Invalid or expired OTP code. Please try again.');
       }

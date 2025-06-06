@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -30,10 +30,12 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get the return URL from location state or default to dashboard
-  const from = (location.state as any)?.from?.pathname || '/dashboard';
+  // Get the return URL from search params (for invitation flows) or location state, or default to dashboard
+  const redirectUrl = searchParams.get('redirect');
+  const from = redirectUrl || (location.state as any)?.from?.pathname || '/dashboard';
 
   // Initialize form
   const form = useForm<LoginFormValues>({
@@ -77,7 +79,7 @@ const Login = () => {
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
           <Link
-            to="/register"
+            to={redirectUrl ? `/register?redirect=${encodeURIComponent(redirectUrl)}` : "/register"}
             className="text-primary underline-offset-4 hover:underline"
           >
             Sign up

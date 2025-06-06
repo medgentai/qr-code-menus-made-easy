@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, ShoppingBag } from 'lucide-react';
 import { CreatePublicOrderDto } from '@/services/public-order-service';
+import PartySizeInput from '@/components/orders/PartySizeInput';
 
 // Form schema
 const formSchema = z.object({
@@ -26,6 +27,10 @@ const formSchema = z.object({
   customerEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
   customerPhone: z.string().min(5, 'Phone number is required'),
   roomNumber: z.string().optional(),
+  partySize: z.union([
+    z.number().min(1, 'Party size must be at least 1'),
+    z.undefined()
+  ]).optional(),
   notes: z.string().optional(),
 });
 
@@ -34,6 +39,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface CheckoutFormProps {
   venueId: string;
   tableId: string | null;
+  tableCapacity?: number | null;
   onBack: () => void;
   onSubmit: (data: FormValues) => void;
   isSubmitting: boolean;
@@ -42,6 +48,7 @@ interface CheckoutFormProps {
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
   venueId,
   tableId,
+  tableCapacity,
   onBack,
   onSubmit,
   isSubmitting,
@@ -54,6 +61,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
     customerEmail,
     customerPhone,
     roomNumber,
+    partySize,
   } = useCart();
 
   // Initialize form
@@ -64,6 +72,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
       customerEmail: customerEmail || '',
       customerPhone: customerPhone || '',
       roomNumber: roomNumber || '',
+      partySize: partySize || undefined,
       notes: '',
     },
   });
@@ -181,6 +190,27 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                     </FormItem>
                   )}
                 />
+
+                {/* Party Size - only show for table orders */}
+                {tableId && (
+                  <FormField
+                    control={form.control}
+                    name="partySize"
+                    render={({ field }) => (
+                      <FormItem>
+                        <PartySizeInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          tableCapacity={tableCapacity}
+                          label="Party Size"
+                          placeholder="Number of guests"
+                          showQuickButtons={true}
+                        />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 {!tableId && (
                   <FormField

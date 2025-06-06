@@ -25,6 +25,7 @@ export interface CreatePublicOrderDto {
   customerEmail?: string;
   customerPhone: string;
   roomNumber?: string;
+  partySize?: number;
   notes?: string;
   items: {
     menuItemId: string;

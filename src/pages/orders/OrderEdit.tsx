@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Minus, Trash2 } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { useMenu } from '@/contexts/menu-context';
@@ -20,6 +21,7 @@ import { useOrder } from '@/hooks/useOrder';
 import { CreateOrderDto, CreateOrderItemDto, OrderStatus, UpdateOrderDto, Order } from '@/services/order-service';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
+import PartySizeInput from '@/components/orders/PartySizeInput';
 import { toast } from 'sonner';
 import { orderKeys } from '@/hooks/useOrderQuery';
 
@@ -30,6 +32,7 @@ const orderFormSchema = z.object({
   customerEmail: z.string().email({ message: 'Please enter a valid email' }).optional().or(z.literal('')),
   customerPhone: z.string().optional(),
   roomNumber: z.string().optional(),
+  partySize: z.number().min(1, { message: 'Party size must be at least 1' }).optional(),
   notes: z.string().optional(),
   status: z.nativeEnum(OrderStatus)
 });
@@ -51,6 +54,7 @@ const OrderEdit: React.FC = () => {
 
   const [selectedItems, setSelectedItems] = useState<CreateOrderItemDto[]>([]);
   const [itemsToRemove, setItemsToRemove] = useState<string[]>([]);
+  const [itemsToUpdate, setItemsToUpdate] = useState<{itemId: string, quantity: number, notes?: string}[]>([]);
   const [activeTab, setActiveTab] = useState('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,6 +67,7 @@ const OrderEdit: React.FC = () => {
       customerEmail: '',
       customerPhone: '',
       roomNumber: '',
+      partySize: undefined,
       notes: '',
       status: OrderStatus.PENDING
     }
@@ -93,6 +98,7 @@ const OrderEdit: React.FC = () => {
             customerEmail: currentOrder.customerEmail || '',
             customerPhone: currentOrder.customerPhone || '',
             roomNumber: currentOrder.roomNumber || '',
+            partySize: currentOrder.partySize || undefined,
             notes: currentOrder.notes || '',
             status: currentOrder.status
           };
@@ -149,6 +155,7 @@ const OrderEdit: React.FC = () => {
             customerEmail: cachedOrder.customerEmail || '',
             customerPhone: cachedOrder.customerPhone || '',
             roomNumber: cachedOrder.roomNumber || '',
+            partySize: cachedOrder.partySize || undefined,
             notes: cachedOrder.notes || '',
             status: cachedOrder.status
           };
@@ -207,6 +214,7 @@ const OrderEdit: React.FC = () => {
           customerEmail: order.customerEmail || '',
           customerPhone: order.customerPhone || '',
           roomNumber: order.roomNumber || '',
+          partySize: order.partySize || undefined,
           notes: order.notes || '',
           status: order.status
         };
@@ -328,8 +336,9 @@ const OrderEdit: React.FC = () => {
     console.log('Current form values:', form.getValues());
     console.log('Selected items:', selectedItems);
     console.log('Items to remove:', itemsToRemove);
+    console.log('Items to update:', itemsToUpdate);
 
-    if (selectedItems.length === 0 && itemsToRemove.length === 0) {
+    if (selectedItems.length === 0 && itemsToRemove.length === 0 && itemsToUpdate.length === 0) {
       toast.error('Please add at least one item to the order or make changes to the order details');
       return;
     }
@@ -342,7 +351,8 @@ const OrderEdit: React.FC = () => {
       addItems: selectedItems.filter(item =>
         !currentOrder?.items?.some(orderItem => orderItem.menuItemId === item.menuItemId)
       ),
-      removeItemIds: itemsToRemove
+      removeItemIds: itemsToRemove,
+      updateItems: itemsToUpdate
     };
 
     try {
@@ -393,6 +403,27 @@ const OrderEdit: React.FC = () => {
   // Handle adding a new item
   const handleAddItem = (item: CreateOrderItemDto) => {
     setSelectedItems(prev => [...prev, item]);
+  };
+
+  // Handle updating quantity for existing item
+  const handleUpdateItemQuantity = (itemId: string, newQuantity: number, notes?: string) => {
+    setItemsToUpdate(prev => {
+      const existingIndex = prev.findIndex(item => item.itemId === itemId);
+      if (existingIndex >= 0) {
+        // Update existing entry
+        const updated = [...prev];
+        updated[existingIndex] = { itemId, quantity: newQuantity, notes };
+        return updated;
+      } else {
+        // Add new entry
+        return [...prev, { itemId, quantity: newQuantity, notes }];
+      }
+    });
+  };
+
+  // Handle canceling an item update
+  const handleCancelItemUpdate = (itemId: string) => {
+    setItemsToUpdate(prev => prev.filter(item => item.itemId !== itemId));
   };
 
   if (!currentOrder) {
@@ -496,6 +527,28 @@ const OrderEdit: React.FC = () => {
                             <FormMessage />
                           </FormItem>
                         )}
+                      />
+
+                      {/* Party Size */}
+                      <FormField
+                        control={form.control}
+                        name="partySize"
+                        render={({ field }) => {
+                          const selectedTable = tables.find(t => t.id === form.watch('tableId'));
+                          return (
+                            <FormItem>
+                              <PartySizeInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                tableCapacity={selectedTable?.capacity}
+                                label="Party Size"
+                                placeholder="Number of guests"
+                                showQuickButtons={true}
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     </div>
 
@@ -673,24 +726,120 @@ const OrderEdit: React.FC = () => {
                   <CardContent>
                     {currentOrder.items && currentOrder.items.length > 0 ? (
                       <div className="space-y-4">
-                        {currentOrder.items.map((item) => (
-                          <div key={item.id} className="flex justify-between items-center p-3 border rounded-md">
-                            <div>
-                              <div className="font-medium">{item.quantity}x {item.menuItem?.name}</div>
-                              {item.notes && (
-                                <div className="text-sm text-muted-foreground">Note: {item.notes}</div>
+                        {currentOrder.items.map((item) => {
+                          const isMarkedForRemoval = itemsToRemove.includes(item.id);
+                          const updateInfo = itemsToUpdate.find(update => update.itemId === item.id);
+                          const currentQuantity = updateInfo?.quantity ?? item.quantity;
+                          const currentNotes = updateInfo?.notes ?? item.notes;
+
+                          return (
+                            <div key={item.id} className={`p-4 border rounded-md ${isMarkedForRemoval ? 'bg-red-50 border-red-200' : ''}`}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <div className="font-medium">{item.menuItem?.name}</div>
+                                  {item.menuItem?.price && (
+                                    <div className="text-sm text-muted-foreground">
+                                      ${parseFloat(item.menuItem.price).toFixed(2)} each
+                                    </div>
+                                  )}
+                                </div>
+
+                                {!isMarkedForRemoval && (
+                                  <div className="flex items-center gap-2">
+                                    {/* Quantity Controls */}
+                                    <div className="flex items-center gap-1">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          const newQuantity = Math.max(1, currentQuantity - 1);
+                                          handleUpdateItemQuantity(item.id, newQuantity, currentNotes);
+                                        }}
+                                      >
+                                        <Minus className="h-3 w-3" />
+                                      </Button>
+                                      <span className="w-8 text-center font-medium">{currentQuantity}</span>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => {
+                                          const newQuantity = currentQuantity + 1;
+                                          handleUpdateItemQuantity(item.id, newQuantity, currentNotes);
+                                        }}
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+
+                                    {/* Remove Button */}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleRemoveItem(item.id)}
+                                      className="text-red-600 hover:text-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Notes */}
+                              {(currentNotes || updateInfo) && (
+                                <div className="mt-2">
+                                  <Input
+                                    placeholder="Add notes for this item..."
+                                    value={currentNotes || ''}
+                                    onChange={(e) => {
+                                      handleUpdateItemQuantity(item.id, currentQuantity, e.target.value);
+                                    }}
+                                    className="text-sm"
+                                  />
+                                </div>
                               )}
+
+                              {/* Status indicators */}
+                              <div className="mt-2 flex items-center gap-2">
+                                {updateInfo && (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="secondary" className="text-xs">
+                                      {updateInfo.quantity !== item.quantity ? `Qty: ${item.quantity} → ${updateInfo.quantity}` : 'Notes updated'}
+                                    </Badge>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleCancelItemUpdate(item.id)}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Cancel changes
+                                    </Button>
+                                  </div>
+                                )}
+                                {isMarkedForRemoval && (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="destructive" className="text-xs">
+                                      Marked for removal
+                                    </Badge>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setItemsToRemove(prev => prev.filter(id => id !== item.id))}
+                                      className="text-xs h-6 px-2"
+                                    >
+                                      Keep item
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRemoveItem(item.id)}
-                              className={itemsToRemove.includes(item.id) ? 'bg-red-100' : ''}
-                            >
-                              {itemsToRemove.includes(item.id) ? 'Marked for Removal' : 'Remove'}
-                            </Button>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : (
                       <div className="text-center py-4">
@@ -731,14 +880,18 @@ const OrderEdit: React.FC = () => {
                     items: [
                       ...currentOrder.items
                         ?.filter(item => !itemsToRemove.includes(item.id))
-                        .map(item => ({
-                          menuItemId: item.menuItemId,
-                          quantity: item.quantity,
-                          notes: item.notes || '',
-                          modifiers: item.modifiers?.map(mod => ({
-                            modifierId: mod.modifierId
-                          })) || []
-                        })) || [],
+                        .map(item => {
+                          // Check if this item has quantity updates
+                          const updateInfo = itemsToUpdate.find(update => update.itemId === item.id);
+                          return {
+                            menuItemId: item.menuItemId,
+                            quantity: updateInfo?.quantity ?? item.quantity,
+                            notes: updateInfo?.notes ?? (item.notes || ''),
+                            modifiers: item.modifiers?.map(mod => ({
+                              modifierId: mod.modifierId
+                            })) || []
+                          };
+                        }) || [],
                       ...selectedItems
                     ]
                   }}

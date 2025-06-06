@@ -18,6 +18,7 @@ import { CreateOrderDto, CreateOrderItemDto, OrderStatus } from '@/services/orde
 import { useCreateOrderMutation } from '@/hooks/useOrderQuery';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
+import PartySizeInput from '@/components/orders/PartySizeInput';
 import { toast } from 'sonner';
 
 // Form schema
@@ -28,6 +29,7 @@ const orderFormSchema = z.object({
   customerEmail: z.string().email({ message: 'Please enter a valid email' }).optional().or(z.literal('')),
   customerPhone: z.string().optional(),
   roomNumber: z.string().optional(),
+  partySize: z.number().min(1, { message: 'Party size must be at least 1' }).optional(),
   notes: z.string().optional(),
   status: z.nativeEnum(OrderStatus).optional()
 });
@@ -55,6 +57,7 @@ const OrderCreate: React.FC = () => {
       customerEmail: '',
       customerPhone: '',
       roomNumber: '',
+      partySize: undefined,
       notes: '',
       status: OrderStatus.PENDING
     }
@@ -93,6 +96,7 @@ const OrderCreate: React.FC = () => {
       customerEmail: data.customerEmail,
       customerPhone: data.customerPhone,
       roomNumber: data.roomNumber,
+      partySize: data.partySize,
       notes: data.notes,
       status: data.status,
       items: selectedItems
@@ -101,11 +105,11 @@ const OrderCreate: React.FC = () => {
     try {
       createOrderMutation.mutate(orderData, {
         onSuccess: (newOrder) => {
-          // Navigate to the new order
+          // Navigate to the orders list page to see the new order
           if (venueId) {
-            navigate(`/organizations/${organizationId}/venues/${venueId}/orders/${newOrder.id}`);
+            navigate(`/organizations/${organizationId}/venues/${venueId}/orders`);
           } else {
-            navigate(`/organizations/${organizationId}/orders/${newOrder.id}`);
+            navigate(`/organizations/${organizationId}/orders`);
           }
           setIsSubmitting(false);
         },
@@ -237,6 +241,28 @@ const OrderCreate: React.FC = () => {
                             <FormMessage />
                           </FormItem>
                         )}
+                      />
+
+                      {/* Party Size */}
+                      <FormField
+                        control={form.control}
+                        name="partySize"
+                        render={({ field }) => {
+                          const selectedTable = tables.find(t => t.id === form.watch('tableId'));
+                          return (
+                            <FormItem>
+                              <PartySizeInput
+                                value={field.value}
+                                onChange={field.onChange}
+                                tableCapacity={selectedTable?.capacity}
+                                label="Party Size"
+                                placeholder="Number of guests"
+                                showQuickButtons={true}
+                              />
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
                     </div>
 

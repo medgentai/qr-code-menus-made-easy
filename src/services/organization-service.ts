@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { OrganizationType, MemberRole } from '@/types/organization';
+import { OrganizationType, MemberRole, StaffType, InvitationStatus } from '@/types/organization';
 
 // Organization interfaces
 export interface Organization {
@@ -38,6 +38,8 @@ export interface UserBasicInfo {
 export interface OrganizationMemberWithUser {
   id: string;
   role: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
   createdAt: string;
   updatedAt: string;
   user: UserBasicInfo;
@@ -71,6 +73,7 @@ export interface OrganizationDetails {
   updatedAt: string;
   owner: UserBasicInfo;
   members: OrganizationMemberWithUser[];
+  invitations?: OrganizationInvitation[];
   stats: OrganizationStats;
   subscription?: SubscriptionInfo;
 }
@@ -98,10 +101,48 @@ export interface UpdateOrganizationDto {
 export interface AddMemberDto {
   email: string;
   role?: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
 }
 
 export interface UpdateMemberRoleDto {
   role: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+}
+
+export interface OrganizationInvitation {
+  id: string;
+  email: string;
+  organizationId: string;
+  invitedBy: string;
+  role: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+  status: InvitationStatus;
+  token: string;
+  expiresAt: string;
+  acceptedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  inviter?: UserBasicInfo;
+  organization?: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl?: string;
+  };
+}
+
+export interface CreateInvitationDto {
+  email: string;
+  role?: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+}
+
+export interface AcceptInvitationDto {
+  token: string;
 }
 
 // Organization service
@@ -181,6 +222,36 @@ const OrganizationService = {
   // Leave an organization
   leaveOrganization: async (id: string): Promise<void> => {
     await api.delete(`/organizations/${id}/leave`);
+  },
+
+  // Invitation methods
+  // Send an invitation
+  sendInvitation: async (id: string, data: CreateInvitationDto): Promise<OrganizationInvitation> => {
+    const response = await api.post<OrganizationInvitation>(`/organizations/${id}/invitations`, data);
+    return response.data;
+  },
+
+  // Get all invitations for an organization
+  getInvitations: async (id: string): Promise<OrganizationInvitation[]> => {
+    const response = await api.get<OrganizationInvitation[]>(`/organizations/${id}/invitations`);
+    return response.data;
+  },
+
+  // Cancel an invitation
+  cancelInvitation: async (id: string, invitationId: string): Promise<void> => {
+    await api.delete(`/organizations/${id}/invitations/${invitationId}`);
+  },
+
+  // Get invitation by token (public)
+  getInvitationByToken: async (token: string): Promise<OrganizationInvitation> => {
+    const response = await api.get<OrganizationInvitation>(`/invitations/${token}`);
+    return response.data;
+  },
+
+  // Accept an invitation
+  acceptInvitation: async (token: string): Promise<OrganizationInvitation> => {
+    const response = await api.post<OrganizationInvitation>(`/invitations/${token}/accept`, {});
+    return response.data;
   },
 };
 

@@ -60,6 +60,7 @@ export interface Order {
   customerEmail?: string | null;
   customerPhone?: string | null;
   roomNumber?: string | null;
+  partySize?: number | null;
   status: OrderStatus;
   totalAmount: string;
   notes?: string | null;
@@ -70,6 +71,7 @@ export interface Order {
   table?: {
     id: string;
     name: string;
+    capacity?: number | null;
     venue?: {
       id: string;
       name: string;
@@ -96,9 +98,16 @@ export interface CreateOrderDto {
   customerEmail?: string;
   customerPhone?: string;
   roomNumber?: string;
+  partySize?: number;
   notes?: string;
   items: CreateOrderItemDto[];
   status?: OrderStatus;
+}
+
+export interface UpdateOrderItemQuantityDto {
+  itemId: string;
+  quantity: number;
+  notes?: string;
 }
 
 export interface UpdateOrderDto {
@@ -107,10 +116,12 @@ export interface UpdateOrderDto {
   customerEmail?: string;
   customerPhone?: string;
   roomNumber?: string;
+  partySize?: number;
   notes?: string;
   status?: OrderStatus;
   addItems?: CreateOrderItemDto[];
   removeItemIds?: string[];
+  updateItems?: UpdateOrderItemQuantityDto[];
 }
 
 export interface UpdateOrderItemDto {

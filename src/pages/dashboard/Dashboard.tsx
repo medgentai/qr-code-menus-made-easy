@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
+import { usePermissions } from '@/contexts/permission-context';
+import { useOrganization } from '@/contexts/organization-context';
+import { MemberRole, StaffType } from '@/types/organization';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -93,10 +97,42 @@ const sampleData = {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { state: { user } } = useAuth();
+  const { userRole, userStaffType } = usePermissions();
+  const { currentOrganization } = useOrganization();
   const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
   const [activeTab, setActiveTab] = useState('overview');
   const [draggingWidget, setDraggingWidget] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Redirect staff to their appropriate dashboards/pages
+  useEffect(() => {
+    // Only redirect if we have all the necessary data
+    if (userRole === MemberRole.STAFF && userStaffType) {
+      setIsRedirecting(true);
+      switch (userStaffType) {
+        case StaffType.FRONT_OF_HOUSE:
+          // Front of House staff go to orders page (requires organization context)
+          if (currentOrganization) {
+            navigate(`/organizations/${currentOrganization.id}/orders`, { replace: true });
+          }
+          break;
+        case StaffType.KITCHEN:
+          // Kitchen staff go to kitchen dashboard (no organization context needed)
+          navigate('/kitchen-dashboard', { replace: true });
+          break;
+        case StaffType.GENERAL:
+          // General staff go to staff dashboard (no organization context needed)
+          navigate('/staff-dashboard', { replace: true });
+          break;
+        default:
+          // Unknown staff type, stay on general dashboard
+          setIsRedirecting(false);
+          break;
+      }
+    }
+  }, [userRole, userStaffType, currentOrganization, navigate]);
 
   // Handle widget removal
   const removeWidget = (id: string) => {
@@ -369,6 +405,18 @@ const Dashboard = () => {
         return <div>Widget content not available</div>;
     }
   };
+
+  // Show loading state for staff users while redirecting
+  if (userRole === MemberRole.STAFF && (isRedirecting || !currentOrganization)) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Redirecting to your workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className="space-y-6">

@@ -8,6 +8,8 @@ import { OrganizationProvider } from "@/contexts/organization-context";
 import { VenueProvider } from "@/contexts/venue-context";
 import { MenuProvider } from "@/contexts/menu-context";
 import { NotificationProvider } from "@/contexts/notification-context";
+import { PermissionProvider } from "@/contexts/permission-context";
+import { NavigationProvider } from "@/contexts/navigation-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 import TokenRefreshManager from "@/components/TokenRefreshManager";
@@ -38,6 +40,10 @@ import ResetPassword from "./pages/auth/ResetPassword";
 // Dashboard pages
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
+
+// Staff Dashboard pages
+import KitchenDashboard from "./pages/staff/KitchenDashboard";
+import StaffDashboard from "./pages/staff/StaffDashboard";
 import Subscriptions from "./pages/subscriptions/Subscriptions";
 import SubscriptionManage from "./pages/subscriptions/SubscriptionManage";
 
@@ -49,6 +55,10 @@ import OrganizationCreateWithPayment from "./pages/organizations/OrganizationCre
 import OrganizationDetails from "./pages/organizations/OrganizationDetails";
 import OrganizationSettings from "./pages/organizations/OrganizationSettings";
 import OrganizationMembers from "./pages/organizations/OrganizationMembers";
+import OrganizationQrCodes from "./pages/organizations/OrganizationQrCodes";
+
+// Invitation pages
+import InvitationAccept from "./pages/invitation/InvitationAccept";
 
 // Venue pages
 import VenueList from "./pages/venues/VenueList";
@@ -110,8 +120,10 @@ const App = () => (
           <OrganizationProvider>
             <VenueProvider>
               <MenuProvider>
-                <NotificationProvider>
-                  <TooltipProvider>
+                <PermissionProvider>
+                  <NavigationProvider>
+                    <NotificationProvider>
+                      <TooltipProvider>
                     <Toaster />
               <Routes>
               {/* Public routes */}
@@ -180,6 +192,24 @@ const App = () => (
                 }
               />
 
+              {/* Staff Dashboard routes */}
+              <Route
+                path="/kitchen-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <KitchenDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/staff-dashboard"
+                element={
+                  <ProtectedRoute>
+                    <StaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Organization routes */}
               <Route
@@ -227,6 +257,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <OrganizationMembers />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/qrcodes"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationQrCodes />
                   </ProtectedRoute>
                 }
               />
@@ -470,11 +508,16 @@ const App = () => (
                 }
               />
 
+              {/* Invitation routes */}
+              <Route path="/invitation" element={<InvitationAccept />} />
+
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
               </Routes>
               </TooltipProvider>
                 </NotificationProvider>
+                  </NavigationProvider>
+                </PermissionProvider>
               </MenuProvider>
             </VenueProvider>
           </OrganizationProvider>

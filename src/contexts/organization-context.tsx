@@ -5,10 +5,12 @@ import { useAuth } from './auth-context';
 import OrganizationService, {
   Organization,
   OrganizationDetails,
+  OrganizationInvitation,
   CreateOrganizationDto,
   UpdateOrganizationDto,
   AddMemberDto,
-  UpdateMemberRoleDto
+  UpdateMemberRoleDto,
+  CreateInvitationDto,
 } from '@/services/organization-service';
 
 // Organization context interface
@@ -28,6 +30,12 @@ export interface OrganizationContextType {
   updateMemberRole: (organizationId: string, memberId: string, data: UpdateMemberRoleDto) => Promise<boolean>;
   removeMember: (organizationId: string, memberId: string) => Promise<boolean>;
   leaveOrganization: (organizationId: string) => Promise<boolean>;
+  // Invitation methods
+  sendInvitation: (organizationId: string, data: CreateInvitationDto) => Promise<boolean>;
+  getInvitations: (organizationId: string) => Promise<OrganizationInvitation[]>;
+  cancelInvitation: (organizationId: string, invitationId: string) => Promise<boolean>;
+  getInvitationByToken: (token: string) => Promise<OrganizationInvitation | null>;
+  acceptInvitation: (token: string) => Promise<boolean>;
 }
 
 // Create the organization context
@@ -121,6 +129,16 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         // If no stored org, use the first one
         setCurrentOrganization(data[0]);
         localStorage.setItem(CURRENT_ORGANIZATION_KEY, data[0].id);
+      } else {
+        // If user has no organizations, redirect to create organization page
+        // Only redirect if we're not already on the create organization page or invitation page
+        const currentPath = window.location.pathname;
+        const isOnCreatePage = currentPath.includes('/organizations/create');
+        const isOnInvitationPage = currentPath.includes('/invitation');
+
+        if (!isOnCreatePage && !isOnInvitationPage) {
+          navigate('/organizations/create');
+        }
       }
     } catch (err) {
       setError('Failed to fetch organizations');
@@ -128,7 +146,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, navigate]);
 
   // Select organization
   const selectOrganization = useCallback((organization: Organization): void => {
@@ -270,7 +288,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       setIsLoading(false);
     }
   };
-
   // Update member role
   const updateMemberRole = async (
     organizationId: string,
@@ -286,9 +303,27 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       await OrganizationService.updateMemberRole(organizationId, memberId, data);
       toast.success('Member role updated successfully');
 
-      // Refresh organization details to get updated members list
-      if (currentOrganization?.id === organizationId) {
-        fetchOrganizationDetails(organizationId);
+      // Optimistically update the member in the current organization details
+      if (currentOrganization?.id === organizationId && currentOrganizationDetails) {
+        setCurrentOrganizationDetails(prevDetails => {
+          if (!prevDetails) return prevDetails;
+          
+          const updatedMembers = prevDetails.members.map(member => 
+            member.id === memberId 
+              ? { 
+                  ...member, 
+                  role: data.role,
+                  staffType: data.staffType,
+                  venueIds: data.venueIds
+                }
+              : member
+          );
+            
+          return {
+            ...prevDetails,
+            members: updatedMembers
+          };
+        });
       }
 
       return true;
@@ -300,7 +335,6 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       setIsLoading(false);
     }
   };
-
   // Remove member
   const removeMember = async (organizationId: string, memberId: string): Promise<boolean> => {
     if (!isAuthenticated) return false;
@@ -312,9 +346,26 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       await OrganizationService.removeMember(organizationId, memberId);
       toast.success('Member removed successfully');
 
-      // Refresh organization details to get updated members list
-      if (currentOrganization?.id === organizationId) {
-        fetchOrganizationDetails(organizationId);
+      // Optimistically remove the member from the current organization details
+      if (currentOrganization?.id === organizationId && currentOrganizationDetails) {
+        setCurrentOrganizationDetails(prevDetails => {
+          if (!prevDetails) return prevDetails;
+          
+          const updatedMembers = prevDetails.members.filter(
+            member => member.id !== memberId
+          );
+          
+          const updatedStats = {
+            ...prevDetails.stats,
+            totalMembers: updatedMembers.length
+          };
+            
+          return {
+            ...prevDetails,
+            members: updatedMembers,
+            stats: updatedStats
+          };
+        });
       }
 
       return true;
@@ -366,6 +417,133 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     }
   };
 
+  // Invitation methods  // Send invitation
+  const sendInvitation = async (organizationId: string, data: CreateInvitationDto): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const newInvitation = await OrganizationService.sendInvitation(organizationId, data);
+      toast.success('Invitation sent successfully');
+
+      // Optimistically update the current organization details with the new invitation
+      if (currentOrganization?.id === organizationId && currentOrganizationDetails) {
+        setCurrentOrganizationDetails(prevDetails => {
+          if (!prevDetails) return prevDetails;
+          
+          const updatedInvitations = prevDetails.invitations ? 
+            [...prevDetails.invitations, newInvitation] : 
+            [newInvitation];
+            
+          return {
+            ...prevDetails,
+            invitations: updatedInvitations
+          };
+        });
+      }
+
+      return true;
+    } catch (err) {
+      setError('Failed to send invitation');
+      toast.error('Failed to send invitation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get invitations
+  const getInvitations = async (organizationId: string): Promise<OrganizationInvitation[]> => {
+    if (!isAuthenticated) return [];
+
+    try {
+      return await OrganizationService.getInvitations(organizationId);
+    } catch (err) {
+      setError('Failed to fetch invitations');
+      toast.error('Failed to fetch invitations');
+      return [];
+    }
+  };
+  // Cancel invitation
+  const cancelInvitation = async (organizationId: string, invitationId: string): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await OrganizationService.cancelInvitation(organizationId, invitationId);
+      toast.success('Invitation cancelled successfully');
+
+      // Optimistically remove the invitation from the current organization details
+      if (currentOrganization?.id === organizationId && currentOrganizationDetails) {
+        setCurrentOrganizationDetails(prevDetails => {
+          if (!prevDetails || !prevDetails.invitations) return prevDetails;
+          
+          const updatedInvitations = prevDetails.invitations.filter(
+            invitation => invitation.id !== invitationId
+          );
+            
+          return {
+            ...prevDetails,
+            invitations: updatedInvitations
+          };
+        });
+      }
+
+      return true;
+    } catch (err) {
+      setError('Failed to cancel invitation');
+      toast.error('Failed to cancel invitation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Get invitation by token (public)
+  const getInvitationByToken = async (token: string): Promise<OrganizationInvitation | null> => {
+    try {
+      return await OrganizationService.getInvitationByToken(token);
+    } catch (err) {
+      setError('Failed to fetch invitation details');
+      toast.error('Invalid or expired invitation');
+      return null;
+    }
+  };
+
+  // Accept invitation
+  const acceptInvitation = async (token: string): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const acceptedInvitation = await OrganizationService.acceptInvitation(token);
+      toast.success('Invitation accepted successfully');
+
+      // Refresh organizations list to include the new organization
+      await fetchOrganizations(true);
+
+      // If we're currently viewing the organization that the invitation was for,
+      // refresh its details to update the invitations list
+      if (currentOrganization && acceptedInvitation.organizationId === currentOrganization.id) {
+        await fetchOrganizationDetails(currentOrganization.id);
+      }
+
+      return true;
+    } catch (err) {
+      setError('Failed to accept invitation');
+      toast.error('Failed to accept invitation');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch organizations when authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -406,6 +584,11 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     updateMemberRole,
     removeMember,
     leaveOrganization,
+    sendInvitation,
+    getInvitations,
+    cancelInvitation,
+    getInvitationByToken,
+    acceptInvitation,
   };
 
   return (

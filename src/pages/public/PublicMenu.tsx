@@ -111,6 +111,7 @@ const PublicMenu: React.FC = () => {
     setCustomerPhone,
     setTableId: setCartTableId,
     setRoomNumber,
+    setPartySize,
     totalAmount,
     totalItems,
     removeItem,
@@ -242,7 +243,14 @@ const PublicMenu: React.FC = () => {
     setActiveFooterTab(FooterTab.TRACK);
   };
 
-  const handlePlaceOrder = async (formData: any) => {
+  const handlePlaceOrder = async (formData: {
+    customerName: string;
+    customerEmail?: string;
+    customerPhone: string;
+    roomNumber?: string;
+    partySize?: number;
+    notes?: string;
+  }) => {
     if (items.length === 0) {
       toast.error('Your cart is empty');
       return;
@@ -256,6 +264,7 @@ const PublicMenu: React.FC = () => {
       setCustomerEmail(formData.customerEmail || '');
       setCustomerPhone(formData.customerPhone);
       setRoomNumber(formData.roomNumber || '');
+      setPartySize(formData.partySize);
 
       // Create public order DTO
       const orderData: CreatePublicOrderDto = {
@@ -264,6 +273,7 @@ const PublicMenu: React.FC = () => {
         customerEmail: formData.customerEmail || undefined,
         customerPhone: formData.customerPhone,
         roomNumber: formData.roomNumber || undefined,
+        partySize: formData.partySize,
         notes: formData.notes || undefined,
         items: items.map(item => ({
           menuItemId: item.menuItemId,
@@ -361,6 +371,7 @@ const PublicMenu: React.FC = () => {
       <CheckoutForm
         venueId={venueId || ''}
         tableId={tableId}
+        tableCapacity={menu?.table?.capacity}
         onBack={handleBackToMenu}
         onSubmit={handlePlaceOrder}
         isSubmitting={isSubmitting}

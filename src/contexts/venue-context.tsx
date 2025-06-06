@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { toast } from 'sonner';
 import { useAuth } from './auth-context';
 import { useOrganization } from './organization-context';
+import { MemberRole } from '@/types/organization';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VenueService, {
   Venue,
@@ -43,7 +44,7 @@ interface VenueProviderProps {
 export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   const { state: authState } = useAuth();
   const { user, isAuthenticated } = authState;
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization, currentOrganizationDetails } = useOrganization();
 
   // Fallback authentication check - if auth context user is missing, check localStorage
   const isUserAuthenticated = isAuthenticated || (() => {
@@ -213,6 +214,29 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       return false;
     }
   }, [isUserAuthenticated, currentVenue, queryClient]);
+
+  // Get current user's venue assignments
+  const userVenueIds = React.useMemo(() => {
+    if (!user || !currentOrganizationDetails) return [];
+
+    const currentMember = currentOrganizationDetails.members.find(
+      member => member.user.id === user.id
+    );
+
+    if (!currentMember || currentMember.role !== MemberRole.STAFF) return [];
+    return currentMember.venueIds || [];
+  }, [user, currentOrganizationDetails]);
+
+  // Auto-select venue for staff members
+  useEffect(() => {
+    if (!currentVenue && venues.length > 0 && userVenueIds.length > 0) {
+      // If staff is assigned to specific venues, auto-select the first one
+      const assignedVenue = venues.find(venue => userVenueIds.includes(venue.id));
+      if (assignedVenue) {
+        setCurrentVenue(assignedVenue);
+      }
+    }
+  }, [currentVenue, venues, userVenueIds]);
 
   // Select a venue
   const selectVenue = useCallback((venue: Venue) => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -40,7 +40,11 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get redirect URL from search params (for invitation flows)
+  const redirectUrl = searchParams.get('redirect');
 
   // Initialize form
   const form = useForm<RegisterFormValues>({
@@ -61,8 +65,12 @@ const Register = () => {
 
       if (success) {
         // Registration successful, navigate to OTP verification
+        // Pass redirect URL in state for invitation flows
         navigate('/verify-otp', {
-          state: { email: data.email },
+          state: {
+            email: data.email,
+            redirectUrl: redirectUrl
+          },
           replace: true
         });
       }
@@ -86,7 +94,7 @@ const Register = () => {
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link
-            to="/login"
+            to={redirectUrl ? `/login?redirect=${encodeURIComponent(redirectUrl)}` : "/login"}
             className="text-primary underline-offset-4 hover:underline"
           >
             Sign in

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { useOrganization } from '@/contexts/organization-context';
+import { useNavigation } from '@/contexts/navigation-context';
+import DynamicSidebar from '@/components/navigation/DynamicSidebar';
+import MobileNavigation from '@/components/navigation/MobileNavigation';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import NotificationBell from '@/components/notifications/notification-bell';
 import {
   DropdownMenu,
@@ -20,17 +22,11 @@ import {
   LayoutDashboard,
   Menu,
   User,
-  Settings,
   LogOut,
   ChevronDown,
   X,
   Building2,
   Plus,
-  Users,
-  Utensils,
-  QrCode,
-  MapPin,
-  ClipboardList,
   CreditCard,
 } from 'lucide-react';
 import { Organization } from '@/services/organization-service';
@@ -94,10 +90,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     navigate(`/organizations/${org.id}`);
   };
 
-  // Check if a link is active
-  const isLinkActive = (path: string) => {
-    return location.pathname.startsWith(path);
-  };
+
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -121,78 +114,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                       <span className="sr-only">Close menu</span>
                     </Button>
                   </div>
-                  <div className="flex-1 overflow-auto py-4">
-                    <nav className="grid items-start px-4 text-sm font-medium gap-1">
-                      <Link
-                        to="/dashboard"
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/dashboard') ? 'text-primary' : 'text-muted-foreground'}`}
-                        onClick={closeMobileMenu}
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Dashboard
-                      </Link>
-                      <Link
-                        to="/organizations"
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/organizations') ? 'text-primary' : 'text-muted-foreground'}`}
-                        onClick={closeMobileMenu}
-                      >
-                        <Building2 className="h-4 w-4" />
-                        Organizations
-                      </Link>
-                      {currentOrganization && (
-                        <>
-                          <Link
-                            to={`/organizations/${currentOrganization.id}/venues`}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/venues`) ? 'text-primary' : 'text-muted-foreground'}`}
-                            onClick={closeMobileMenu}
-                          >
-                            <MapPin className="h-4 w-4" />
-                            Venues
-                          </Link>
-                          <Link
-                            to={`/organizations/${currentOrganization.id}/menus`}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/menus`) ? 'text-primary' : 'text-muted-foreground'}`}
-                            onClick={closeMobileMenu}
-                          >
-                            <Utensils className="h-4 w-4" />
-                            Menus
-                          </Link>
-                          <Link
-                            to={`/organizations/${currentOrganization.id}/orders`}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/orders`) ? 'text-primary' : 'text-muted-foreground'}`}
-                            onClick={closeMobileMenu}
-                          >
-                            <ClipboardList className="h-4 w-4" />
-                            Orders
-                          </Link>
-                          <Link
-                            to={`/organizations/${currentOrganization.id}?activeTab=qrcodes`}
-                            className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${location.pathname === `/organizations/${currentOrganization.id}` && location.search.includes('activeTab=qrcodes') ? 'text-primary' : 'text-muted-foreground'}`}
-                            onClick={closeMobileMenu}
-                          >
-                            <QrCode className="h-4 w-4" />
-                            QR Codes
-                          </Link>
-                        </>
-                      )}
-                      <Link
-                        to="/subscriptions"
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/subscriptions') ? 'text-primary' : 'text-muted-foreground'}`}
-                        onClick={closeMobileMenu}
-                      >
-                        <CreditCard className="h-4 w-4" />
-                        Subscriptions
-                      </Link>
-                      <Link
-                        to="/profile"
-                        className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`}
-                        onClick={closeMobileMenu}
-                      >
-                        <User className="h-4 w-4" />
-                        Profile
-                      </Link>
-                    </nav>
-                  </div>
+                  <MobileNavigation onLinkClick={closeMobileMenu} />
                 </div>
               </SheetContent>
             </Sheet>
@@ -308,106 +230,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Main content */}
       <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside className="hidden w-64 border-r bg-muted/40 md:block">
-          <div className="flex h-full flex-col">
-            <div className="flex-1 overflow-auto py-4">
-              <nav className="grid items-start px-4 text-sm font-medium gap-1">
-                <Link
-                  to="/dashboard"
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/dashboard') ? 'text-primary' : 'text-muted-foreground'}`}
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  to="/organizations"
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/organizations') && !location.pathname.includes('/organizations/') ? 'text-primary' : 'text-muted-foreground'}`}
-                >
-                  <Building2 className="h-4 w-4" />
-                  Organizations
-                </Link>
-                <Link
-                  to="/subscriptions"
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/subscriptions') ? 'text-primary' : 'text-muted-foreground'}`}
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Subscriptions
-                </Link>
-                <Link
-                  to="/profile"
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${isLinkActive('/profile') ? 'text-primary' : 'text-muted-foreground'}`}
-                >
-                  <User className="h-4 w-4" />
-                  Profile
-                </Link>
-
-                {/* Organization section */}
-                {currentOrganization && (
-                  <>
-                    <Separator className="my-2" />
-                    <div className="px-3 py-2">
-                      <h4 className="mb-2 text-xs font-semibold">
-                        {currentOrganization.name}
-                      </h4>
-                      <div className="space-y-1">
-                        <Link
-                          to={`/organizations/${currentOrganization.id}`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${location.pathname === `/organizations/${currentOrganization.id}` && !location.search.includes('activeTab=') ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <Building2 className="h-3 w-3" />
-                          <span>Overview</span>
-                        </Link>
-                        <Link
-                          to={`/organizations/${currentOrganization.id}/venues`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/venues`) ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <MapPin className="h-3 w-3" />
-                          <span>Venues</span>
-                        </Link>
-                        <Link
-                          to={`/organizations/${currentOrganization.id}/menus`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/menus`) ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <Utensils className="h-3 w-3" />
-                          <span>Menus</span>
-                        </Link>
-                        <Link
-                          to={`/organizations/${currentOrganization.id}/orders`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/orders`) ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <ClipboardList className="h-3 w-3" />
-                          <span>Orders</span>
-                        </Link>
-                        <Link
-                          to={`/organizations/${currentOrganization.id}?activeTab=qrcodes`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${location.pathname === `/organizations/${currentOrganization.id}` && location.search.includes('activeTab=qrcodes') ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <QrCode className="h-3 w-3" />
-                          <span>QR Codes</span>
-                        </Link>
-                        <Link
-                          to={`/organizations/${currentOrganization.id}/members`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/members`) ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <Users className="h-3 w-3" />
-                          <span>Members</span>
-                        </Link>
-                        <Link
-                          to={`/organizations/${currentOrganization.id}/settings`}
-                          className={`flex items-center gap-2 rounded-md px-2 py-1 text-xs hover:text-primary ${isLinkActive(`/organizations/${currentOrganization.id}/settings`) ? 'text-primary' : 'text-muted-foreground'}`}
-                        >
-                          <Settings className="h-3 w-3" />
-                          <span>Settings</span>
-                        </Link>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </nav>
-            </div>
-          </div>
-        </aside>
+        {/* Dynamic Sidebar */}
+        <DynamicSidebar />
 
         {/* Page content */}
         <main className="flex-1 overflow-auto">

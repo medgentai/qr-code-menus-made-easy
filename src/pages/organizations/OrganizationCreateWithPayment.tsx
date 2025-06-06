@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Check } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { useOrganization } from '@/contexts/organization-context';
 
 // Import step components (we'll create these)
 import OrganizationDetailsStep from '@/components/organization/OrganizationDetailsStep';
@@ -94,11 +95,15 @@ const STEPS = [
 
 const OrganizationCreateWithPayment = () => {
   const navigate = useNavigate();
+  const { organizations } = useOrganization();
   const [currentStep, setCurrentStep] = useState(1);
   const [stepData, setStepData] = useState<StepData>({});
   const [paymentOrder, setPaymentOrder] = useState<any>(null);
   const [paymentResult, setPaymentResult] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Check if user has existing organizations
+  const hasExistingOrganizations = organizations.length > 0;
 
   // Calculate progress percentage
   const progressPercentage = (currentStep / STEPS.length) * 100;
@@ -237,14 +242,16 @@ const OrganizationCreateWithPayment = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/organizations')}
-          className="self-start mb-2 sm:mb-0 md:mb-0 sm:mr-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back
-        </Button>
+        {hasExistingOrganizations && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/organizations')}
+            className="self-start mb-2 sm:mb-0 md:mb-0 sm:mr-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+        )}
         <div>
           <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold tracking-tight">
             Create Organization
@@ -305,7 +312,7 @@ const OrganizationCreateWithPayment = () => {
                 <OrganizationDetailsStep
                   initialData={stepData.organizationDetails}
                   onSubmit={handleOrganizationDetails}
-                  onBack={() => navigate('/organizations')}
+                  onBack={hasExistingOrganizations ? () => navigate('/organizations') : undefined}
                 />
               )}
 

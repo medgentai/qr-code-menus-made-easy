@@ -56,7 +56,7 @@ type FormValues = z.infer<typeof organizationDetailsSchema>;
 interface OrganizationDetailsStepProps {
   initialData?: Partial<FormValues>;
   onSubmit: (data: FormValues) => void;
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const OrganizationDetailsStep: React.FC<OrganizationDetailsStepProps> = ({
@@ -235,10 +235,12 @@ const OrganizationDetailsStep: React.FC<OrganizationDetailsStepProps> = ({
         </div>
 
         <div className="flex justify-between pt-4">
-          <Button type="button" variant="outline" onClick={onBack}>
-            Cancel
-          </Button>
-          <Button type="submit">
+          {onBack && (
+            <Button type="button" variant="outline" onClick={onBack}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" className={!onBack ? 'ml-auto' : ''}>
             Continue to Plan Selection
           </Button>
         </div>

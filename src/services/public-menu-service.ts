@@ -8,6 +8,11 @@ export interface PublicMenu extends Menu {
     name: string;
     slug: string;
   };
+  table?: {
+    id: string;
+    name: string;
+    capacity?: number | null;
+  };
 }
 
 // Public menu service

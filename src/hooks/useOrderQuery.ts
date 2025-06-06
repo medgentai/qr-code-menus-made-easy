@@ -348,8 +348,39 @@ export const useCreateOrderMutation = () => {
   return useMutation({
     mutationFn: (data: CreateOrderDto) => OrderService.create(data),
     onSuccess: (newOrder) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });
+      // Invalidate all order list queries
+      queryClient.invalidateQueries({ queryKey: orderKeys.lists() });      // Invalidate all filtered queries (including infinite queries)
+      queryClient.invalidateQueries({
+        queryKey: ['orders', 'list', 'filtered'],
+        exact: false // This ensures all filtered queries are invalidated regardless of filter parameters
+      });
+
+      // Specifically invalidate infinite filtered queries
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) &&
+            queryKey[0] === 'orders' &&
+            queryKey[1] === 'list' &&
+            queryKey[2] === 'filtered' &&
+            queryKey[queryKey.length - 1] === 'infinite'
+          );
+        }
+      });      // Force refetch of active filtered queries to immediately show the new order
+      queryClient.refetchQueries({
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) &&
+            queryKey[0] === 'orders' &&
+            queryKey[1] === 'list' &&
+            queryKey[2] === 'filtered' &&
+            queryKey[queryKey.length - 1] === 'infinite' &&
+            (query.state.status === 'success' || query.state.status === 'error') // Only refetch previously loaded queries
+          );
+        }
+      });
 
       // If the order has a venueId, also invalidate venue-specific queries
       if (newOrder.table?.venue?.id) {
@@ -357,11 +388,6 @@ export const useCreateOrderMutation = () => {
           queryKey: orderKeys.venue(newOrder.table.venue.id)
         });
       }
-
-      // Also invalidate any filtered queries
-      queryClient.invalidateQueries({
-        queryKey: ['orders', 'list', 'filtered']
-      });
 
       toast.success('Order created successfully');
     },

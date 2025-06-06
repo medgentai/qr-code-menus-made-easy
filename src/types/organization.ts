@@ -11,10 +11,23 @@ export enum OrganizationType {
 // Member role enum
 export enum MemberRole {
   OWNER = 'OWNER',
-  ADMIN = 'ADMIN',
+  ADMINISTRATOR = 'ADMINISTRATOR',
   MANAGER = 'MANAGER',
   STAFF = 'STAFF',
-  MEMBER = 'MEMBER',
+}
+
+// Staff type enum
+export enum StaffType {
+  KITCHEN = 'KITCHEN',
+  FRONT_OF_HOUSE = 'FRONT_OF_HOUSE',
+  GENERAL = 'GENERAL',
+}
+
+export enum InvitationStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
 }
 
 // Organization type labels for display
@@ -30,19 +43,24 @@ export const OrganizationTypeLabels: Record<OrganizationType, string> = {
 // Member role labels for display
 export const MemberRoleLabels: Record<MemberRole, string> = {
   [MemberRole.OWNER]: 'Owner',
-  [MemberRole.ADMIN]: 'Administrator',
+  [MemberRole.ADMINISTRATOR]: 'Administrator',
   [MemberRole.MANAGER]: 'Manager',
   [MemberRole.STAFF]: 'Staff',
-  [MemberRole.MEMBER]: 'Member',
+};
+
+// Staff type labels for display
+export const StaffTypeLabels: Record<StaffType, string> = {
+  [StaffType.KITCHEN]: 'Kitchen Staff',
+  [StaffType.FRONT_OF_HOUSE]: 'Front of House',
+  [StaffType.GENERAL]: 'General Staff',
 };
 
 // Member role descriptions
 export const MemberRoleDescriptions: Record<MemberRole, string> = {
   [MemberRole.OWNER]: 'Full control over the organization, including billing and deletion',
-  [MemberRole.ADMIN]: 'Can manage all aspects except billing and organization deletion',
+  [MemberRole.ADMINISTRATOR]: 'Can manage all aspects except billing and organization deletion',
   [MemberRole.MANAGER]: 'Can manage menus, venues, and orders',
   [MemberRole.STAFF]: 'Can view and update orders and menus',
-  [MemberRole.MEMBER]: 'Basic access with limited permissions',
 };
 
 // Member role permissions (for UI display)
@@ -58,7 +76,7 @@ export const MemberRolePermissions: Record<MemberRole, string[]> = {
     'View analytics',
     'Manage orders',
   ],
-  [MemberRole.ADMIN]: [
+  [MemberRole.ADMINISTRATOR]: [
     'Manage organization settings',
     'Manage members',
     'Manage venues',
@@ -81,10 +99,88 @@ export const MemberRolePermissions: Record<MemberRole, string[]> = {
     'View limited analytics',
     'Manage orders',
   ],
-  [MemberRole.MEMBER]: [
-    'View venues',
-    'View menus',
-    'View QR codes',
-    'View orders',
-  ],
 };
+
+// Staff type descriptions
+export const StaffTypeDescriptions: Record<StaffType, string> = {
+  [StaffType.KITCHEN]: 'Responsible for food and drink preparation',
+  [StaffType.FRONT_OF_HOUSE]: 'Handles customer service, orders, and table management',
+  [StaffType.GENERAL]: 'Flexible role with general restaurant duties',
+};
+
+// Invitation status labels
+export const InvitationStatusLabels: Record<InvitationStatus, string> = {
+  [InvitationStatus.PENDING]: 'Pending',
+  [InvitationStatus.ACCEPTED]: 'Accepted',
+  [InvitationStatus.EXPIRED]: 'Expired',
+  [InvitationStatus.CANCELLED]: 'Cancelled',
+};
+
+export const InvitationStatusDescriptions: Record<InvitationStatus, string> = {
+  [InvitationStatus.PENDING]: 'Invitation has been sent and is waiting for acceptance',
+  [InvitationStatus.ACCEPTED]: 'Invitation has been accepted and user is now a member',
+  [InvitationStatus.EXPIRED]: 'Invitation has expired and is no longer valid',
+  [InvitationStatus.CANCELLED]: 'Invitation has been cancelled by an administrator',
+};
+
+// Organization member interface
+export interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    profileImageUrl?: string;
+  };
+}
+
+export interface OrganizationInvitation {
+  id: string;
+  email: string;
+  organizationId: string;
+  invitedBy: string;
+  role: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+  status: InvitationStatus;
+  token: string;
+  expiresAt: string;
+  acceptedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  inviter?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  organization?: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl?: string;
+  };
+}
+
+export interface UpdateMemberRoleDto {
+  role: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+}
+
+export interface CreateInvitationDto {
+  email: string;
+  role?: MemberRole;
+  staffType?: StaffType;
+  venueIds?: string[];
+}
+
+export interface AcceptInvitationDto {
+  token: string;
+}

@@ -204,6 +204,15 @@ class WebSocketService {
     this.listeners.get(event)?.delete(callback);
   }
 
+  // Alias methods for compatibility
+  on(event: string, callback: (data: any) => void) {
+    this.addEventListener(event, callback);
+  }
+
+  off(event: string, callback: (data: any) => void) {
+    this.removeEventListener(event, callback);
+  }
+
   // Notify all listeners of an event
   private notifyListeners(event: string, data: any) {
     if (!this.listeners.has(event)) return;
@@ -225,7 +234,7 @@ class WebSocketService {
 
   // Get connection status
   isConnected(): boolean {
-    return this.connected;
+    return this.connected && this.socket?.connected === true;
   }
 
   // Get current token

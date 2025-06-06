@@ -67,9 +67,12 @@ const createOrganizationSchema = z.object({
 type FormValues = z.infer<typeof createOrganizationSchema>;
 
 const OrganizationCreate = () => {
-  const { createOrganization } = useOrganization();
+  const { createOrganization, organizations } = useOrganization();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if user has existing organizations
+  const hasExistingOrganizations = organizations.length > 0;
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -133,18 +136,23 @@ const OrganizationCreate = () => {
   return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row md:flex-row md:items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/organizations')}
-            className="self-start mb-2 sm:mb-0 md:mb-0 sm:mr-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
-          </Button>
+          {hasExistingOrganizations && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/organizations')}
+              className="self-start mb-2 sm:mb-0 md:mb-0 sm:mr-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            </Button>
+          )}
           <div>
             <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold tracking-tight">Create Organization</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Set up a new organization to manage your venues and menus
+              {hasExistingOrganizations
+                ? "Set up a new organization to manage your venues and menus"
+                : "Set up your organization with subscription and first venue"
+              }
             </p>
           </div>
         </div>
@@ -299,13 +307,15 @@ const OrganizationCreate = () => {
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigate('/organizations')}
-                      >
-                        Cancel
-                      </Button>
+                      {hasExistingOrganizations && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => navigate('/organizations')}
+                        >
+                          Cancel
+                        </Button>
+                      )}
                       <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? 'Creating...' : 'Create Organization'}
                       </Button>

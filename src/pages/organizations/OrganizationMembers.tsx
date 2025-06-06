@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useOrganization } from '@/contexts/organization-context';
 import { useAuth } from '@/contexts/auth-context';
+import { useVenue } from '@/contexts/venue-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -78,15 +79,22 @@ import {
 import {
   MemberRole,
   MemberRoleLabels,
-  MemberRoleDescriptions
+  MemberRoleDescriptions,
+  StaffType,
+  StaffTypeLabels,
+  StaffTypeDescriptions,
+  InvitationStatus,
+  InvitationStatusLabels,
 } from '@/types/organization';
 
-// Add member form schema
-const addMemberSchema = z.object({
+// Send invitation form schema
+const sendInvitationSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
   role: z.nativeEnum(MemberRole, {
     errorMap: () => ({ message: 'Please select a valid role' }),
   }),
+  staffType: z.nativeEnum(StaffType).optional(),
+  venueIds: z.array(z.string()).optional(),
 });
 
 // Update member role form schema
@@ -94,9 +102,11 @@ const updateRoleSchema = z.object({
   role: z.nativeEnum(MemberRole, {
     errorMap: () => ({ message: 'Please select a valid role' }),
   }),
+  staffType: z.nativeEnum(StaffType).optional(),
+  venueIds: z.array(z.string()).optional(),
 });
 
-type AddMemberFormValues = z.infer<typeof addMemberSchema>;
+type SendInvitationFormValues = z.infer<typeof sendInvitationSchema>;
 type UpdateRoleFormValues = z.infer<typeof updateRoleSchema>;
 
 const OrganizationMembers = () => {
@@ -107,26 +117,32 @@ const OrganizationMembers = () => {
     currentOrganization,
     currentOrganizationDetails,
     fetchOrganizationDetails,
-    addMember,
+    sendInvitation,
+    cancelInvitation,
     updateMemberRole,
     removeMember,
     leaveOrganization,
     isLoading
   } = useOrganization();
+  const { venues } = useVenue();
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isUpdateRoleDialogOpen, setIsUpdateRoleDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedInviteRole, setSelectedInviteRole] = useState<MemberRole>(MemberRole.STAFF);
+  const [selectedUpdateRole, setSelectedUpdateRole] = useState<MemberRole>(MemberRole.STAFF);
 
-  // Initialize add member form
-  const addMemberForm = useForm<AddMemberFormValues>({
-    resolver: zodResolver(addMemberSchema),
+  // Initialize send invitation form
+  const sendInvitationForm = useForm<SendInvitationFormValues>({
+    resolver: zodResolver(sendInvitationSchema),
     defaultValues: {
       email: '',
-      role: MemberRole.MEMBER,
+      role: MemberRole.STAFF,
+      staffType: undefined,
+      venueIds: [],
     },
   });
 
@@ -134,7 +150,9 @@ const OrganizationMembers = () => {
   const updateRoleForm = useForm<UpdateRoleFormValues>({
     resolver: zodResolver(updateRoleSchema),
     defaultValues: {
-      role: MemberRole.MEMBER,
+      role: MemberRole.STAFF,
+      staffType: undefined,
+      venueIds: [],
     },
   });
 
@@ -155,7 +173,7 @@ const OrganizationMembers = () => {
       setIsOwner(currentOrganizationDetails.owner.id === user.id);
       setIsAdmin(
         currentUserMember?.role === MemberRole.OWNER ||
-        currentUserMember?.role === MemberRole.ADMIN
+        currentUserMember?.role === MemberRole.ADMINISTRATOR
       );
     }
   }, [currentOrganizationDetails, user]);
@@ -175,34 +193,35 @@ const OrganizationMembers = () => {
     switch (role) {
       case MemberRole.OWNER:
         return <ShieldAlert className="h-4 w-4" />;
-      case MemberRole.ADMIN:
+      case MemberRole.ADMINISTRATOR:
         return <ShieldCheck className="h-4 w-4" />;
       case MemberRole.MANAGER:
         return <Shield className="h-4 w-4" />;
       case MemberRole.STAFF:
-      case MemberRole.MEMBER:
       default:
         return <ShieldQuestion className="h-4 w-4" />;
     }
   };
 
-  // Handle add member form submission
-  const onAddMember = async (data: AddMemberFormValues) => {
+  // Handle send invitation form submission
+  const onSendInvitation = async (data: SendInvitationFormValues) => {
     if (!id) return;
 
     setIsSubmitting(true);
     try {
-      const success = await addMember(id, {
+      const success = await sendInvitation(id, {
         email: data.email,
         role: data.role,
+        staffType: data.role === MemberRole.STAFF ? data.staffType : undefined,
+        venueIds: data.role === MemberRole.STAFF ? data.venueIds : undefined,
       });
 
       if (success) {
-        setIsAddDialogOpen(false);
-        addMemberForm.reset();
+        setIsInviteDialogOpen(false);
+        sendInvitationForm.reset();
       }
     } catch (error) {
-      console.error('Error adding member:', error);
+      console.error('Error sending invitation:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -216,6 +235,8 @@ const OrganizationMembers = () => {
     try {
       const success = await updateMemberRole(id, selectedMember.id, {
         role: data.role,
+        staffType: data.role === MemberRole.STAFF ? data.staffType : undefined,
+        venueIds: data.role === MemberRole.STAFF ? data.venueIds : undefined,
       });
 
       if (success) {
@@ -264,7 +285,10 @@ const OrganizationMembers = () => {
   // Open update role dialog
   const openUpdateRoleDialog = (member: any) => {
     setSelectedMember(member);
+    setSelectedUpdateRole(member.role);
     updateRoleForm.setValue('role', member.role);
+    updateRoleForm.setValue('staffType', member.staffType || undefined);
+    updateRoleForm.setValue('venueIds', member.venueIds || []);
     setIsUpdateRoleDialogOpen(true);
   };
 
@@ -288,25 +312,25 @@ const OrganizationMembers = () => {
           </div>
           <div className="flex gap-2">
             {isOwner || isAdmin ? (
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size="sm">
                     <UserPlus className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Add Member</span>
-                    <span className="inline sm:hidden">Add</span>
+                    <span className="hidden sm:inline">Send Invitation</span>
+                    <span className="inline sm:hidden">Invite</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Add Team Member</DialogTitle>
+                    <DialogTitle>Send Team Invitation</DialogTitle>
                     <DialogDescription>
-                      Invite someone to join your organization
+                      Send an invitation email to invite someone to join your organization
                     </DialogDescription>
                   </DialogHeader>
-                  <Form {...addMemberForm}>
-                    <form onSubmit={addMemberForm.handleSubmit(onAddMember)} className="space-y-4">
+                  <Form {...sendInvitationForm}>
+                    <form onSubmit={sendInvitationForm.handleSubmit(onSendInvitation)} className="space-y-4">
                       <FormField
-                        control={addMemberForm.control}
+                        control={sendInvitationForm.control}
                         name="email"
                         render={({ field }) => (
                           <FormItem>
@@ -318,20 +342,23 @@ const OrganizationMembers = () => {
                               />
                             </FormControl>
                             <FormDescription>
-                              Enter the email address of the person you want to invite
+                              An invitation email will be sent to this address
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       <FormField
-                        control={addMemberForm.control}
+                        control={sendInvitationForm.control}
                         name="role"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Role</FormLabel>
                             <Select
-                              onValueChange={field.onChange}
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                setSelectedInviteRole(value as MemberRole);
+                              }}
                               defaultValue={field.value}
                             >
                               <FormControl>
@@ -354,22 +381,106 @@ const OrganizationMembers = () => {
                               </SelectContent>
                             </Select>
                             <FormDescription>
-                              {selectedMember && MemberRoleDescriptions[field.value as MemberRole]}
+                              {MemberRoleDescriptions[field.value as MemberRole]}
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+
+                      {/* Staff Type Field - Only show for STAFF role */}
+                      {selectedInviteRole === MemberRole.STAFF && (
+                        <>
+                          <FormField
+                            control={sendInvitationForm.control}
+                            name="staffType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Staff Type</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select staff type" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {Object.entries(StaffTypeLabels).map(([type, label]) => (
+                                      <SelectItem key={type} value={type}>
+                                        {label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  {field.value && StaffTypeDescriptions[field.value as StaffType]}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Venue Assignment Field - Only show for STAFF role */}
+                          <FormField
+                            control={sendInvitationForm.control}
+                            name="venueIds"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Venue Assignment (Optional)</FormLabel>
+                                <Select
+                                  value={field.value?.[0] || ""}
+                                  onValueChange={(value) => {
+                                    if (value === "all") {
+                                      field.onChange([]);
+                                    } else if (value) {
+                                      field.onChange([value]);
+                                    }
+                                  }}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select venue assignment" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="all">
+                                      All Venues (Default)
+                                    </SelectItem>
+                                    {venues.length === 0 ? (
+                                      <div className="p-2 text-sm text-muted-foreground">
+                                        No venues available. Create venues first.
+                                      </div>
+                                    ) : (
+                                      venues.map((venue) => (
+                                        <SelectItem key={venue.id} value={venue.id}>
+                                          {venue.name}
+                                        </SelectItem>
+                                      ))
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <FormDescription>
+                                  Assign staff to a specific venue or leave as "All Venues" for full access.
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      )}
+
                       <DialogFooter>
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setIsAddDialogOpen(false)}
+                          onClick={() => setIsInviteDialogOpen(false)}
                         >
                           Cancel
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                          {isSubmitting ? 'Adding...' : 'Add Member'}
+                          {isSubmitting ? 'Sending...' : 'Send Invitation'}
                         </Button>
                       </DialogFooter>
                     </form>
@@ -468,13 +579,34 @@ const OrganizationMembers = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2 sm:mt-2 md:mt-0 self-end sm:self-end md:self-auto">
-                      <Badge
-                        variant="outline"
-                        className="flex items-center gap-1"
-                      >
-                        {getRoleIcon(member.role)}
-                        <span className="hidden xs:inline">{MemberRoleLabels[member.role]}</span>
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          {getRoleIcon(member.role)}
+                          <span className="hidden xs:inline">{MemberRoleLabels[member.role]}</span>
+                        </Badge>
+                        {member.role === MemberRole.STAFF && member.staffType && (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {StaffTypeLabels[member.staffType as StaffType]}
+                          </Badge>
+                        )}
+                        {member.role === MemberRole.STAFF && member.venueIds && member.venueIds.length > 0 && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {(() => {
+                              const assignedVenue = venues.find(v => v.id === member.venueIds[0]);
+                              return assignedVenue ? assignedVenue.name : 'Specific Venue';
+                            })()}
+                          </Badge>
+                        )}
+                      </div>
 
                       {canManageMember && (
                         <DropdownMenu>
@@ -535,14 +667,107 @@ const OrganizationMembers = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsAddDialogOpen(true)}
+                  onClick={() => setIsInviteDialogOpen(true)}
                 >
-                  <Plus className="h-4 w-4 mr-1" /> Add Member
+                  <Plus className="h-4 w-4 mr-1" /> Send Invitation
                 </Button>
               </div>
             </CardFooter>
           )}
         </Card>
+
+        {/* Pending Invitations Section - Only show for admins/owners */}
+        {(isOwner || isAdmin) && currentOrganizationDetails?.invitations &&
+         currentOrganizationDetails.invitations.filter(inv => inv.status === InvitationStatus.PENDING).length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Invitations</CardTitle>
+              <CardDescription>
+                Invitations that have been sent but not yet accepted
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {currentOrganizationDetails.invitations
+                  .filter(invitation => invitation.status === InvitationStatus.PENDING)
+                  .map((invitation) => (
+                  <div key={invitation.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-2 border rounded-md">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                        <UserPlus className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium">{invitation.email}</p>
+                          <Badge
+                            variant={invitation.status === InvitationStatus.PENDING ? "default" :
+                                   invitation.status === InvitationStatus.EXPIRED ? "destructive" : "secondary"}
+                          >
+                            {InvitationStatusLabels[invitation.status]}
+                          </Badge>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Invited by {invitation.inviter?.name} • {new Date(invitation.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2 sm:mt-0">
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          {getRoleIcon(invitation.role)}
+                          <span className="hidden xs:inline">{MemberRoleLabels[invitation.role]}</span>
+                        </Badge>
+                        {invitation.role === MemberRole.STAFF && invitation.staffType && (
+                          <Badge variant="secondary" className="text-xs">
+                            {StaffTypeLabels[invitation.staffType as StaffType]}
+                          </Badge>
+                        )}
+                      </div>
+                      {invitation.status === InvitationStatus.PENDING && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive">
+                                  Cancel Invitation
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Cancel Invitation</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to cancel the invitation for {invitation.email}?
+                                    They will no longer be able to accept this invitation.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => id && cancelInvitation(id, invitation.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Cancel Invitation
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Update Role Dialog */}
         <Dialog open={isUpdateRoleDialogOpen} onOpenChange={setIsUpdateRoleDialogOpen}>
@@ -562,7 +787,10 @@ const OrganizationMembers = () => {
                     <FormItem>
                       <FormLabel>Role</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedUpdateRole(value as MemberRole);
+                        }}
                         defaultValue={field.value}
                       >
                         <FormControl>
@@ -591,6 +819,90 @@ const OrganizationMembers = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* Staff Type Field - Only show for STAFF role */}
+                {selectedUpdateRole === MemberRole.STAFF && (
+                  <>
+                    <FormField
+                      control={updateRoleForm.control}
+                      name="staffType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Staff Type</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select staff type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(StaffTypeLabels).map(([type, label]) => (
+                                <SelectItem key={type} value={type}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            {field.value && StaffTypeDescriptions[field.value as StaffType]}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Venue Assignment Field - Only show for STAFF role */}
+                    <FormField
+                      control={updateRoleForm.control}
+                      name="venueIds"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Venue Assignment (Optional)</FormLabel>
+                          <Select
+                            value={field.value?.[0] || ""}
+                            onValueChange={(value) => {
+                              if (value === "all") {
+                                field.onChange([]);
+                              } else if (value) {
+                                field.onChange([value]);
+                              }
+                            }}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select venue assignment" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="all">
+                                All Venues (Default)
+                              </SelectItem>
+                              {venues.length === 0 ? (
+                                <div className="p-2 text-sm text-muted-foreground">
+                                  No venues available. Create venues first.
+                                </div>
+                              ) : (
+                                venues.map((venue) => (
+                                  <SelectItem key={venue.id} value={venue.id}>
+                                    {venue.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Assign staff to a specific venue or leave as "All Venues" for full access.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
                 <DialogFooter>
                   <Button
                     type="button"

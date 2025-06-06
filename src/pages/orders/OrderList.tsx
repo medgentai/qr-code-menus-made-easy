@@ -23,7 +23,8 @@ import {
   Utensils,
   Table as TableIcon,
   Store,
-  Loader2
+  Loader2,
+  Users
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -73,7 +74,9 @@ import {
 } from "@/components/ui/tooltip";
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
+import { usePermissions } from '@/contexts/permission-context';
 import { useOrder } from '@/hooks/useOrder';
+import { useRoleBasedOrders } from '@/hooks/useRoleBasedOrders';
 import OrderService, { Order, OrderStatus, FilterOrdersDto } from '@/services/order-service';
 import { toast } from 'sonner';
 import {
@@ -90,53 +93,36 @@ const OrderList: React.FC = () => {
   const { currentOrganization } = useOrganization();
   const { currentVenue, venues, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
   const { selectOrder } = useOrder();
+  const { userRole, userStaffType, userVenueIds } = usePermissions();
   const queryClient = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
   const [venueFilter, setVenueFilter] = useState<string>('');
 
-  // No need to fetch venues here - the VenueContext will handle this automatically
-  // when the currentOrganization changes
-
-  // Use a simple loading state instead of regular queries
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Combined filters state - memoized to prevent unnecessary re-renders
-  const filters = useMemo<FilterOrdersDto>(() => ({
-    organizationId: organizationId || undefined,
-    venueId: venueId || venueFilter || undefined,
-    status: statusFilter || undefined
-  }), [organizationId, venueId, venueFilter, statusFilter]);
-
-  // Use the new infinite filtered query hook with combined filters
-  const infiniteOrdersQuery = useInfiniteFilteredOrdersQuery(filters);
+  // Use role-based orders hook for automatic filtering with additional filters
+  const {
+    orders: roleBasedOrders,
+    isLoading: roleBasedLoading,
+    hasNextPage,
+    fetchNextPage,
+    canCreateOrder,
+    canEditOrder,
+    canDeleteOrder,
+    canUpdateOrderStatus,
+    availableStatusFilters,
+    pageInfo,
+    rawQuery: infiniteOrdersQuery
+  } = useRoleBasedOrders({
+    status: statusFilter === '' ? undefined : statusFilter,
+    venueId: venueFilter === '' ? undefined : venueFilter
+  });
 
   // Update mutations
   const updateOrderStatusMutation = useUpdateOrderStatusMutation();
   const deleteOrderMutation = useDeleteOrderMutation();
 
-  // Extract all orders from infinite query pages
-  const infiniteOrders = useMemo(() => {
-    if (!infiniteOrdersQuery.data) {
-      return [];
-    }
-
-    // Extract data from the paginated response
-    const extractedOrders = infiniteOrdersQuery.data.pages
-      .flatMap((page: any) => {
-        // Each page is a paginated response with a data property containing orders
-        if (page && Array.isArray(page.data)) {
-          return page.data;
-        }
-
-        // Fallback for any other structure
-        return [];
-      })
-      .filter((order: any) => order && order.id);
-
-
-    return extractedOrders;
-  }, [infiniteOrdersQuery.data]);
+  // Use role-based orders as the main data source
+  const infiniteOrders = roleBasedOrders;
 
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -146,6 +132,22 @@ const OrderList: React.FC = () => {
 
   // State to track orders with pending status updates - for immediate UI updates
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState<Record<string, OrderStatus>>({});
+
+  // Use role-based loading state
+  const isLoading = roleBasedLoading;
+
+  // Filter venues based on user permissions
+  const accessibleVenues = useMemo(() => {
+    if (!venues) return [];
+
+    // For staff members, only show venues they have access to
+    if (userRole === 'STAFF' && userVenueIds && userVenueIds.length > 0) {
+      return venues.filter(venue => userVenueIds.includes(venue.id));
+    }
+
+    // For non-staff roles, show all venues
+    return venues;
+  }, [venues, userRole, userVenueIds]);
 
   // Order statistics - using infinite query data for consistency
   const orderStats = useMemo(() => {
@@ -174,9 +176,7 @@ const OrderList: React.FC = () => {
       cancelled,
       totalAmount
     };
-  }, [infiniteOrders]);
-
-  // Optimized refresh function with debounce to prevent multiple rapid refreshes
+  }, [infiniteOrders]);  // Refresh function - always refetch when user explicitly clicks refresh
   const handleRefresh = useCallback(async () => {
     // Prevent refresh if already refreshing
     if (isRefreshing) return;
@@ -184,13 +184,11 @@ const OrderList: React.FC = () => {
     setIsRefreshing(true);
 
     try {
-      // Only refetch if data is stale or if it's been more than 30 seconds since last fetch
-      const lastFetchedAt = infiniteOrdersQuery.dataUpdatedAt;
-      const thirtySecondsAgo = Date.now() - 30 * 1000;
-
-      if (lastFetchedAt < thirtySecondsAgo) {
-        await infiniteOrdersQuery.refetch();
-      }
+      // Clear any pending status updates before refreshing
+      setPendingStatusUpdates({});
+      
+      // Always refetch when user explicitly clicks refresh
+      await infiniteOrdersQuery.refetch();
     } finally {
       // Use setTimeout to prevent UI flicker
       setTimeout(() => {
@@ -201,15 +199,10 @@ const OrderList: React.FC = () => {
 
   // Function to load more orders - memoized to prevent unnecessary re-renders
   const handleLoadMore = useCallback(async () => {
-    if (infiniteOrdersQuery.hasNextPage && !infiniteOrdersQuery.isFetchingNextPage) {
-      await infiniteOrdersQuery.fetchNextPage();
+    if (hasNextPage && !infiniteOrdersQuery.isFetchingNextPage) {
+      await fetchNextPage();
     }
-  }, [infiniteOrdersQuery.hasNextPage, infiniteOrdersQuery.isFetchingNextPage, infiniteOrdersQuery.fetchNextPage]);
-
-  // Set loading state when filters change or query is fetching
-  useEffect(() => {
-    setIsLoading(infiniteOrdersQuery.isLoading || infiniteOrdersQuery.isFetching);
-  }, [infiniteOrdersQuery.isLoading, infiniteOrdersQuery.isFetching]);
+  }, [hasNextPage, infiniteOrdersQuery.isFetchingNextPage, fetchNextPage]);
 
   const handleCreateOrder = () => {
     if (venueId) {
@@ -468,9 +461,9 @@ const OrderList: React.FC = () => {
         {/* Header with title and actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{pageInfo.title}</h1>
             <p className="text-muted-foreground">
-              Manage orders for {currentVenue?.name || currentOrganization?.name || 'your business'}
+              {pageInfo.description} {currentVenue?.name ? `at ${currentVenue.name}` : currentOrganization?.name ? `for ${currentOrganization.name}` : ''}
             </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -483,9 +476,11 @@ const OrderList: React.FC = () => {
             >
               <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
-            <Button onClick={handleCreateOrder} className="w-full sm:w-auto h-10">
-              <Plus className="mr-2 h-4 w-4" /> Create Order
-            </Button>
+            {canCreateOrder && (
+              <Button onClick={handleCreateOrder} className="w-full sm:w-auto h-10">
+                <Plus className="mr-2 h-4 w-4" /> Create Order
+              </Button>
+            )}
           </div>
         </div>
 
@@ -590,7 +585,7 @@ const OrderList: React.FC = () => {
                 >
                   All Statuses
                 </DropdownMenuItem>
-                {Object.values(OrderStatus).map((status) => (
+                {availableStatusFilters.map((status) => (
                   <DropdownMenuItem
                     key={status}
                     onClick={() => {
@@ -610,13 +605,13 @@ const OrderList: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* Venue Filter Dropdown - Only show on organization page */}
-            {organizationId && !venueId && (
+            {/* Venue Filter Dropdown - Only show on organization page and if user has access to multiple venues */}
+            {organizationId && !venueId && accessibleVenues.length > 1 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="w-full sm:w-auto">
                     <Store className="mr-2 h-4 w-4" />
-                    {venueFilter ? `Venue: ${venues.find(v => v.id === venueFilter)?.name || 'Selected'}` : 'All Venues'}
+                    {venueFilter ? `Venue: ${accessibleVenues.find(v => v.id === venueFilter)?.name || 'Selected'}` : 'All Venues'}
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -632,9 +627,9 @@ const OrderList: React.FC = () => {
                       }
                     }}
                   >
-                    All Venues
+                    All Accessible Venues
                   </DropdownMenuItem>
-                  {venues.map((venue) => (
+                  {accessibleVenues.map((venue) => (
                     <DropdownMenuItem
                       key={venue.id}
                       onClick={() => {
@@ -713,7 +708,7 @@ const OrderList: React.FC = () => {
                   ? 'Try adjusting your search or filters to find what you\'re looking for.'
                   : 'Create your first order to start managing your business.'}
               </p>
-              {!searchTerm && !statusFilter && (
+              {!searchTerm && !statusFilter && canCreateOrder && (
                 <Button onClick={handleCreateOrder}>Create Order</Button>
               )}
             </CardContent>
@@ -749,14 +744,24 @@ const OrderList: React.FC = () => {
                         <div className="text-xs text-muted-foreground">{format(new Date(order.createdAt), 'h:mm a')}</div>
                       </TableCell>
                       <TableCell>
-                        {order.table?.name || 'N/A'}
-                        {/* Show venue name when viewing at organization level */}
-                        {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
-                          <div className="text-xs text-muted-foreground">
-                            <Store className="h-3 w-3 inline mr-1" />
-                            {order.table.venue.name}
-                          </div>
-                        )}
+                        <div>
+                          {order.table?.name || 'N/A'}
+                          {/* Show party size and table capacity */}
+                          {order.partySize && (
+                            <div className="text-xs text-muted-foreground">
+                              <Users className="h-3 w-3 inline mr-1" />
+                              {order.partySize} guests
+                              {order.table?.capacity && ` (${order.table.capacity} max)`}
+                            </div>
+                          )}
+                          {/* Show venue name when viewing at organization level */}
+                          {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
+                            <div className="text-xs text-muted-foreground">
+                              <Store className="h-3 w-3 inline mr-1" />
+                              {order.table.venue.name}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>{order.items?.length || 0}</TableCell>
                       <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
@@ -777,30 +782,40 @@ const OrderList: React.FC = () => {
                             <DropdownMenuItem onClick={() => handleViewOrder(order.id)}>
                               <Eye className="mr-2 h-4 w-4" /> View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditOrder(order.id)}>
-                              <Edit className="mr-2 h-4 w-4" /> Edit Order
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                            {Object.values(OrderStatus).map((status) => (
-                              <DropdownMenuItem
-                                key={status}
-                                onClick={() => handleStatusChange(order.id, status)}
-                                disabled={order.status === status}
-                              >
-                                <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
-                                  {status}
-                                </Badge>
-                                {status}
+                            {canEditOrder(order.status) && (
+                              <DropdownMenuItem onClick={() => handleEditOrder(order.id)}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit Order
                               </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => confirmDelete(order)}
-                              className="text-destructive focus:text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                            </DropdownMenuItem>
+                            )}
+                            {canUpdateOrderStatus(order.status) && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                {availableStatusFilters.map((status) => (
+                                  <DropdownMenuItem
+                                    key={status}
+                                    onClick={() => handleStatusChange(order.id, status)}
+                                    disabled={order.status === status}
+                                  >
+                                    <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
+                                      {status}
+                                    </Badge>
+                                    {status}
+                                  </DropdownMenuItem>
+                                ))}
+                              </>
+                            )}
+                            {canDeleteOrder(order.status) && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => confirmDelete(order)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -862,6 +877,15 @@ const OrderList: React.FC = () => {
                             <TableIcon className="h-3 w-3 text-muted-foreground" />
                             <span className="font-medium">{order.table.name}</span>
 
+                            {/* Show party size and table capacity */}
+                            {order.partySize && (
+                              <span className="text-xs text-muted-foreground ml-1">
+                                <Users className="h-3 w-3 inline mr-1" />
+                                {order.partySize} guests
+                                {order.table?.capacity && ` (${order.table.capacity} max)`}
+                              </span>
+                            )}
+
                             {/* Show venue name when viewing at organization level */}
                             {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
                               <span className="text-xs text-muted-foreground ml-1">
@@ -917,46 +941,62 @@ const OrderList: React.FC = () => {
                     >
                       <Eye className="mr-2 h-4 w-4" /> View
                     </Button>
-                    <Separator orientation="vertical" className="h-8" />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditOrder(order.id)}
-                      className="flex-1"
-                    >
-                      <Edit className="mr-2 h-4 w-4" /> Edit
-                    </Button>
-                    <Separator orientation="vertical" className="h-8" />
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="flex-1">
-                          <MoreHorizontal className="mr-2 h-4 w-4" /> More
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {Object.values(OrderStatus).map((status) => (
-                          <DropdownMenuItem
-                            key={status}
-                            onClick={() => handleStatusChange(order.id, status)}
-                            disabled={order.status === status}
-                          >
-                            <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
-                              {status}
-                            </Badge>
-                            {status}
-                          </DropdownMenuItem>
-                        ))}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => confirmDelete(order)}
-                          className="text-destructive focus:text-destructive"
+                    {canEditOrder(order.status) && (
+                      <>
+                        <Separator orientation="vertical" className="h-8" />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditOrder(order.id)}
+                          className="flex-1"
                         >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete Order
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <Edit className="mr-2 h-4 w-4" /> Edit
+                        </Button>
+                      </>
+                    )}
+                    {(canUpdateOrderStatus(order.status) || canDeleteOrder(order.status)) && (
+                      <>
+                        <Separator orientation="vertical" className="h-8" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="flex-1">
+                              <MoreHorizontal className="mr-2 h-4 w-4" /> More
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-56">
+                            {canUpdateOrderStatus(order.status) && (
+                              <>
+                                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {availableStatusFilters.map((status) => (
+                                  <DropdownMenuItem
+                                    key={status}
+                                    onClick={() => handleStatusChange(order.id, status)}
+                                    disabled={order.status === status}
+                                  >
+                                    <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
+                                      {status}
+                                    </Badge>
+                                    {status}
+                                  </DropdownMenuItem>
+                                ))}
+                              </>
+                            )}
+                            {canDeleteOrder(order.status) && (
+                              <>
+                                {canUpdateOrderStatus(order.status) && <DropdownMenuSeparator />}
+                                <DropdownMenuItem
+                                  onClick={() => confirmDelete(order)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </>
+                    )}
                   </CardFooter>
                 </Card>
               ))}
