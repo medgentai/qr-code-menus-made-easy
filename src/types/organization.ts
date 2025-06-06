@@ -20,7 +20,6 @@ export enum MemberRole {
 export enum StaffType {
   KITCHEN = 'KITCHEN',
   FRONT_OF_HOUSE = 'FRONT_OF_HOUSE',
-  GENERAL = 'GENERAL',
 }
 
 export enum InvitationStatus {
@@ -52,7 +51,6 @@ export const MemberRoleLabels: Record<MemberRole, string> = {
 export const StaffTypeLabels: Record<StaffType, string> = {
   [StaffType.KITCHEN]: 'Kitchen Staff',
   [StaffType.FRONT_OF_HOUSE]: 'Front of House',
-  [StaffType.GENERAL]: 'General Staff',
 };
 
 // Member role descriptions
@@ -105,7 +103,6 @@ export const MemberRolePermissions: Record<MemberRole, string[]> = {
 export const StaffTypeDescriptions: Record<StaffType, string> = {
   [StaffType.KITCHEN]: 'Responsible for food and drink preparation',
   [StaffType.FRONT_OF_HOUSE]: 'Handles customer service, orders, and table management',
-  [StaffType.GENERAL]: 'Flexible role with general restaurant duties',
 };
 
 // Invitation status labels

@@ -136,11 +136,7 @@ export const PermissionGroups = {
     Permission.MANAGE_ORDER_STATUS,
   ],
   
-  GENERAL_STAFF: [
-    Permission.VIEW_ORDERS,
-    Permission.VIEW_MENUS,
-    Permission.VIEW_VENUES,
-  ],
+
   
   QR_CODES: [
     Permission.VIEW_QR_CODES,
@@ -251,36 +247,5 @@ export const StaffNavigationConfig = {
     },
   ],
   
-  GENERAL: [
-    {
-      path: '/staff-dashboard',
-      label: 'Staff Dashboard',
-      icon: 'User',
-      permissions: [Permission.VIEW_DASHBOARD],
-    },
-    {
-      path: '/orders',
-      label: 'Orders',
-      icon: 'ShoppingCart',
-      permissions: [Permission.VIEW_ORDERS],
-    },
-    {
-      path: '/menus',
-      label: 'Menus',
-      icon: 'Menu',
-      permissions: [Permission.VIEW_MENUS],
-    },
-    {
-      path: '/venues',
-      label: 'Venues',
-      icon: 'MapPin',
-      permissions: [Permission.VIEW_VENUES],
-    },
-    {
-      path: '/settings',
-      label: 'Settings',
-      icon: 'Settings',
-      permissions: [Permission.VIEW_SETTINGS],
-    },
-  ],
+
 };

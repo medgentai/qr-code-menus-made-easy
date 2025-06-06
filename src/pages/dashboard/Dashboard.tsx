@@ -122,10 +122,6 @@ const Dashboard = () => {
           // Kitchen staff go to kitchen dashboard (no organization context needed)
           navigate('/kitchen-dashboard', { replace: true });
           break;
-        case StaffType.GENERAL:
-          // General staff go to staff dashboard (no organization context needed)
-          navigate('/staff-dashboard', { replace: true });
-          break;
         default:
           // Unknown staff type, stay on general dashboard
           setIsRedirecting(false);

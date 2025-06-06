@@ -58,17 +58,12 @@ export const StaffTypePermissions: Record<StaffType, Permission[]> = {
     ...PermissionGroups.MENU_BASIC,
     ...PermissionGroups.SETTINGS,
   ],
-  
+
   [StaffType.FRONT_OF_HOUSE]: [
     ...PermissionGroups.FRONT_OF_HOUSE_STAFF,
     ...PermissionGroups.MENU_BASIC,
     ...PermissionGroups.VENUE_BASIC,
     ...PermissionGroups.QR_CODES,
-    ...PermissionGroups.SETTINGS,
-  ],
-  
-  [StaffType.GENERAL]: [
-    ...PermissionGroups.GENERAL_STAFF,
     ...PermissionGroups.SETTINGS,
   ],
 };
@@ -173,8 +168,6 @@ export function getDashboardRoute(role: MemberRole, staffType?: StaffType): stri
       case StaffType.FRONT_OF_HOUSE:
         // Front of house staff go to orders page instead of a separate dashboard
         return '/dashboard';
-      case StaffType.GENERAL:
-        return '/staff-dashboard';
       default:
         return '/dashboard';
     }
@@ -242,9 +235,6 @@ export function getAllowedOrderStatuses(role: MemberRole, staffType?: StaffType)
       case StaffType.FRONT_OF_HOUSE:
         // Front of house staff should see the full customer service workflow
         return ['PENDING', 'CONFIRMED', 'READY', 'COMPLETED', 'CANCELLED'];
-      case StaffType.GENERAL:
-        // General staff can see basic order information (all statuses but limited actions)
-        return null; // Can see all but with limited actions
       default:
         return ['PENDING', 'CONFIRMED']; // Default limited view
     }
@@ -283,9 +273,6 @@ export function canPerformOrderAction(
           return ['PENDING', 'CONFIRMED', 'READY', 'COMPLETED', 'CANCELLED'].includes(orderStatus || '');
         }
         return false;
-      case StaffType.GENERAL:
-        // General staff have limited actions
-        return action === 'create';
       default:
         return false;
     }
@@ -304,8 +291,6 @@ export function getAccessLevelDescription(role: MemberRole, staffType?: StaffTyp
         return 'Kitchen operations and order management';
       case StaffType.FRONT_OF_HOUSE:
         return 'Customer service and table management';
-      case StaffType.GENERAL:
-        return 'General restaurant operations';
       default:
         return 'Staff-level access';
     }

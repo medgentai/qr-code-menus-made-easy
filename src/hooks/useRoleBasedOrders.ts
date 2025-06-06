@@ -146,11 +146,6 @@ export const useRoleBasedOrders = (additionalFilters?: {
             title: 'Service Orders',
             description: `Manage the complete customer service workflow${venueContext}`
           };
-        case 'GENERAL':
-          return {
-            title: 'Orders',
-            description: `View order information${venueContext}`
-          };
         default:
           return {
             title: 'Orders',

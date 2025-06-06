@@ -24,8 +24,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ onLinkClick }) => {
           return { label: 'Kitchen Staff', color: 'bg-orange-100 text-orange-800' };
         case 'FRONT_OF_HOUSE':
           return { label: 'Front of House', color: 'bg-blue-100 text-blue-800' };
-        case 'GENERAL':
-          return { label: 'General Staff', color: 'bg-purple-100 text-purple-800' };
         default:
           return { label: 'Staff', color: 'bg-gray-100 text-gray-800' };
       }

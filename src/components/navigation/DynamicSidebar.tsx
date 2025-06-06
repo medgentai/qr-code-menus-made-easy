@@ -40,8 +40,6 @@ const DynamicSidebar: React.FC<DynamicSidebarProps> = ({ className }) => {
           return { label: 'Kitchen Staff', variant: 'default' as const, color: 'bg-orange-100 text-orange-800' };
         case StaffType.FRONT_OF_HOUSE:
           return { label: 'Front of House', variant: 'default' as const, color: 'bg-blue-100 text-blue-800' };
-        case StaffType.GENERAL:
-          return { label: 'General Staff', variant: 'default' as const, color: 'bg-purple-100 text-purple-800' };
         default:
           return { label: 'Staff', variant: 'secondary' as const, color: 'bg-gray-100 text-gray-800' };
       }

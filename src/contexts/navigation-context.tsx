@@ -128,33 +128,7 @@ const staffNavigationTemplates: Record<StaffType, Omit<NavigationItem, 'path'>[]
     },
   ],
 
-  [StaffType.GENERAL]: [
-    {
-      label: 'Staff Dashboard',
-      icon: User,
-      permissions: [Permission.VIEW_DASHBOARD],
-    },
-    {
-      label: 'Orders',
-      icon: ShoppingCart,
-      permissions: [Permission.VIEW_ORDERS],
-    },
-    {
-      label: 'Menus',
-      icon: Menu,
-      permissions: [Permission.VIEW_MENUS],
-    },
-    {
-      label: 'Venues',
-      icon: MapPin,
-      permissions: [Permission.VIEW_VENUES],
-    },
-    {
-      label: 'Settings',
-      icon: Settings,
-      permissions: [Permission.VIEW_SETTINGS],
-    },
-  ],
+
 };
 
 // Function to generate staff navigation items with organization-specific paths
@@ -172,9 +146,7 @@ const generateStaffNavigationItems = (
       case 'Kitchen Dashboard':
         path = '/kitchen-dashboard';
         break;
-      case 'Staff Dashboard':
-        path = '/staff-dashboard';
-        break;
+
       case 'Orders':
         path = `/organizations/${organizationId}/orders`;
         break;

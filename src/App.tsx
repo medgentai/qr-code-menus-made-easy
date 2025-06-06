@@ -43,7 +43,6 @@ import Profile from "./pages/profile/Profile";
 
 // Staff Dashboard pages
 import KitchenDashboard from "./pages/staff/KitchenDashboard";
-import StaffDashboard from "./pages/staff/StaffDashboard";
 import Subscriptions from "./pages/subscriptions/Subscriptions";
 import SubscriptionManage from "./pages/subscriptions/SubscriptionManage";
 
@@ -202,14 +201,7 @@ const App = () => (
                 }
               />
 
-              <Route
-                path="/staff-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <StaffDashboard />
-                  </ProtectedRoute>
-                }
-              />
+
 
               {/* Organization routes */}
               <Route
