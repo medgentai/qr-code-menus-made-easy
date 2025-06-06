@@ -5,7 +5,6 @@ export enum OrganizationType {
   CAFE = 'CAFE',
   FOOD_TRUCK = 'FOOD_TRUCK',
   BAR = 'BAR',
-  OTHER = 'OTHER',
 }
 
 // Member role enum
@@ -36,7 +35,6 @@ export const OrganizationTypeLabels: Record<OrganizationType, string> = {
   [OrganizationType.CAFE]: 'Cafe',
   [OrganizationType.FOOD_TRUCK]: 'Food Truck',
   [OrganizationType.BAR]: 'Bar',
-  [OrganizationType.OTHER]: 'Other',
 };
 
 // Member role labels for display

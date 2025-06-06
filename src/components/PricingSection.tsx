@@ -1,15 +1,11 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { CheckCircle, Utensils, Hotel, CircleDollarSign, Loader2, AlertCircle } from 'lucide-react';
+import { CheckCircle, Utensils, Hotel, Coffee, Truck, Wine, Loader2, AlertCircle, Star, Shield, Zap } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+import { Badge } from "@/components/ui/badge";
 import { usePlans } from '@/hooks/usePlans';
 import { Plan } from '@/types/payment';
 
@@ -21,65 +17,94 @@ const PricingSection = () => {
   const getIcon = (organizationType: string) => {
     switch (organizationType) {
       case 'RESTAURANT':
-        return <Utensils className="h-10 w-10 text-orange-500" />;
+        return <Utensils className="h-8 w-8 text-white" />;
       case 'HOTEL':
-        return <Hotel className="h-10 w-10 text-orange-500" />;
+        return <Hotel className="h-8 w-8 text-white" />;
       case 'CAFE':
-        return <CircleDollarSign className="h-10 w-10 text-orange-500" />;
+        return <Coffee className="h-8 w-8 text-white" />;
+      case 'FOOD_TRUCK':
+        return <Truck className="h-8 w-8 text-white" />;
+      case 'BAR':
+        return <Wine className="h-8 w-8 text-white" />;
       default:
-        return <Utensils className="h-10 w-10 text-orange-500" />;
+        return <Utensils className="h-8 w-8 text-white" />;
     }
   };
 
-  // Helper function to calculate daily cost
-  const calculateDailyCost = (annualPrice: number) => {
-    return Math.round(annualPrice / 365);
+  // Helper function to get gradient colors based on organization type
+  const getGradient = (organizationType: string) => {
+    switch (organizationType) {
+      case 'RESTAURANT':
+        return 'from-orange-500 to-red-500';
+      case 'HOTEL':
+        return 'from-blue-500 to-indigo-500';
+      case 'CAFE':
+        return 'from-amber-500 to-orange-500';
+      case 'FOOD_TRUCK':
+        return 'from-green-500 to-emerald-500';
+      case 'BAR':
+        return 'from-purple-500 to-pink-500';
+      default:
+        return 'from-orange-500 to-red-500';
+    }
+  };
+
+  // Helper function to calculate savings
+  const calculateSavings = (monthlyPrice: number, annualPrice: number) => {
+    const annualMonthly = monthlyPrice * 12;
+    const savings = annualMonthly - annualPrice;
+    const percentage = Math.round((savings / annualMonthly) * 100);
+    return { amount: savings, percentage };
   };
 
   // Transform backend plans to frontend format
-  const transformedPlans = backendPlans.map((plan: Plan, index: number) => ({
-    id: plan.id,
-    name: plan.name,
-    description: plan.description,
-    monthlyPrice: Number(plan.monthlyPrice),
-    annualPrice: Math.round(Number(plan.annualPrice) / 12), // Monthly equivalent of annual price
-    annualTotal: Number(plan.annualPrice), // Total annual price
-    icon: getIcon(plan.organizationType),
-    features: plan.features,
-    cta: "Book a Free Demo",
-    highlight: plan.organizationType === 'RESTAURANT', // Highlight restaurant plan
-    dailyCost: calculateDailyCost(Number(plan.annualPrice)),
-    organizationType: plan.organizationType,
-  }));
+  const transformedPlans = backendPlans.map((plan: Plan, index: number) => {
+    const savings = calculateSavings(Number(plan.monthlyPrice), Number(plan.annualPrice));
+    return {
+      id: plan.id,
+      name: plan.name,
+      description: plan.description,
+      monthlyPrice: Number(plan.monthlyPrice),
+      annualPrice: Number(plan.annualPrice),
+      annualMonthlyEquivalent: Math.round(Number(plan.annualPrice) / 12),
+      icon: getIcon(plan.organizationType),
+      gradient: getGradient(plan.organizationType),
+      features: plan.features,
+      cta: "Get Started",
+      highlight: plan.organizationType === 'RESTAURANT',
+      savings,
+      organizationType: plan.organizationType,
+    };
+  });
 
   const customSolutionDescription = "Whether you run Cafés & Bars, Food Trucks, Event Spaces, or need an Enterprise solution, our team can tailor ScanServe to meet your specific requirements and scale with your business.";
 
   // Loading state
   if (loading) {
     return (
-      <section className="section bg-navy-800" id="pricing">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white" id="pricing">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Simple, <span className="text-orange-500">Transparent</span> Pricing
             </h2>
-            <p className="text-lg text-gray-300">
+            <p className="text-xl text-gray-600 mb-8">
               Choose the plan that's right for your business. Start managing your venue today.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {[1, 2].map((i) => (
-              <div key={i} className="pricing-card">
-                <Skeleton className="h-8 w-3/4 mb-4 bg-gray-700" />
-                <Skeleton className="h-4 w-full mb-6 bg-gray-700" />
-                <Skeleton className="h-12 w-1/2 mb-6 bg-gray-700" />
+              <div key={i} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <Skeleton className="h-8 w-3/4 mb-4" />
+                <Skeleton className="h-4 w-full mb-6" />
+                <Skeleton className="h-12 w-1/2 mb-6" />
                 <div className="space-y-3 mb-8">
                   {[1, 2, 3, 4].map((j) => (
-                    <Skeleton key={j} className="h-4 w-full bg-gray-700" />
+                    <Skeleton key={j} className="h-4 w-full" />
                   ))}
                 </div>
-                <Skeleton className="h-10 w-full bg-gray-700" />
+                <Skeleton className="h-12 w-full" />
               </div>
             ))}
           </div>
@@ -91,19 +116,19 @@ const PricingSection = () => {
   // Error state
   if (error) {
     return (
-      <section className="section bg-navy-800" id="pricing">
+      <section className="py-20 bg-gradient-to-br from-gray-50 to-white" id="pricing">
         <div className="container-custom">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Simple, <span className="text-orange-500">Transparent</span> Pricing
             </h2>
-            <Alert className="bg-red-900 border-red-700">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-red-100">
+            <Alert className="bg-red-50 border-red-200">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
                 Failed to load pricing plans.
                 <Button
                   variant="link"
-                  className="text-red-200 underline p-0 ml-1 h-auto"
+                  className="text-red-600 underline p-0 ml-1 h-auto"
                   onClick={refetch}
                 >
                   Try again
@@ -117,117 +142,162 @@ const PricingSection = () => {
   }
 
   return (
-    <section className="section bg-navy-800" id="pricing">
+    <section className="py-20 bg-gradient-to-br from-gray-50 to-white" id="pricing">
       <div className="container-custom">
-        <div className="max-w-3xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+        {/* Header */}
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Simple, <span className="text-orange-500">Transparent</span> Pricing
           </h2>
-          <p className="text-lg text-gray-300">
+          <p className="text-xl text-gray-600 mb-8">
             Choose the plan that's right for your business. Start managing your venue today.
           </p>
 
-          <div className="flex items-center justify-center mt-8 space-x-3">
-            <span className={`text-sm font-medium ${!isAnnual ? 'text-white' : 'text-gray-400'}`}>Monthly</span>
+          {/* Trust indicators */}
+          <div className="flex items-center justify-center gap-8 text-sm text-gray-500 mb-8">
+            <div className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-green-500" />
+              <span>No setup fees</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-blue-500" />
+              <span>Instant activation</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star className="h-4 w-4 text-yellow-500" />
+              <span>24/7 support</span>
+            </div>
+          </div>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4">
+            <span className={`text-sm font-medium ${!isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
+              Monthly
+            </span>
             <Switch
               checked={isAnnual}
               onCheckedChange={setIsAnnual}
               className="data-[state=checked]:bg-orange-500"
             />
-            <span className={`text-sm font-medium ${isAnnual ? 'text-white' : 'text-gray-400'}`}>
-              Annual <span className="text-orange-500 ml-1">Save 20%</span>
+            <span className={`text-sm font-medium ${isAnnual ? 'text-gray-900' : 'text-gray-500'}`}>
+              Annual
+              <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700 hover:bg-green-100">
+                Save 20%
+              </Badge>
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {transformedPlans.map((plan, index) => (
             <div
               key={index}
-              className={`pricing-card relative ${plan.highlight ? 'border-orange-500 border-2 shadow-lg overflow-visible z-10' : ''}`}
+              className={`relative bg-white rounded-2xl shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+                plan.highlight
+                  ? 'border-orange-200 ring-2 ring-orange-500 ring-opacity-20'
+                  : 'border-gray-200 hover:border-orange-200'
+              }`}
             >
               {plan.highlight && (
-                <div className="absolute top-0 right-0 -mt-4 -mr-4 bg-orange-500 text-white text-xs font-bold px-4 py-1 rounded-full uppercase shadow-lg z-10">
-                  Most Popular
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-1 text-sm font-semibold">
+                    Most Popular
+                  </Badge>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mb-4">
-                {plan.icon}
-                <h3 className="text-xl font-bold text-navy-800">{plan.name}</h3>
-              </div>
-
-              <p className="text-gray-600 mb-6 h-12">{plan.description}</p>
-
-              <div className="mb-6">
-                <div className="flex items-end">
-                  <span className="text-4xl font-bold text-navy-800">
-                    ₹{isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                  </span>
-                  <span className="text-gray-500 ml-1">/month</span>
-                </div>
-
-                {isAnnual && (
-                  <div className="flex items-center mt-2">
-                    <div className="text-orange-500 text-sm font-medium">
-                      ₹{plan.annualTotal} billed annually
-                    </div>
-
-                    <HoverCard>
-                      <HoverCardTrigger>
-                        <div className="ml-2 bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded-full cursor-help">
-                          Only ₹{plan.dailyCost}/day
-                        </div>
-                      </HoverCardTrigger>
-                      <HoverCardContent className="w-80">
-                        <div className="text-sm">
-                          <p className="font-medium">Just ₹{plan.dailyCost} per day</p>
-                          <p className="text-gray-600 mt-1">
-                            That's less than the cost of a cup of chai! Invest in your business's digital presence for pennies a day.
-                          </p>
-                        </div>
-                      </HoverCardContent>
-                    </HoverCard>
+              {/* Header with icon and gradient */}
+              <div className={`p-8 pb-6 bg-gradient-to-r ${plan.gradient} rounded-t-2xl`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+                    {plan.icon}
                   </div>
-                )}
-
-                <div className="mt-2 text-xs text-gray-500">
-                  *Excluding applicable taxes and payment gateway fees
+                  <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
                 </div>
+                <p className="text-white text-opacity-90">{plan.description}</p>
               </div>
 
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-orange-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="p-8 pt-6">
 
-              <Button
-                className={`w-full ${plan.highlight ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'btn-outline'}`}
-                asChild
-              >
-                <Link to="/get-started">
-                  {plan.cta}
-                </Link>
-              </Button>
+                {/* Pricing */}
+                <div className="mb-8">
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-5xl font-bold text-gray-900">
+                      ₹{isAnnual ? plan.annualMonthlyEquivalent : plan.monthlyPrice}
+                    </span>
+                    <span className="text-gray-500 text-lg">/month</span>
+                  </div>
+
+                  {isAnnual && (
+                    <div className="space-y-2">
+                      <div className="text-gray-600 text-sm">
+                        ₹{plan.annualPrice} billed annually
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Save ₹{plan.savings.amount} ({plan.savings.percentage}% off)
+                      </Badge>
+                    </div>
+                  )}
+
+                  <div className="mt-3 text-xs text-gray-500">
+                    *Excluding applicable taxes
+                  </div>
+                </div>
+
+                {/* Features */}
+                <ul className="space-y-4 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA Button */}
+                <Button
+                  className={`w-full h-12 text-base font-semibold transition-all duration-200 ${
+                    plan.highlight
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-lg hover:shadow-xl'
+                      : 'bg-gray-900 hover:bg-gray-800 text-white'
+                  }`}
+                  asChild
+                >
+                  <Link to="/get-started">
+                    {plan.cta}
+                  </Link>
+                </Button>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="max-w-3xl mx-auto mt-16 bg-navy-700 rounded-xl p-8 text-center">
-          <h3 className="text-2xl font-bold text-white mb-4">Need a custom solution?</h3>
-          <p className="text-gray-300 mb-6">
-            {customSolutionDescription}
-          </p>
-          <Button
-            className="bg-white text-navy-800 hover:bg-gray-100"
-            asChild
-          >
-            <Link to="/get-started">Contact Sales</Link>
-          </Button>
+        {/* Custom Solution CTA */}
+        <div className="max-w-4xl mx-auto mt-20">
+          <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-2xl p-8 md:p-12 text-center">
+            <h3 className="text-3xl font-bold text-white mb-4">
+              Need help getting started?
+            </h3>
+            <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+              Have questions about our plans or need assistance setting up your restaurant?
+              Our team is here to help you choose the right solution for your business.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 text-base font-semibold"
+                asChild
+              >
+                <Link to="/get-started">Get Started</Link>
+              </Button>
+              <Button
+                className="bg-white bg-opacity-20 backdrop-blur-sm border-2 border-white text-white hover:bg-white hover:text-gray-900 px-8 py-3 text-base font-semibold transition-all duration-200"
+                asChild
+              >
+                <Link to="/get-started">Contact Us</Link>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

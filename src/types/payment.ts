@@ -18,7 +18,7 @@ export interface PaymentOrder {
 
 export interface CreateOrganizationPaymentDto {
   organizationName: string;
-  organizationType: 'RESTAURANT' | 'HOTEL' | 'CAFE' | 'FOOD_TRUCK' | 'BAR' | 'OTHER';
+  organizationType: 'RESTAURANT' | 'HOTEL' | 'CAFE' | 'FOOD_TRUCK' | 'BAR';
   planId?: string;
   billingCycle: 'MONTHLY' | 'ANNUAL';
   venueName: string;
