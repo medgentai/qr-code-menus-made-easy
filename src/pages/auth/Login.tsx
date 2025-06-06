@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,7 +54,25 @@ const Login = () => {
 
       if (success) {
         toast.success('Login successful!');
-        navigate(from, { replace: true });
+        
+        // Check if user has organizations before redirecting
+        try {
+          // Import here to avoid circular dependencies
+          const OrganizationService = (await import('@/services/organization-service')).default;
+          const organizations = await OrganizationService.getAll();
+          
+          if (organizations.length === 0) {
+            // New user with no organizations - redirect to create organization
+            navigate('/organizations/create', { replace: true });
+          } else {
+            // User has organizations - redirect to intended destination or dashboard
+            navigate(from, { replace: true });
+          }
+        } catch (orgError) {
+          // If we can't fetch organizations, default to the intended destination
+          // The organization context will handle the redirect if needed
+          navigate(from, { replace: true });
+        }
       } else {
         // If login returns false but no error was thrown, it might be because OTP is required
         // The auth context already shows a toast for this case

@@ -14,6 +14,8 @@ import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 import TokenRefreshManager from "@/components/TokenRefreshManager";
 
+import OrganizationGuard from "@/components/organization-guard";
+
 // Public pages
 import Index from "./pages/Index";
 import Features from "./pages/Features";
@@ -61,7 +63,6 @@ import InvitationAccept from "./pages/invitation/InvitationAccept";
 
 // Venue pages
 import VenueList from "./pages/venues/VenueList";
-import VenueCreate from "./pages/venues/VenueCreate";
 import VenueCreateWithPayment from "./pages/venues/VenueCreateWithPayment";
 import VenueDetails from "./pages/venues/VenueDetails";
 import VenueEdit from "./pages/venues/VenueEdit";
@@ -155,14 +156,14 @@ const App = () => (
               <Route path="/auth/register" element={<Register />} />
               <Route path="/auth/verify-otp" element={<VerifyOtp />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
-
-              {/* Protected routes */}
+              <Route path="/auth/reset-password" element={<ResetPassword />} />              {/* Protected routes */}
               <Route
                 path="/dashboard"
                 element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <OrganizationGuard>
+                      <Dashboard />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
               />
@@ -199,11 +200,7 @@ const App = () => (
                     <KitchenDashboard />
                   </ProtectedRoute>
                 }
-              />
-
-
-
-              {/* Organization routes */}
+              />              {/* Organization routes */}
               <Route
                 path="/organizations"
                 element={
@@ -232,7 +229,9 @@ const App = () => (
                 path="/organizations/:id"
                 element={
                   <ProtectedRoute>
-                    <OrganizationDetails />
+                    <OrganizationGuard>
+                      <OrganizationDetails />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
               />
@@ -240,7 +239,9 @@ const App = () => (
                 path="/organizations/:id/settings"
                 element={
                   <ProtectedRoute>
-                    <OrganizationSettings />
+                    <OrganizationGuard>
+                      <OrganizationSettings />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
               />
@@ -248,15 +249,18 @@ const App = () => (
                 path="/organizations/:id/members"
                 element={
                   <ProtectedRoute>
-                    <OrganizationMembers />
+                    <OrganizationGuard>
+                      <OrganizationMembers />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
-              />
-              <Route
+              />              <Route
                 path="/organizations/:id/qrcodes"
                 element={
                   <ProtectedRoute>
-                    <OrganizationQrCodes />
+                    <OrganizationGuard>
+                      <OrganizationQrCodes />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
               />
@@ -266,7 +270,9 @@ const App = () => (
                 path="/organizations/:id/venues"
                 element={
                   <ProtectedRoute>
-                    <VenueList />
+                    <OrganizationGuard>
+                      <VenueList />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
               />

@@ -128,17 +128,12 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       } else if (data.length > 0) {
         // If no stored org, use the first one
         setCurrentOrganization(data[0]);
-        localStorage.setItem(CURRENT_ORGANIZATION_KEY, data[0].id);
-      } else {
-        // If user has no organizations, redirect to create organization page
-        // Only redirect if we're not already on the create organization page or invitation page
-        const currentPath = window.location.pathname;
-        const isOnCreatePage = currentPath.includes('/organizations/create');
-        const isOnInvitationPage = currentPath.includes('/invitation');
-
-        if (!isOnCreatePage && !isOnInvitationPage) {
-          navigate('/organizations/create');
-        }
+        localStorage.setItem(CURRENT_ORGANIZATION_KEY, data[0].id);      } else {
+        // If user has no organizations, set current organization to null
+        // The OrganizationGuard components will handle redirects appropriately
+        setCurrentOrganization(null);
+        setCurrentOrganizationDetails(null);
+        localStorage.removeItem(CURRENT_ORGANIZATION_KEY);
       }
     } catch (err) {
       setError('Failed to fetch organizations');

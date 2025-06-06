@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth-context';
 import { useOrganization } from '@/contexts/organization-context';
-import { useNavigation } from '@/contexts/navigation-context';
+import { usePermissions } from '@/contexts/permission-context';
 import DynamicSidebar from '@/components/navigation/DynamicSidebar';
 import MobileNavigation from '@/components/navigation/MobileNavigation';
 import { Button } from '@/components/ui/button';
@@ -42,8 +42,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     currentOrganization,
     selectOrganization
   } = useOrganization();
+  const { canManageOrganization } = usePermissions();
   const navigate = useNavigate();
-  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Close mobile menu on resize to desktop
@@ -121,10 +121,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <Link to="/" className="flex items-center gap-2">
               <span className="text-xl font-bold">ScanServe</span>
             </Link>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* Organization Selector */}
-            {organizations.length > 0 && (
+          </div>          <div className="flex items-center gap-4">
+            {/* Organization Management Dropdown - Only for owners and administrators */}
+            {organizations.length > 0 && canManageOrganization && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="hidden sm:hidden md:flex items-center gap-2">
@@ -172,6 +171,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            )}
+
+            {/* Organization Indicator - Read-only for Staff/Managers */}
+            {currentOrganization && !canManageOrganization && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-md border">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <span className="max-w-[100px] md:max-w-[150px] truncate text-sm text-muted-foreground">
+                  {currentOrganization.name}
+                </span>
+              </div>
             )}
 
             {/* Notification Bell */}

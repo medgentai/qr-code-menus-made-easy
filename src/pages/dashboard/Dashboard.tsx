@@ -100,7 +100,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { state: { user } } = useAuth();
   const { userRole, userStaffType } = usePermissions();
-  const { currentOrganization } = useOrganization();
+  const { currentOrganization, organizations } = useOrganization();
   const [widgets, setWidgets] = useState<Widget[]>(initialWidgets);
   const [activeTab, setActiveTab] = useState('overview');
   const [draggingWidget, setDraggingWidget] = useState<string | null>(null);
@@ -108,8 +108,8 @@ const Dashboard = () => {
 
   // Redirect staff to their appropriate dashboards/pages
   useEffect(() => {
-    // Only redirect if we have all the necessary data
-    if (userRole === MemberRole.STAFF && userStaffType) {
+    // Only redirect if we have all the necessary data and user has organizations
+    if (userRole === MemberRole.STAFF && userStaffType && organizations && organizations.length > 0) {
       setIsRedirecting(true);
       switch (userStaffType) {
         case StaffType.FRONT_OF_HOUSE:
@@ -128,7 +128,7 @@ const Dashboard = () => {
           break;
       }
     }
-  }, [userRole, userStaffType, currentOrganization, navigate]);
+  }, [userRole, userStaffType, currentOrganization, organizations, navigate]);
 
   // Handle widget removal
   const removeWidget = (id: string) => {
@@ -400,7 +400,17 @@ const Dashboard = () => {
       default:
         return <div>Widget content not available</div>;
     }
-  };
+  };  // Show loading state while redirecting
+  if (isRedirecting) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Redirecting to your workspace...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading state for staff users while redirecting
   if (userRole === MemberRole.STAFF && (isRedirecting || !currentOrganization)) {
