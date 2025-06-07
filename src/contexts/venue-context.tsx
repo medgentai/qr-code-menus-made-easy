@@ -21,7 +21,7 @@ export interface VenueContextType {
   isLoading: boolean;
   error: string | null;
   fetchVenuesForOrganization: (organizationId: string) => Promise<void>;
-  fetchVenueById: (id: string) => Promise<Venue | null>;
+  fetchVenueById: (id: string, forceRefresh?: boolean) => Promise<Venue | null>;
   createVenue: (data: CreateVenueDto) => Promise<Venue | null>;
   updateVenue: (id: string, data: UpdateVenueDto) => Promise<Venue | null>;
   deleteVenue: (id: string) => Promise<boolean>;
@@ -100,25 +100,37 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   }, [isUserAuthenticated, currentOrganization, queryClient, refetchVenues]);
 
   // Fetch venue by ID
-  const fetchVenueById = useCallback(async (id: string): Promise<Venue | null> => {
+  const fetchVenueById = useCallback(async (id: string, forceRefresh: boolean = false): Promise<Venue | null> => {
     if (!isUserAuthenticated) return null;
 
     setError(null);
 
     try {
-      // Check if we already have data in the cache
-      const cachedVenue = queryClient.getQueryData<Venue>(['venue', id]);
-      if (cachedVenue) {
-        setCurrentVenue(cachedVenue);
-        return cachedVenue;
+      if (forceRefresh) {
+        // Force refetch from server
+        const result = await queryClient.fetchQuery({
+          queryKey: ['venue', id],
+          queryFn: () => VenueService.getById(id),
+          staleTime: 0 // Force fresh data
+        });
+        setCurrentVenue(result);
+        return result;
+      } else {
+        // Check if we already have data in the cache
+        const cachedVenue = queryClient.getQueryData<Venue>(['venue', id]);
+        if (cachedVenue) {
+          setCurrentVenue(cachedVenue);
+          return cachedVenue;
+        }
+
+        // Fetch and cache
+        const data = await VenueService.getById(id);
+
+
+        setCurrentVenue(data);
+        queryClient.setQueryData(['venue', id], data);
+        return data;
       }
-
-      const data = await VenueService.getById(id);
-      setCurrentVenue(data);
-
-      // Update the cache
-      queryClient.setQueryData(['venue', id], data);
-      return data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch venue';
       setError(errorMessage);
@@ -237,6 +249,16 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       }
     }
   }, [currentVenue, venues, userVenueIds]);
+
+  // Update current venue when venues list changes (e.g., after image upload)
+  useEffect(() => {
+    if (currentVenue && venues.length > 0) {
+      const updatedVenue = venues.find(venue => venue.id === currentVenue.id);
+      if (updatedVenue && updatedVenue.imageUrl !== currentVenue.imageUrl) {
+        setCurrentVenue(updatedVenue);
+      }
+    }
+  }, [venues, currentVenue]);
 
   // Select a venue
   const selectVenue = useCallback((venue: Venue) => {

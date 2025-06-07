@@ -56,16 +56,8 @@ const VenueList = () => {
     }
   }, [location, organizationId, queryClient]);
 
-  // Only fetch organization details if needed - no venue fetching here
-  useEffect(() => {
-    if (organizationId) {
-      // Check if we need to fetch organization details
-      if (!currentOrganization || currentOrganization.id !== organizationId) {
-        console.log('Fetching organization details in VenueList for:', organizationId);
-        fetchOrganizationDetails(organizationId);
-      }
-    }
-  }, [organizationId, currentOrganization]);
+  // Note: Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   // No need for a separate effect to fetch venues - the VenueContext will handle this
 

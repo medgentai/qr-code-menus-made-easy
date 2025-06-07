@@ -144,9 +144,10 @@ const handleApiError = async (response: Response, options?: RequestOptions): Pro
 /**
  * Create headers for API requests
  */
-const createHeaders = (options?: RequestOptions): HeadersInit => {
+const createHeaders = (options?: RequestOptions, data?: any): HeadersInit => {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    // Only set Content-Type for non-FormData requests
+    ...(!(data instanceof FormData) && { 'Content-Type': 'application/json' }),
     ...options?.headers,
   };
 
@@ -379,8 +380,8 @@ export async function apiRequest<T>(
 
       const response = await fetch(url, {
         method,
-        headers: createHeaders(mergedOptions),
-        body: data ? JSON.stringify(data) : undefined,
+        headers: createHeaders(mergedOptions, data),
+        body: data instanceof FormData ? data : (data ? JSON.stringify(data) : undefined),
         // Include credentials to send and receive cookies
         credentials: 'include'
       });

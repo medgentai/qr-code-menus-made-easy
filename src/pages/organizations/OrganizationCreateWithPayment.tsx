@@ -20,6 +20,7 @@ import { PaymentSuccess } from '@/components/payments';
 import PaymentService from '@/services/payment-service';
 import { CreateOrganizationPaymentDto, PaymentVerificationDto } from '@/types/payment';
 import { OrganizationType } from '@/types/organization';
+import { useUploadOrganizationLogo, useUploadVenueImage } from '@/hooks/useImageUpload';
 
 // Form schemas for each step
 const organizationDetailsSchema = z.object({
@@ -81,9 +82,9 @@ type PlanSelectionForm = z.infer<typeof planSelectionSchema>;
 type VenueDetailsForm = z.infer<typeof venueDetailsSchema>;
 
 interface StepData {
-  organizationDetails?: OrganizationDetailsForm;
+  organizationDetails?: OrganizationDetailsForm & { logoFile?: File; logoUploadMethod?: 'url' | 'upload' };
   planSelection?: PlanSelectionForm;
-  venueDetails?: VenueDetailsForm;
+  venueDetails?: VenueDetailsForm & { imageFile?: File; imageUploadMethod?: 'url' | 'upload' };
 }
 
 const STEPS = [
@@ -96,6 +97,8 @@ const STEPS = [
 const OrganizationCreateWithPayment = () => {
   const navigate = useNavigate();
   const { organizations } = useOrganization();
+  const uploadLogo = useUploadOrganizationLogo();
+  const uploadVenueImage = useUploadVenueImage();
   const [currentStep, setCurrentStep] = useState(1);
   const [stepData, setStepData] = useState<StepData>({});
   const [paymentOrder, setPaymentOrder] = useState<any>(null);
@@ -189,7 +192,10 @@ const OrganizationCreateWithPayment = () => {
         postalCode: stepData.venueDetails.postalCode,
         phoneNumber: stepData.venueDetails.phoneNumber,
         email: stepData.venueDetails.email,
-        imageUrl: stepData.venueDetails.imageUrl,
+        // Only include imageUrl if it's not empty
+        ...(stepData.venueDetails.imageUrl && stepData.venueDetails.imageUrl.trim() !== '' && {
+          imageUrl: stepData.venueDetails.imageUrl
+        }),
       };
 
       const order = await PaymentService.createOrganizationPaymentOrder(paymentData);
@@ -210,6 +216,39 @@ const OrganizationCreateWithPayment = () => {
     setIsProcessing(true);
     try {
       const result = await PaymentService.completeOrganizationPayment(verificationData);
+
+      // Upload logo if file was selected
+      if (stepData.organizationDetails?.logoFile && stepData.organizationDetails?.logoUploadMethod === 'upload') {
+        try {
+          await uploadLogo.mutateAsync({
+            file: stepData.organizationDetails.logoFile,
+            organizationId: result.organization.id,
+            data: {
+              altText: `${stepData.organizationDetails.name} logo`,
+            },
+          });
+        } catch (uploadError) {
+          // Don't fail the entire process if logo upload fails
+          toast.warning('Organization created successfully, but logo upload failed. You can upload it later.');
+        }
+      }
+
+      // Upload venue image if file was selected
+      if (stepData.venueDetails?.imageFile && stepData.venueDetails?.imageUploadMethod === 'upload') {
+        try {
+          await uploadVenueImage.mutateAsync({
+            file: stepData.venueDetails.imageFile,
+            data: {
+              venueId: result.venue.id,
+              altText: `${stepData.venueDetails.venueName} venue image`,
+            },
+          });
+        } catch (uploadError) {
+          // Don't fail the entire process if venue image upload fails
+          toast.warning('Venue created successfully, but image upload failed. You can upload it later.');
+        }
+      }
+
       setPaymentResult(result);
       toast.success('Organization created successfully!');
     } catch (error: any) {

@@ -202,12 +202,10 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
         // Handle both paginated and array responses
         const ordersData = Array.isArray(ordersResponse) ? ordersResponse : ordersResponse.data;
 
-        console.log('Fetched initial orders:', ordersData);
         setOrders(ordersData);
         initialFetchDone.current = true;
         setLastUpdate(new Date());
       } catch (error) {
-        console.error('Failed to fetch initial orders:', error);
         toast.error('Failed to load orders');
       } finally {
         setIsLoading(false);

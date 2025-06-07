@@ -17,6 +17,9 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Building2, Phone, Mail, Globe } from 'lucide-react';
 import { OrganizationType } from '@/types/organization';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadVenueImage } from '@/hooks/useImageUpload';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const venueDetailsSchema = z.object({
   venueName: z.string()
@@ -52,13 +55,14 @@ const venueDetailsSchema = z.object({
     .url({ message: 'Invalid URL format' })
     .max(255, { message: 'URL must be less than 255 characters' })
     .optional()
+    .or(z.literal(''))
 });
 
 type FormValues = z.infer<typeof venueDetailsSchema>;
 
 interface VenueDetailsStepProps {
   initialData?: Partial<FormValues>;
-  onSubmit: (data: FormValues) => void;
+  onSubmit: (data: FormValues & { imageFile?: File; imageUploadMethod?: 'url' | 'upload' }) => void;
   onBack: () => void;
   organizationType?: OrganizationType;
 }
@@ -87,6 +91,9 @@ const VenueDetailsStep: React.FC<VenueDetailsStepProps> = ({
   organizationType,
 }) => {
   const venuePricing = getVenuePricing(organizationType);
+  const uploadVenueImage = useUploadVenueImage();
+  const [selectedImageFile, setSelectedImageFile] = React.useState<File | null>(null);
+  const [imageUploadMethod, setImageUploadMethod] = React.useState<'url' | 'upload'>('url');
   const form = useForm<FormValues>({
     resolver: zodResolver(venueDetailsSchema),
     defaultValues: {
@@ -134,7 +141,11 @@ const VenueDetailsStep: React.FC<VenueDetailsStepProps> = ({
 
       {/* Form */}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit((values) => onSubmit({
+          ...values,
+          imageFile: selectedImageFile || undefined,
+          imageUploadMethod
+        }))} className="space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
             <h4 className="text-md font-medium flex items-center gap-2">
@@ -244,15 +255,39 @@ const VenueDetailsStep: React.FC<VenueDetailsStepProps> = ({
                 name="imageUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Image URL</FormLabel>
+                    <FormLabel>Venue Image (Optional)</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input placeholder="https://example.com/image.jpg" className="pl-10" {...field} />
-                      </div>
+                      <Tabs value={imageUploadMethod} onValueChange={(value) => setImageUploadMethod(value as 'url' | 'upload')}>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="url">URL</TabsTrigger>
+                          <TabsTrigger value="upload">Upload</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="url" className="space-y-2">
+                          <div className="relative">
+                            <Globe className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input
+                              placeholder="https://example.com/image.jpg"
+                              className="pl-10"
+                              {...field}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Enter a URL to your venue image
+                          </p>
+                        </TabsContent>
+                        <TabsContent value="upload" className="space-y-2">
+                          <ImageUploadField
+                            value={field.value}
+                            onChange={field.onChange}
+                            onFileSelect={setSelectedImageFile}
+                            placeholder="Upload your venue image"
+                            maxSize={5 * 1024 * 1024} // 5MB limit
+                          />
+                        </TabsContent>
+                      </Tabs>
                     </FormControl>
                     <FormDescription>
-                      URL to an image of your venue (optional)
+                      Add an image for your venue using a URL or by uploading a file
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

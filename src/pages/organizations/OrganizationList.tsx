@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Building2,
   Plus,
@@ -71,6 +72,15 @@ const OrganizationList = () => {
     }
   };
 
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -131,17 +141,33 @@ const OrganizationList = () => {
               <Card key={org.id} className="overflow-hidden flex flex-col h-full">
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
-                    <CardTitle className="flex items-center gap-2 max-w-[70%]">
-                      {getOrganizationIcon(org.type)}
-                      <span className="truncate">{org.name}</span>
-                    </CardTitle>
+                    <div className="flex items-center gap-3 max-w-[70%]">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
+                        {org.logoUrl ? (
+                          <AvatarImage
+                            src={org.logoUrl}
+                            alt={org.name}
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {getInitials(org.name)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="flex items-center gap-2">
+                          {getOrganizationIcon(org.type)}
+                          <span className="truncate">{org.name}</span>
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          {OrganizationTypeLabels[org.type]}
+                        </CardDescription>
+                      </div>
+                    </div>
                     <Badge variant={org.isActive ? "default" : "secondary"} className="flex-shrink-0">
                       {org.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
-                  <CardDescription>
-                    {OrganizationTypeLabels[org.type]}
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="pb-2 flex-grow">
                   {org.description && (

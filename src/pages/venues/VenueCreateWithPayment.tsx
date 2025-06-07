@@ -13,6 +13,7 @@ import { PaymentSuccess } from '@/components/payments';
 // Import services and types
 import PaymentService from '@/services/payment-service';
 import { CreateVenuePaymentDto, PaymentVerificationDto, PaymentOrder } from '@/types/payment';
+import { useUploadVenueImage } from '@/hooks/useImageUpload';
 
 interface VenueStepData {
   venueDetails?: {
@@ -27,12 +28,15 @@ interface VenueStepData {
     email?: string;
     imageUrl?: string;
     billingCycle?: 'MONTHLY' | 'ANNUAL';
+    imageFile?: File;
+    imageUploadMethod?: 'url' | 'upload';
   };
 }
 
 const VenueCreateWithPayment = () => {
   const { id: organizationId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const uploadVenueImage = useUploadVenueImage();
 
   // State management
   const [currentStep, setCurrentStep] = useState(1);
@@ -58,6 +62,8 @@ const VenueCreateWithPayment = () => {
     email?: string;
     imageUrl?: string;
     billingCycle?: 'MONTHLY' | 'ANNUAL';
+    imageFile?: File;
+    imageUploadMethod?: 'url' | 'upload';
   }) => {
     setStepData(prev => ({
       ...prev,
@@ -99,7 +105,10 @@ const VenueCreateWithPayment = () => {
         postalCode: stepData.venueDetails.postalCode,
         phoneNumber: stepData.venueDetails.phoneNumber,
         email: stepData.venueDetails.email,
-        imageUrl: stepData.venueDetails.imageUrl,
+        // Only include imageUrl if it's not empty
+        ...(stepData.venueDetails.imageUrl && stepData.venueDetails.imageUrl.trim() !== '' && {
+          imageUrl: stepData.venueDetails.imageUrl
+        }),
       };
 
       const order = await PaymentService.createVenuePaymentOrder(paymentData);
@@ -120,6 +129,25 @@ const VenueCreateWithPayment = () => {
     setIsProcessing(true);
     try {
       const result = await PaymentService.completeVenuePayment(verificationData);
+
+      // Upload venue image if file was selected
+      if (stepData.venueDetails?.imageFile && stepData.venueDetails?.imageUploadMethod === 'upload') {
+        try {
+          await uploadVenueImage.mutateAsync({
+            file: stepData.venueDetails.imageFile,
+            data: {
+              venueId: result.venue.id,
+              altText: `${stepData.venueDetails.venueName} venue image`,
+            },
+          });
+          console.log('Venue image uploaded successfully after venue creation');
+        } catch (uploadError) {
+          console.error('Venue image upload failed:', uploadError);
+          // Don't fail the entire process if venue image upload fails
+          toast.warning('Venue created successfully, but image upload failed. You can upload it later.');
+        }
+      }
+
       setPaymentResult(result);
       toast.success('Venue created successfully!');
     } catch (error: any) {

@@ -10,6 +10,9 @@ import { Switch } from '@/components/ui/switch';
 import { useMenu } from '@/contexts/menu-context';
 import { Category, CreateCategoryDto, UpdateCategoryDto } from '@/services/menu-service';
 import { Loader2 } from 'lucide-react';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadCategoryImage } from '@/hooks/useImageUpload';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Form schema
 const formSchema = z.object({
@@ -21,7 +24,15 @@ const formSchema = z.object({
   description: z.string().max(500, {
     message: 'Description must not exceed 500 characters.',
   }).optional(),
-  imageUrl: z.string().url({ message: 'Please enter a valid URL.' }).optional().or(z.literal('')),
+  imageUrl: z.string().optional().refine((val) => {
+    if (!val || val === '') return true; // Allow empty values
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  }, { message: 'Please enter a valid URL or leave empty.' }),
   displayOrder: z.coerce.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
 });
@@ -34,7 +45,10 @@ interface CategoryFormProps {
 
 export const CategoryForm: React.FC<CategoryFormProps> = ({ menuId, category, onSuccess }) => {
   const { createCategory, updateCategory, isLoading } = useMenu();
+  const uploadCategoryImage = useUploadCategoryImage();
   const isEditing = !!category;
+  const [selectedImageFile, setSelectedImageFile] = React.useState<File | null>(null);
+  const [imageUploadMethod, setImageUploadMethod] = React.useState<'url' | 'upload'>('url');
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -50,10 +64,29 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ menuId, category, on
 
   // Form submission handler
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    let imageUrl = values.imageUrl;
+
     if (isEditing && category) {
+      // Upload image if file was selected
+      if (selectedImageFile && imageUploadMethod === 'upload') {
+        try {
+          const uploadResult = await uploadCategoryImage.mutateAsync({
+            file: selectedImageFile,
+            data: {
+              categoryId: category.id,
+              altText: `${values.name} category image`,
+            },
+          });
+          // Update the imageUrl with the uploaded image URL
+          imageUrl = uploadResult.url;
+        } catch (uploadError) {
+          // Continue with category update even if image upload fails
+        }
+      }
+
       const categoryData: UpdateCategoryDto = {
         ...values,
-        imageUrl: values.imageUrl || undefined,
+        imageUrl: imageUploadMethod === 'url' ? (values.imageUrl || undefined) : imageUrl,
       };
 
       const updatedCategory = await updateCategory(category.id, categoryData);
@@ -66,11 +99,30 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ menuId, category, on
         description: values.description,
         displayOrder: values.displayOrder,
         isActive: values.isActive,
-        imageUrl: values.imageUrl || undefined,
+        imageUrl: imageUploadMethod === 'url' ? (values.imageUrl || undefined) : undefined,
       };
 
       const newCategory = await createCategory(menuId, categoryData);
       if (newCategory) {
+        // Upload image if file was selected
+        if (selectedImageFile && imageUploadMethod === 'upload') {
+          try {
+            const uploadResult = await uploadCategoryImage.mutateAsync({
+              file: selectedImageFile,
+              data: {
+                categoryId: newCategory.id,
+                altText: `${values.name} category image`,
+              },
+            });
+            console.log('Category image uploaded successfully:', uploadResult);
+
+            // Update the category with the uploaded image URL
+            await updateCategory(newCategory.id, { imageUrl: uploadResult.url });
+          } catch (uploadError) {
+            console.error('Category image upload failed:', uploadError);
+            // Don't fail the entire process if image upload fails
+          }
+        }
         onSuccess();
       }
     }
@@ -122,12 +174,37 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ menuId, category, on
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL (Optional)</FormLabel>
+              <FormLabel>Category Image (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
+                <Tabs value={imageUploadMethod} onValueChange={(value) => setImageUploadMethod(value as 'url' | 'upload')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="url">URL</TabsTrigger>
+                    <TabsTrigger value="upload">Upload</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="url" className="space-y-2">
+                    <Input
+                      placeholder="https://example.com/image.jpg"
+                      {...field}
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter a URL to your category image
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="upload" className="space-y-2">
+                    <ImageUploadField
+                      value={field.value}
+                      onChange={field.onChange}
+                      onFileSelect={setSelectedImageFile}
+                      placeholder="Upload your category image"
+                      maxSize={5 * 1024 * 1024} // 5MB limit
+                      disabled={isLoading}
+                    />
+                  </TabsContent>
+                </Tabs>
               </FormControl>
               <FormDescription>
-                A URL to an image representing this category.
+                Add an image for your category using a URL or by uploading a file
               </FormDescription>
               <FormMessage />
             </FormItem>

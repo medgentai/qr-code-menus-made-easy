@@ -72,14 +72,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
     // Prevent duplicate API calls for the same organization ID in rapid succession
     if (lastFetchedDetailsId === id && isLoading) {
-      console.log('Already fetching details for organization:', id);
-      return currentOrganizationDetails; // Return current details if already fetching
-    }
-
-    // If we already have details for this organization, return them
-    if (currentOrganizationDetails && currentOrganizationDetails.id === id) {
-      console.log('Using existing details for organization:', id);
-      return currentOrganizationDetails;
+      return null; // Return null if already fetching to avoid using stale data
     }
 
     setLastFetchedDetailsId(id);
@@ -97,7 +90,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, isLoading, currentOrganizationDetails, lastFetchedDetailsId]);
+  }, [isAuthenticated, isLoading, lastFetchedDetailsId]);
 
   // Fetch organizations
   const fetchOrganizations = useCallback(async (force: boolean = false): Promise<void> => {
@@ -141,7 +134,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
 
   // Select organization
   const selectOrganization = useCallback((organization: Organization): void => {
@@ -560,7 +553,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         fetchOrganizationDetails(currentOrganization.id);
       }
     }
-  }, [currentOrganization?.id, isAuthenticated, currentOrganizationDetails]);
+  }, [currentOrganization?.id, isAuthenticated]);
 
   // Context value
   const value: OrganizationContextType = {

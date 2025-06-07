@@ -74,10 +74,10 @@ const OrganizationQrCodes = () => {
 
   useEffect(() => {
     if (organizationId) {
-      fetchOrganizationDetails(organizationId);
+      // Note: Organization details are automatically fetched by the organization context
       fetchVenuesForOrganization(organizationId);
     }
-  }, [organizationId, fetchOrganizationDetails, fetchVenuesForOrganization]);
+  }, [organizationId, fetchVenuesForOrganization]);
 
   // Function to fetch QR codes for all venues in the organization
   const fetchQrCodesForOrganization = async () => {

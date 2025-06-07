@@ -34,6 +34,9 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Building2 } from 'lucide-react';
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadOrganizationLogo } from '@/hooks/useImageUpload';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Form validation schema
 const createOrganizationSchema = z.object({
@@ -54,7 +57,9 @@ const createOrganizationSchema = z.object({
   logoUrl: z.string()
     .url({ message: 'Logo URL must be a valid URL' })
     .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .or(z.null())
+    .transform(val => val || ''),
   websiteUrl: z.string()
     .url({ message: 'Website URL must be a valid URL' })
     .optional()
@@ -69,7 +74,10 @@ type FormValues = z.infer<typeof createOrganizationSchema>;
 const OrganizationCreate = () => {
   const { createOrganization, organizations } = useOrganization();
   const navigate = useNavigate();
+  const uploadLogo = useUploadOrganizationLogo();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
+  const [logoUploadMethod, setLogoUploadMethod] = useState<'url' | 'upload'>('url');
 
   // Check if user has existing organizations
   const hasExistingOrganizations = organizations.length > 0;
@@ -111,16 +119,36 @@ const OrganizationCreate = () => {
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      let logoUrl = data.logoUrl;
+
+      // Create organization first
       const newOrg = await createOrganization({
         name: data.name,
         slug: data.slug || undefined,
         description: data.description || undefined,
-        logoUrl: data.logoUrl || undefined,
+        logoUrl: logoUrl || undefined,
         websiteUrl: data.websiteUrl || undefined,
         type: data.type,
       });
 
       if (newOrg) {
+        // Upload logo if file was selected
+        if (selectedLogoFile && logoUploadMethod === 'upload') {
+          try {
+            const uploadResult = await uploadLogo.mutateAsync({
+              file: selectedLogoFile,
+              organizationId: newOrg.id,
+              data: {
+                altText: `${data.name} logo`,
+              },
+            });
+            // Logo URL will be automatically updated in the organization via the upload service
+          } catch (uploadError) {
+            console.error('Logo upload failed:', uploadError);
+            // Continue with organization creation even if logo upload fails
+          }
+        }
+
         // Add a small delay to allow context state to update before navigation
         setTimeout(() => {
           navigate(`/organizations/${newOrg.id}`);
@@ -290,15 +318,37 @@ const OrganizationCreate = () => {
                         name="logoUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Logo URL</FormLabel>
+                            <FormLabel>Organization Logo (Optional)</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="https://example.com/logo.png"
-                                {...field}
-                              />
+                              <Tabs value={logoUploadMethod} onValueChange={(value) => setLogoUploadMethod(value as 'url' | 'upload')}>
+                                <TabsList className="grid w-full grid-cols-2">
+                                  <TabsTrigger value="url">URL</TabsTrigger>
+                                  <TabsTrigger value="upload">Upload</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="url" className="space-y-2">
+                                  <Input
+                                    placeholder="https://example.com/logo.png"
+                                    {...field}
+                                    disabled={isSubmitting}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Enter a URL to your organization's logo
+                                  </p>
+                                </TabsContent>
+                                <TabsContent value="upload" className="space-y-2">
+                                  <ImageUploadField
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onFileSelect={setSelectedLogoFile}
+                                    placeholder="Upload your organization logo"
+                                    maxSize={5 * 1024 * 1024} // 5MB limit for logos
+                                    disabled={isSubmitting}
+                                  />
+                                </TabsContent>
+                              </Tabs>
                             </FormControl>
                             <FormDescription>
-                              URL to your organization's logo (optional)
+                              Add a logo for your organization using a URL or by uploading a file
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

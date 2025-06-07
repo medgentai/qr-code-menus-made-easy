@@ -30,11 +30,8 @@ const QrCodeCreate: React.FC = () => {
   const { currentVenue, tables, fetchVenueById, fetchTablesForVenue } = useVenue();
   const { menus, fetchMenusForOrganization } = useMenu();
 
-  useEffect(() => {
-    if (organizationId) {
-      fetchOrganizationDetails(organizationId);
-    }
-  }, [organizationId, fetchOrganizationDetails]);
+  // Note: Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   useEffect(() => {
     const fetchData = async () => {

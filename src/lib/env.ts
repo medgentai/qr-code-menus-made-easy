@@ -29,15 +29,4 @@ export const SUPPORTED_IMAGE_FORMATS = ['image/jpeg', 'image/png', 'image/webp',
 // Supported document formats for upload
 export const SUPPORTED_DOCUMENT_FORMATS = ['application/pdf'];
 
-// Debug mode
-export const DEBUG_MODE = import.meta.env.VITE_DEBUG_MODE === 'true';
 
-/**
- * Log debug information if debug mode is enabled
- */
-export function debugLog(...args: any[]): void {
-  // Debug logging disabled in production
-  if (DEBUG_MODE && process.env.NODE_ENV === 'development') {
-    // Only log in development mode
-  }
-}

@@ -54,6 +54,8 @@ import {
   Building2
 } from 'lucide-react';
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadOrganizationLogo } from '@/hooks/useImageUpload';
 
 // Form validation schema
 const updateOrganizationSchema = z.object({
@@ -73,7 +75,9 @@ const updateOrganizationSchema = z.object({
   logoUrl: z.string()
     .url({ message: 'Logo URL must be a valid URL' })
     .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .or(z.null())
+    .transform(val => val || ''),
   websiteUrl: z.string()
     .url({ message: 'Website URL must be a valid URL' })
     .optional()
@@ -104,6 +108,9 @@ const OrganizationSettings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isOwner, setIsOwner] = useState(false);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
+  const [logoUploadMethod, setLogoUploadMethod] = useState<'url' | 'upload'>('url');
+  const uploadLogo = useUploadOrganizationLogo();
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -119,12 +126,8 @@ const OrganizationSettings = () => {
     },
   });
 
-  // Load organization data
-  useEffect(() => {
-    if (id) {
-      fetchOrganizationDetails(id);
-    }
-  }, [id, fetchOrganizationDetails]);
+  // Note: Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   // Update form values when organization data is loaded
   useEffect(() => {
@@ -181,15 +184,40 @@ const OrganizationSettings = () => {
 
     setIsSubmitting(true);
     try {
-      await updateOrganization(id, {
+      // Upload logo if file was selected
+      if (selectedLogoFile && logoUploadMethod === 'upload') {
+        try {
+          await uploadLogo.mutateAsync({
+            file: selectedLogoFile,
+            organizationId: id,
+            data: {
+              altText: `${data.name} logo`,
+            },
+          });
+          // Logo URL will be automatically updated in the organization via the upload service
+          // Don't update logoUrl in the organization update call since it's handled by upload
+        } catch (uploadError) {
+          console.error('Logo upload failed:', uploadError);
+          // Continue with organization update even if logo upload fails
+        }
+      }
+
+      // Only update logoUrl if using URL method, not upload method
+      const updateData: any = {
         name: data.name,
         slug: data.slug,
         description: data.description || undefined,
-        logoUrl: data.logoUrl || undefined,
         websiteUrl: data.websiteUrl || undefined,
         type: data.type,
         isActive: data.isActive,
-      });
+      };
+
+      // Only set logoUrl if using URL method
+      if (logoUploadMethod === 'url') {
+        updateData.logoUrl = data.logoUrl || undefined;
+      }
+
+      await updateOrganization(id, updateData);
     } catch (error) {
       console.error('Error updating organization:', error);
     } finally {
@@ -402,15 +430,37 @@ const OrganizationSettings = () => {
                         name="logoUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Logo URL</FormLabel>
+                            <FormLabel>Organization Logo (Optional)</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="https://example.com/logo.png"
-                                {...field}
-                              />
+                              <Tabs value={logoUploadMethod} onValueChange={(value) => setLogoUploadMethod(value as 'url' | 'upload')}>
+                                <TabsList className="grid w-full grid-cols-2">
+                                  <TabsTrigger value="url">URL</TabsTrigger>
+                                  <TabsTrigger value="upload">Upload</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="url" className="space-y-2">
+                                  <Input
+                                    placeholder="https://example.com/logo.png"
+                                    {...field}
+                                    disabled={isSubmitting}
+                                  />
+                                  <p className="text-xs text-muted-foreground">
+                                    Enter a URL to your organization's logo
+                                  </p>
+                                </TabsContent>
+                                <TabsContent value="upload" className="space-y-2">
+                                  <ImageUploadField
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    onFileSelect={setSelectedLogoFile}
+                                    placeholder="Upload your organization logo"
+                                    maxSize={5 * 1024 * 1024} // 5MB limit for logos
+                                    disabled={isSubmitting}
+                                  />
+                                </TabsContent>
+                              </Tabs>
                             </FormControl>
                             <FormDescription>
-                              URL to your organization's logo (optional)
+                              Add a logo for your organization using a URL or by uploading a file
                             </FormDescription>
                             <FormMessage />
                           </FormItem>

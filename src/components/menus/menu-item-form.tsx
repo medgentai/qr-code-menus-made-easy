@@ -16,6 +16,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CommonAllergens } from '@/types/menu';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadMenuItemImage } from '@/hooks/useImageUpload';
 
 // Form schema
 const formSchema = z.object({
@@ -53,10 +55,12 @@ interface MenuItemFormProps {
 
 export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem, onSuccess }) => {
   const { createMenuItem, updateMenuItem, isLoading } = useMenu();
+  const uploadMenuItemImage = useUploadMenuItemImage();
   const isEditing = !!menuItem;
   const [selectedAllergens, setSelectedAllergens] = React.useState<string[]>(
     menuItem?.allergens ? menuItem.allergens.split(',').map(a => a.trim()) : []
   );
+  const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -97,50 +101,86 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
 
   // Form submission handler
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (isEditing && menuItem) {
-      const menuItemData: UpdateMenuItemDto = {
-        name: values.name,
-        price: values.price,
-        description: values.description,
-        imageUrl: values.imageUrl || undefined,
-        discountPrice: values.discountPrice || undefined,
-        preparationTime: values.preparationTime,
-        calories: values.calories,
-        isVegetarian: values.isVegetarian,
-        isVegan: values.isVegan,
-        isGlutenFree: values.isGlutenFree,
-        spicyLevel: values.spicyLevel,
-        allergens: values.allergens,
-        displayOrder: values.displayOrder,
-        isAvailable: values.isAvailable,
-      };
+    console.log('🚀 Menu item form submission started:', {
+      isEditing,
+      hasSelectedFile: !!selectedFile,
+      menuItemId: menuItem?.id,
+      selectedFileName: selectedFile?.name,
+    });
 
-      const updatedMenuItem = await updateMenuItem(menuItem.id, menuItemData);
-      if (updatedMenuItem) {
-        onSuccess();
-      }
-    } else {
-      const menuItemData: CreateMenuItemDto = {
-        name: values.name, // Explicitly set required properties
-        price: values.price,
-        description: values.description,
-        imageUrl: values.imageUrl || undefined,
-        discountPrice: values.discountPrice || undefined,
-        preparationTime: values.preparationTime,
-        calories: values.calories,
-        isVegetarian: values.isVegetarian,
-        isVegan: values.isVegan,
-        isGlutenFree: values.isGlutenFree,
-        spicyLevel: values.spicyLevel,
-        allergens: values.allergens,
-        displayOrder: values.displayOrder,
-        isAvailable: values.isAvailable,
-      };
+    try {
+      let imageUrl = values.imageUrl;
 
-      const newMenuItem = await createMenuItem(categoryId, menuItemData);
-      if (newMenuItem) {
-        onSuccess();
+      // Upload image if a new file was selected (only for editing)
+      if (selectedFile && isEditing && menuItem) {
+        const uploadResult = await uploadMenuItemImage.mutateAsync({
+          file: selectedFile,
+          data: {
+            menuItemId: menuItem.id,
+          },
+        });
+
+        imageUrl = uploadResult.url;
       }
+
+      if (isEditing && menuItem) {
+        const menuItemData: UpdateMenuItemDto = {
+          name: values.name,
+          price: values.price,
+          description: values.description,
+          imageUrl: imageUrl || undefined,
+          discountPrice: values.discountPrice || undefined,
+          preparationTime: values.preparationTime,
+          calories: values.calories,
+          isVegetarian: values.isVegetarian,
+          isVegan: values.isVegan,
+          isGlutenFree: values.isGlutenFree,
+          spicyLevel: values.spicyLevel,
+          allergens: values.allergens,
+          displayOrder: values.displayOrder,
+          isAvailable: values.isAvailable,
+        };
+
+        const updatedMenuItem = await updateMenuItem(menuItem.id, menuItemData);
+        if (updatedMenuItem) {
+          onSuccess();
+        }
+      } else {
+        // First create the menu item without image
+        const menuItemData: CreateMenuItemDto = {
+          name: values.name,
+          price: values.price,
+          description: values.description,
+          imageUrl: undefined, // Will be updated after image upload
+          discountPrice: values.discountPrice || undefined,
+          preparationTime: values.preparationTime,
+          calories: values.calories,
+          isVegetarian: values.isVegetarian,
+          isVegan: values.isVegan,
+          isGlutenFree: values.isGlutenFree,
+          spicyLevel: values.spicyLevel,
+          allergens: values.allergens,
+          displayOrder: values.displayOrder,
+          isAvailable: values.isAvailable,
+        };
+
+        const newMenuItem = await createMenuItem(categoryId, menuItemData);
+
+        if (newMenuItem) {
+          // Upload image if file was selected
+          if (selectedFile) {
+            await uploadMenuItemImage.mutateAsync({
+              file: selectedFile,
+              data: {
+                menuItemId: newMenuItem.id,
+              },
+            });
+          }
+          onSuccess();
+        }
+      }
+    } catch (error) {
+      // Error handling is done by the mutation hooks
     }
   };
 
@@ -232,12 +272,19 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL (Optional)</FormLabel>
+              <FormLabel>Menu Item Image (Optional)</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
+                <ImageUploadField
+                  value={field.value}
+                  onChange={field.onChange}
+                  onFileSelect={setSelectedFile}
+                  placeholder="Upload an image of this menu item"
+                  isUploading={uploadMenuItemImage.isPending}
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormDescription>
-                A URL to an image of this menu item.
+                Upload an image to showcase this menu item. Supports JPEG, PNG, and WebP formats.
               </FormDescription>
               <FormMessage />
             </FormItem>

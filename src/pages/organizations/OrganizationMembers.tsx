@@ -156,12 +156,8 @@ const OrganizationMembers = () => {
     },
   });
 
-  // Load organization data
-  useEffect(() => {
-    if (id) {
-      fetchOrganizationDetails(id);
-    }
-  }, [id, fetchOrganizationDetails]);
+  // Note: Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   // Check user permissions
   useEffect(() => {

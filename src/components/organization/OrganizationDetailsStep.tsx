@@ -22,6 +22,9 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadOrganizationLogo } from '@/hooks/useImageUpload';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const organizationDetailsSchema = z.object({
   name: z.string()
@@ -41,7 +44,9 @@ const organizationDetailsSchema = z.object({
   logoUrl: z.string()
     .url({ message: 'Logo URL must be a valid URL' })
     .optional()
-    .or(z.literal('')),
+    .or(z.literal(''))
+    .or(z.null())
+    .transform(val => val || ''),
   websiteUrl: z.string()
     .url({ message: 'Website URL must be a valid URL' })
     .optional()
@@ -55,7 +60,7 @@ type FormValues = z.infer<typeof organizationDetailsSchema>;
 
 interface OrganizationDetailsStepProps {
   initialData?: Partial<FormValues>;
-  onSubmit: (data: FormValues) => void;
+  onSubmit: (data: FormValues & { logoFile?: File; logoUploadMethod?: 'url' | 'upload' }) => void;
   onBack?: () => void;
 }
 
@@ -64,6 +69,10 @@ const OrganizationDetailsStep: React.FC<OrganizationDetailsStepProps> = ({
   onSubmit,
   onBack,
 }) => {
+  const uploadLogo = useUploadOrganizationLogo();
+  const [selectedLogoFile, setSelectedLogoFile] = React.useState<File | null>(null);
+  const [logoUploadMethod, setLogoUploadMethod] = React.useState<'url' | 'upload'>('url');
+
   const form = useForm<FormValues>({
     resolver: zodResolver(organizationDetailsSchema),
     defaultValues: {
@@ -93,9 +102,18 @@ const OrganizationDetailsStep: React.FC<OrganizationDetailsStepProps> = ({
     form.setValue('slug', slug, { shouldValidate: true });
   };
 
+  // Handle form submission with file data
+  const handleSubmit = (data: FormValues) => {
+    onSubmit({
+      ...data,
+      logoFile: selectedLogoFile || undefined,
+      logoUploadMethod,
+    });
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
@@ -218,15 +236,35 @@ const OrganizationDetailsStep: React.FC<OrganizationDetailsStepProps> = ({
             name="logoUrl"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Logo URL</FormLabel>
+                <FormLabel>Organization Logo (Optional)</FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="https://example.com/logo.png"
-                    {...field}
-                  />
+                  <Tabs value={logoUploadMethod} onValueChange={(value) => setLogoUploadMethod(value as 'url' | 'upload')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="url">URL</TabsTrigger>
+                      <TabsTrigger value="upload">Upload</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="url" className="space-y-2">
+                      <Input
+                        placeholder="https://example.com/logo.png"
+                        {...field}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Enter a URL to your organization's logo
+                      </p>
+                    </TabsContent>
+                    <TabsContent value="upload" className="space-y-2">
+                      <ImageUploadField
+                        value={field.value}
+                        onChange={field.onChange}
+                        onFileSelect={setSelectedLogoFile}
+                        placeholder="Upload your organization logo"
+                        maxSize={5 * 1024 * 1024} // 5MB limit for logos
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </FormControl>
                 <FormDescription>
-                  URL to your organization's logo (optional)
+                  Add a logo for your organization using a URL or by uploading a file
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableStatus, TableStatusColors, TableStatusLabels } from '@/types/venue';
 import { formatDate } from '@/lib/utils';
+import { VenueImageUpload } from '@/components/venues/venue-image-upload';
 
 const VenueDetails = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId: string }>();
@@ -72,11 +73,8 @@ const VenueDetails = () => {
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [isLoadingQrCodes, setIsLoadingQrCodes] = useState(true);
 
-  useEffect(() => {
-    if (organizationId) {
-      fetchOrganizationDetails(organizationId);
-    }
-  }, [organizationId, fetchOrganizationDetails]);
+  // Note: Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   useEffect(() => {
     if (venueId) {
@@ -238,6 +236,41 @@ const VenueDetails = () => {
                   <CardDescription>Details about this venue</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Venue Image */}
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-2">Venue Image</div>
+                    {currentVenue?.imageUrl ? (
+                      <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
+                        <img
+                          src={currentVenue.imageUrl}
+                          alt={currentVenue.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
+                        <div className="text-center text-muted-foreground">
+                          <div>No image available</div>
+                          <div className="text-xs mt-2">
+                            Upload an image to display here
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Venue Image Upload Component */}
+                  {currentVenue && (
+                    <VenueImageUpload
+                      venueId={currentVenue.id}
+                      currentImageUrl={currentVenue.imageUrl}
+                      onSuccess={(imageUrl) => {
+                        // The upload hook will automatically update the venue cache
+                        console.log('Venue image uploaded successfully:', imageUrl);
+                      }}
+                    />
+                  )}
+
                   {isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-5 w-full" />

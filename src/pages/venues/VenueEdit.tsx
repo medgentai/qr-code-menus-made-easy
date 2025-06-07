@@ -28,6 +28,9 @@ import {
 import { ArrowLeft } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { useOrganization } from '@/contexts/organization-context';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import { useUploadVenueImage } from '@/hooks/useImageUpload';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Form schema
@@ -52,7 +55,10 @@ const VenueEdit = () => {
   const navigate = useNavigate();
   const { currentVenue, fetchVenueById, updateVenue, isLoading } = useVenue();
   const { currentOrganization, fetchOrganizationDetails } = useOrganization();
+  const uploadVenueImage = useUploadVenueImage();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imageUploadMethod, setImageUploadMethod] = useState<'url' | 'upload'>('url');
 
   // Initialize form
   const form = useForm<VenueFormValues>({
@@ -74,9 +80,7 @@ const VenueEdit = () => {
 
   // Fetch venue data
   useEffect(() => {
-    if (organizationId) {
-      fetchOrganizationDetails(organizationId);
-    }
+    // Note: Organization details are automatically fetched by the organization context
     if (venueId) {
       fetchVenueById(venueId).then(venue => {
         if (venue) {
@@ -97,7 +101,7 @@ const VenueEdit = () => {
         }
       });
     }
-  }, [organizationId, venueId, fetchOrganizationDetails, fetchVenueById, form]);
+  }, [venueId, fetchVenueById, form]);
 
   // Handle form submission
   const onSubmit = async (data: VenueFormValues) => {
@@ -106,7 +110,28 @@ const VenueEdit = () => {
     setIsSubmitting(true);
 
     try {
-      const venue = await updateVenue(venueId, data);
+      // Upload image if file was selected
+      if (selectedImageFile && imageUploadMethod === 'upload') {
+        try {
+          await uploadVenueImage.mutateAsync({
+            file: selectedImageFile,
+            data: {
+              venueId: venueId,
+              altText: `${data.name} venue image`,
+            },
+          });
+        } catch (uploadError) {
+          // Continue with venue update even if image upload fails
+        }
+      }
+
+      const venue = await updateVenue(venueId, {
+        ...data,
+        // Only update imageUrl if using URL method, otherwise keep existing
+        ...(imageUploadMethod === 'url' && {
+          imageUrl: data.imageUrl || undefined
+        })
+      });
 
       if (venue) {
         navigate(`/organizations/${organizationId}/venues/${venueId}`);
@@ -364,12 +389,37 @@ const VenueEdit = () => {
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Image URL</FormLabel>
+                      <FormLabel>Venue Image (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://example.com/image.jpg" {...field} />
+                        <Tabs value={imageUploadMethod} onValueChange={(value) => setImageUploadMethod(value as 'url' | 'upload')}>
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="url">URL</TabsTrigger>
+                            <TabsTrigger value="upload">Upload</TabsTrigger>
+                          </TabsList>
+                          <TabsContent value="url" className="space-y-2">
+                            <Input
+                              placeholder="https://example.com/image.jpg"
+                              {...field}
+                              disabled={isSubmitting}
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Enter a URL to your venue image
+                            </p>
+                          </TabsContent>
+                          <TabsContent value="upload" className="space-y-2">
+                            <ImageUploadField
+                              value={field.value}
+                              onChange={field.onChange}
+                              onFileSelect={setSelectedImageFile}
+                              placeholder="Upload your venue image"
+                              maxSize={5 * 1024 * 1024} // 5MB limit
+                              disabled={isSubmitting}
+                            />
+                          </TabsContent>
+                        </Tabs>
                       </FormControl>
                       <FormDescription>
-                        URL to an image of your venue
+                        Add an image for your venue using a URL or by uploading a file
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

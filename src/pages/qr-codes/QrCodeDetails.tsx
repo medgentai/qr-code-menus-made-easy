@@ -51,11 +51,8 @@ const QrCodeDetails: React.FC = () => {
   const [qrCode, setQrCode] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    if (organizationId) {
-      fetchOrganizationDetails(organizationId);
-    }
-  }, [organizationId, fetchOrganizationDetails]);
+  // Note: Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   useEffect(() => {
     if (venueId) {
