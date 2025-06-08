@@ -54,13 +54,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TableStatus, TableStatusColors, TableStatusLabels } from '@/types/venue';
+import { OrganizationType } from '@/types/organization';
 import { formatDate } from '@/lib/utils';
 import { VenueImageUpload } from '@/components/venues/venue-image-upload';
 
 const VenueDetails = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId: string }>();
   const navigate = useNavigate();
-  const { currentOrganization, fetchOrganizationDetails } = useOrganization();
+  const { currentOrganization, currentOrganizationDetails, fetchOrganizationDetails } = useOrganization();
   const {
     currentVenue,
     tables,
@@ -75,6 +76,9 @@ const VenueDetails = () => {
 
   // Note: Organization details are automatically fetched by the organization context
   // when the current organization changes, so we don't need to fetch them here
+
+  // Check if current organization is a food truck
+  const isFoodTruck = currentOrganizationDetails?.type === OrganizationType.FOOD_TRUCK;
 
   useEffect(() => {
     if (venueId) {
@@ -158,9 +162,11 @@ const VenueDetails = () => {
                 <DropdownMenuItem onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/edit`)}>
                   <Edit className="h-4 w-4 mr-2" /> Edit Venue
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables`)}>
-                  <TableIcon className="h-4 w-4 mr-2" /> Manage Tables
-                </DropdownMenuItem>
+                {!isFoodTruck && (
+                  <DropdownMenuItem onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables`)}>
+                    <TableIcon className="h-4 w-4 mr-2" /> Manage Tables
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/settings`)}>
                   <Settings className="h-4 w-4 mr-2" /> Settings
                 </DropdownMenuItem>
@@ -222,10 +228,10 @@ const VenueDetails = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className={`grid w-full mb-6 ${isFoodTruck ? 'grid-cols-1' : 'grid-cols-3'}`}>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="tables">Tables</TabsTrigger>
-            <TabsTrigger value="qrcodes">QR Codes</TabsTrigger>
+            {!isFoodTruck && <TabsTrigger value="tables">Tables</TabsTrigger>}
+            {!isFoodTruck && <TabsTrigger value="qrcodes">QR Codes</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="overview">
@@ -361,18 +367,28 @@ const VenueDetails = () => {
                     </div>
                   ) : (
                     <>
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-muted-foreground">Tables</div>
-                        <div className="font-medium">{tables.length}</div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="text-sm text-muted-foreground">QR Codes</div>
-                        <div className="font-medium">{isLoadingQrCodes ? '...' : qrCodes.length}</div>
-                      </div>
+                      {!isFoodTruck && (
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-muted-foreground">Tables</div>
+                          <div className="font-medium">{tables.length}</div>
+                        </div>
+                      )}
+                      {!isFoodTruck && (
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-muted-foreground">QR Codes</div>
+                          <div className="font-medium">{isLoadingQrCodes ? '...' : qrCodes.length}</div>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-muted-foreground">Total Scans</div>
                         <div className="font-medium">0</div>
                       </div>
+                      {isFoodTruck && (
+                        <div className="flex justify-between items-center">
+                          <div className="text-sm text-muted-foreground">Mobile Location</div>
+                          <div className="font-medium">Active</div>
+                        </div>
+                      )}
                     </>
                   )}
                 </CardContent>
@@ -380,20 +396,21 @@ const VenueDetails = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="tables">
-            <Card>
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <CardTitle>Tables</CardTitle>
-                  <CardDescription>Manage tables for this venue</CardDescription>
-                </div>
-                <Button
-                  onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/create`)}
-                  className="w-full sm:w-auto"
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Add Table
-                </Button>
-              </CardHeader>
+          {!isFoodTruck && (
+            <TabsContent value="tables">
+              <Card>
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <CardTitle>Tables</CardTitle>
+                    <CardDescription>Manage tables for this venue</CardDescription>
+                  </div>
+                  <Button
+                    onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/create`)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Table
+                  </Button>
+                </CardHeader>
               <CardContent>
                 {isLoading ? (
                   <div className="space-y-4">
@@ -462,8 +479,10 @@ const VenueDetails = () => {
               </CardContent>
             </Card>
           </TabsContent>
+          )}
 
-          <TabsContent value="qrcodes">
+          {!isFoodTruck && (
+            <TabsContent value="qrcodes">
             <div className="flex justify-between items-center mb-4">
               <div></div>
               <Button
@@ -481,6 +500,7 @@ const VenueDetails = () => {
               venueId={venueId!}
             />
           </TabsContent>
+          )}
         </Tabs>
       </div>
   );

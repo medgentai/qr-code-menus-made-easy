@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { TableStatus, TableStatusColors, TableStatusLabels } from '@/types/venue';
+import { OrganizationType } from '@/types/organization';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,7 +47,7 @@ import {
 const VenueTables = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId: string }>();
   const navigate = useNavigate();
-  const { currentOrganization, fetchOrganizationDetails } = useOrganization();
+  const { currentOrganization, currentOrganizationDetails, fetchOrganizationDetails } = useOrganization();
   const {
     currentVenue,
     tables,
@@ -59,18 +60,34 @@ const VenueTables = () => {
   // Note: Organization details are automatically fetched by the organization context
   // when the current organization changes, so we don't need to fetch them here
 
+  // Check if current organization is a food truck
+  const isFoodTruck = currentOrganizationDetails?.type === OrganizationType.FOOD_TRUCK;
+
+  // Redirect food trucks away from tables page
   useEffect(() => {
-    if (venueId) {
+    if (isFoodTruck && organizationId && venueId) {
+      navigate(`/organizations/${organizationId}/venues/${venueId}`);
+      return;
+    }
+  }, [isFoodTruck, organizationId, venueId, navigate]);
+
+  useEffect(() => {
+    if (venueId && !isFoodTruck) {
       fetchVenueById(venueId);
       fetchTablesForVenue(venueId);
     }
-  }, [venueId, fetchVenueById, fetchTablesForVenue]);
+  }, [venueId, isFoodTruck, fetchVenueById, fetchTablesForVenue]);
 
   const handleDeleteTable = async (tableId: string) => {
     await deleteTable(tableId);
     // Refresh tables after deletion
     fetchTablesForVenue(venueId!);
   };
+
+  // Don't render anything for food trucks (they will be redirected)
+  if (isFoodTruck) {
+    return null;
+  }
 
   return (
       <div className="space-y-6">

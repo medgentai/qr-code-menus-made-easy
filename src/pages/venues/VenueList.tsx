@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { OrganizationType } from '@/types/organization';
 import {
   Building2,
   Plus,
@@ -36,7 +37,7 @@ const VenueList = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { currentOrganization, fetchOrganizationDetails } = useOrganization();
+  const { currentOrganization, currentOrganizationDetails, fetchOrganizationDetails } = useOrganization();
   const { venues, isLoading, fetchVenuesForOrganization } = useVenue();
 
   // Check if we're coming from payment success and force refresh
@@ -60,6 +61,9 @@ const VenueList = () => {
   // when the current organization changes, so we don't need to fetch them here
 
   // No need for a separate effect to fetch venues - the VenueContext will handle this
+
+  // Check if current organization is a food truck
+  const isFoodTruck = currentOrganizationDetails?.type === OrganizationType.FOOD_TRUCK;
 
   return (
     <>
@@ -155,7 +159,10 @@ const VenueList = () => {
               <Building2 className="h-12 w-12 text-muted-foreground/60 mb-4" />
               <h3 className="text-lg font-medium mb-2">No Venues Yet</h3>
               <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                Create your first venue to start managing tables and QR codes for your business.
+                {isFoodTruck
+                  ? "Create your first mobile location to start managing QR codes for your food truck."
+                  : "Create your first venue to start managing tables and QR codes for your business."
+                }
               </p>
               <Button onClick={() => navigate(`/organizations/${organizationId}/venues/create`)}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -214,15 +221,17 @@ const VenueList = () => {
                   )}
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row gap-2 justify-between pt-0">
-                  <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/organizations/${organizationId}/venues/${venue.id}/tables`)}
-                      className="w-full sm:w-auto"
-                    >
-                      <TableIcon className="h-4 w-4 mr-1" /> Tables
-                    </Button>
+                  <div className={`grid gap-2 w-full sm:w-auto ${isFoodTruck ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    {!isFoodTruck && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/organizations/${organizationId}/venues/${venue.id}/tables`)}
+                        className="w-full sm:w-auto"
+                      >
+                        <TableIcon className="h-4 w-4 mr-1" /> Tables
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"

@@ -745,7 +745,7 @@ const OrderList: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          {order.table?.name || 'N/A'}
+                          {order.table?.name || 'No Table'}
                           {/* Show party size and table capacity */}
                           {order.partySize && (
                             <div className="text-xs text-muted-foreground">
@@ -755,10 +755,10 @@ const OrderList: React.FC = () => {
                             </div>
                           )}
                           {/* Show venue name when viewing at organization level */}
-                          {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
+                          {organizationId && !venueId && !venueFilter && (
                             <div className="text-xs text-muted-foreground">
                               <Store className="h-3 w-3 inline mr-1" />
-                              {order.table.venue.name}
+                              {order.venue?.name || order.table?.venue?.name || 'Unknown Venue'}
                             </div>
                           )}
                         </div>
@@ -872,6 +872,7 @@ const OrderList: React.FC = () => {
                   <CardContent className="pb-2 flex-grow">
                     <div className="space-y-3 h-full">
                       <div className="flex flex-col gap-1">
+                        {/* Show table information if available */}
                         {order.table && (
                           <div className="flex items-center gap-2 text-sm">
                             <TableIcon className="h-3 w-3 text-muted-foreground" />
@@ -885,14 +886,24 @@ const OrderList: React.FC = () => {
                                 {order.table?.capacity && ` (${order.table.capacity} max)`}
                               </span>
                             )}
+                          </div>
+                        )}
 
-                            {/* Show venue name when viewing at organization level */}
-                            {organizationId && !venueId && !venueFilter && order.table?.venue?.name && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                <Store className="h-3 w-3 inline mx-1" />
-                                {order.table.venue.name}
-                              </span>
-                            )}
+                        {/* Show party size for orders without tables (food trucks) */}
+                        {!order.table && order.partySize && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Users className="h-3 w-3 text-muted-foreground" />
+                            <span>{order.partySize} guests</span>
+                          </div>
+                        )}
+
+                        {/* Show venue name when viewing at organization level */}
+                        {organizationId && !venueId && !venueFilter && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Store className="h-3 w-3 text-muted-foreground" />
+                            <span className="text-xs text-muted-foreground">
+                              {order.venue?.name || order.table?.venue?.name || 'Unknown Venue'}
+                            </span>
                           </div>
                         )}
 

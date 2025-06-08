@@ -13,6 +13,7 @@ import { Category, MenuItem } from '@/services/menu-service';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
+import { formatPrice } from '@/lib/utils';
 
 const MenuDetails: React.FC = () => {
   const { id: organizationId, menuId } = useParams<{ id: string; menuId: string }>();
@@ -346,7 +347,7 @@ const MenuDetails: React.FC = () => {
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <p className="font-medium">${parseFloat(item.price).toFixed(2)}</p>
+                                  <p className="font-medium">{formatPrice(item.price)}</p>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="ghost" size="icon">

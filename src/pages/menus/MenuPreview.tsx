@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SpicyLevelLabels } from '@/types/menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetClose } from '@/components/ui/sheet';
+import { formatPrice } from '@/lib/utils';
 
 const MenuPreview: React.FC = () => {
   const { id: organizationId, menuId } = useParams<{ id: string; menuId: string }>();
@@ -158,12 +159,12 @@ const MenuPreview: React.FC = () => {
                         </div>
                         <div className="ml-4 flex flex-col items-end">
                           <div className="font-semibold">
-                            ${parseFloat(item.price).toFixed(2)}
+                            {formatPrice(item.price)}
                           </div>
                           {item.discountPrice && (
                             <div className="text-sm">
-                              <span className="line-through text-gray-400 mr-1">${parseFloat(item.price).toFixed(2)}</span>
-                              <span className="text-green-600">${parseFloat(item.discountPrice).toFixed(2)}</span>
+                              <span className="line-through text-gray-400 mr-1">{formatPrice(item.price)}</span>
+                              <span className="text-green-600">{formatPrice(item.discountPrice)}</span>
                             </div>
                           )}
                           {item.imageUrl && (
@@ -208,11 +209,11 @@ const MenuPreview: React.FC = () => {
             
             <div className="flex justify-between items-center mb-4">
               <div className="text-xl font-semibold">
-                ${parseFloat(selectedItem?.price || '0').toFixed(2)}
+                {formatPrice(selectedItem?.price || '0')}
               </div>
               {selectedItem?.discountPrice && (
                 <Badge variant="outline" className="bg-green-50 text-green-700">
-                  ${parseFloat(selectedItem.discountPrice).toFixed(2)} Special
+                  {formatPrice(selectedItem.discountPrice)} Special
                 </Badge>
               )}
             </div>

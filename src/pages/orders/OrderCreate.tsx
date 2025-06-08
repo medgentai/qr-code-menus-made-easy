@@ -14,12 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { useVenue } from '@/contexts/venue-context';
 import { useMenu } from '@/contexts/menu-context';
+import { useOrganization } from '@/contexts/organization-context';
 import { CreateOrderDto, CreateOrderItemDto, OrderStatus } from '@/services/order-service';
 import { useCreateOrderMutation } from '@/hooks/useOrderQuery';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
 import PartySizeInput from '@/components/orders/PartySizeInput';
 import { toast } from 'sonner';
+import { OrganizationType } from '@/types/organization';
 
 // Form schema
 const orderFormSchema = z.object({
@@ -41,11 +43,20 @@ const OrderCreate: React.FC = () => {
   const navigate = useNavigate();
   const { venues, tables, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
   const { menus, fetchMenusForOrganization } = useMenu();
+  const { currentOrganization } = useOrganization();
   const createOrderMutation = useCreateOrderMutation();
 
   const [selectedItems, setSelectedItems] = useState<CreateOrderItemDto[]>([]);
   const [activeTab, setActiveTab] = useState('details');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Get organization type for conditional field rendering
+  const organizationType = currentOrganization?.type;
+
+  // Helper functions to determine field visibility
+  const shouldShowTableSelection = organizationType !== OrganizationType.FOOD_TRUCK;
+  const shouldShowRoomNumber = organizationType === OrganizationType.HOTEL;
+  const shouldShowPartySize = organizationType !== OrganizationType.FOOD_TRUCK;
 
   // Initialize form
   const form = useForm<OrderFormValues>({
@@ -210,60 +221,64 @@ const OrderCreate: React.FC = () => {
                         )}
                       />
 
-                      {/* Table Selection */}
-                      <FormField
-                        control={form.control}
-                        name="tableId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Table (Optional)</FormLabel>
-                            <Select
-                              value={field.value || 'none'}
-                              onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a table" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="none">No table</SelectItem>
-                                {tables.map((table) => (
-                                  <SelectItem key={table.id} value={table.id}>
-                                    {table.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              Select a table for dine-in orders
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Party Size */}
-                      <FormField
-                        control={form.control}
-                        name="partySize"
-                        render={({ field }) => {
-                          const selectedTable = tables.find(t => t.id === form.watch('tableId'));
-                          return (
+                      {/* Table Selection - Hidden for Food Trucks */}
+                      {shouldShowTableSelection && (
+                        <FormField
+                          control={form.control}
+                          name="tableId"
+                          render={({ field }) => (
                             <FormItem>
-                              <PartySizeInput
-                                value={field.value}
-                                onChange={field.onChange}
-                                tableCapacity={selectedTable?.capacity}
-                                label="Party Size"
-                                placeholder="Number of guests"
-                                showQuickButtons={true}
-                              />
+                              <FormLabel>Table (Optional)</FormLabel>
+                              <Select
+                                value={field.value || 'none'}
+                                onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a table" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="none">No table</SelectItem>
+                                  {tables.map((table) => (
+                                    <SelectItem key={table.id} value={table.id}>
+                                      {table.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormDescription>
+                                Select a table for dine-in orders
+                              </FormDescription>
                               <FormMessage />
                             </FormItem>
-                          );
-                        }}
-                      />
+                          )}
+                        />
+                      )}
+
+                      {/* Party Size - Hidden for Food Trucks */}
+                      {shouldShowPartySize && (
+                        <FormField
+                          control={form.control}
+                          name="partySize"
+                          render={({ field }) => {
+                            const selectedTable = tables.find(t => t.id === form.watch('tableId'));
+                            return (
+                              <FormItem>
+                                <PartySizeInput
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  tableCapacity={selectedTable?.capacity}
+                                  label="Party Size"
+                                  placeholder="Number of guests"
+                                  showQuickButtons={true}
+                                />
+                                <FormMessage />
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      )}
                     </div>
 
                     <Separator />
@@ -316,23 +331,25 @@ const OrderCreate: React.FC = () => {
                           )}
                         />
 
-                        {/* Room Number */}
-                        <FormField
-                          control={form.control}
-                          name="roomNumber"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Room Number</FormLabel>
-                              <FormControl>
-                                <Input placeholder="101" {...field} />
-                              </FormControl>
-                              <FormDescription>
-                                For hotel room service orders
-                              </FormDescription>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        {/* Room Number - Only for Hotels */}
+                        {shouldShowRoomNumber && (
+                          <FormField
+                            control={form.control}
+                            name="roomNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Room Number</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="101" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  For hotel room service orders
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
                       </div>
                     </div>
 

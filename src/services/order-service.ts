@@ -55,6 +55,7 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  venueId?: string | null;
   tableId?: string | null;
   customerName?: string | null;
   customerEmail?: string | null;
@@ -68,6 +69,10 @@ export interface Order {
   updatedAt: string;
   completedAt?: string | null;
   items?: OrderItem[];
+  venue?: {
+    id: string;
+    name: string;
+  };
   table?: {
     id: string;
     name: string;

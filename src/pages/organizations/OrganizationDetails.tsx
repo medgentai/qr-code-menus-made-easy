@@ -45,7 +45,6 @@ import {
   Truck,
   Wine,
   Store,
-  BarChart,
   Plus,
   MoreHorizontal,
   Edit,
@@ -136,12 +135,19 @@ const OrganizationDetails = () => {
     }
   };
 
-  // Fetch QR codes when venues are loaded or when the active tab changes to QR codes
+  // Fetch QR codes when venues are loaded (for statistics display)
+  useEffect(() => {
+    if (venues.length > 0) {
+      fetchQrCodesForOrganization();
+    }
+  }, [venues]);
+
+  // Also fetch QR codes when the QR codes tab becomes active (for real-time updates)
   useEffect(() => {
     if (venues.length > 0 && activeTab === 'qrcodes') {
       fetchQrCodesForOrganization();
     }
-  }, [venues, activeTab]);
+  }, [activeTab]);
 
   // Function to get the appropriate icon based on organization type
   const getOrganizationIcon = (type: OrganizationType) => {
@@ -331,7 +337,6 @@ const OrganizationDetails = () => {
               <TabsTrigger value="venues" className="text-sm sm:text-base">Venues</TabsTrigger>
               <TabsTrigger value="menus" className="text-sm sm:text-base">Menus</TabsTrigger>
               <TabsTrigger value="qrcodes" className="text-sm sm:text-base">QR Codes</TabsTrigger>
-              <TabsTrigger value="analytics" className="text-sm sm:text-base">Analytics</TabsTrigger>
             </TabsList>
           </div>
 
@@ -446,7 +451,7 @@ const OrganizationDetails = () => {
                         <span className="text-sm">QR Codes</span>
                       </div>
                       <Badge variant="outline">
-                        {currentOrganizationDetails.stats.totalQrCodes || 0}
+                        {qrCodes.length}
                       </Badge>
                     </div>
                   </CardContent>
@@ -824,27 +829,7 @@ const OrganizationDetails = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics</CardTitle>
-                <CardDescription>
-                  View insights and statistics for your organization
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <BarChart className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Analytics Coming Soon</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  Track menu views, popular items, and customer engagement. Analytics will be available once you have active menus and QR codes.
-                </p>
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <BarChart className="h-4 w-4 mr-2" />
-                  Learn More
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
         </Tabs>
       </div>
 
