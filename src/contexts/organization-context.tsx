@@ -19,6 +19,7 @@ export interface OrganizationContextType {
   currentOrganization: Organization | null;
   currentOrganizationDetails: OrganizationDetails | null;
   isLoading: boolean;
+  hasLoaded: boolean; // Track if organizations have been initially loaded
   error: string | null;
   fetchOrganizations: (force?: boolean) => Promise<void>;
   fetchOrganizationDetails: (id: string) => Promise<OrganizationDetails | null>;
@@ -50,7 +51,7 @@ interface OrganizationProviderProps {
 const CURRENT_ORGANIZATION_KEY = 'currentOrganization';
 
 export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ children }) => {
-  const { state: { isAuthenticated } } = useAuth();
+  const { state: { isAuthenticated, isLoading: authLoading } } = useAuth();
   const navigate = useNavigate();
 
   // State
@@ -532,8 +533,11 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     }
   };
 
-  // Fetch organizations when authenticated
+  // Fetch organizations when authenticated and auth is ready
   useEffect(() => {
+    // Wait for auth to finish loading before making API calls
+    if (authLoading) return;
+
     if (isAuthenticated) {
       fetchOrganizations();
     } else {
@@ -543,17 +547,23 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       setCurrentOrganizationDetails(null);
       hasLoadedRef.current = false;
     }
-  }, [isAuthenticated, fetchOrganizations]);
+  }, [isAuthenticated, authLoading, fetchOrganizations]);
 
   // Fetch organization details when current organization changes
   useEffect(() => {
+    // Wait for auth to finish loading before making API calls
+    if (authLoading) return;
+
     if (currentOrganization && isAuthenticated) {
       // Only fetch if we don't already have details for this organization
-      if (!currentOrganizationDetails || currentOrganizationDetails.id !== currentOrganization.id) {
+      // AND we're not currently loading details for this organization
+      if (!currentOrganizationDetails ||
+          (currentOrganizationDetails.id !== currentOrganization.id &&
+           lastFetchedDetailsId !== currentOrganization.id)) {
         fetchOrganizationDetails(currentOrganization.id);
       }
     }
-  }, [currentOrganization?.id, isAuthenticated]);
+  }, [currentOrganization?.id, isAuthenticated, authLoading, lastFetchedDetailsId]);
 
   // Context value
   const value: OrganizationContextType = {
@@ -561,6 +571,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     currentOrganization,
     currentOrganizationDetails,
     isLoading,
+    hasLoaded: hasLoadedRef.current,
     error,
     fetchOrganizations,
     fetchOrganizationDetails,

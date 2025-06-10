@@ -1,8 +1,9 @@
 import React from 'react';
-import { CheckCircle, ArrowLeft, Clock, Info } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Clock, Info, Receipt, Timer, User, MapPin, Phone, Mail, CreditCard, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import { OrderStatus } from '@/services/order-service';
 
@@ -57,96 +58,195 @@ const OrderConfirmation: React.FC<OrderConfirmationProps> = ({
   };
 
   return (
-    <div className="container max-w-2xl mx-auto px-4 py-8">
-      <Button
-        variant="ghost"
-        className="mb-4"
-        onClick={onBackToMenu}
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Menu
-      </Button>
-
-      <Card className="w-full flex flex-col min-h-[280px]">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle className="h-10 w-10 text-green-600" />
+    <div className="min-h-screen bg-gray-50">
+      {/* Compact Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-md mx-auto px-3 py-3">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBackToMenu}
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg h-8 px-2"
+            >
+              <ArrowLeft className="h-3 w-3 mr-1" />
+              <span className="text-sm">Back</span>
+            </Button>
+            <h1 className="text-base font-semibold text-gray-900">Order Receipt</h1>
+            <div className="w-12" />
           </div>
-          <CardTitle className="text-2xl">Order Confirmed!</CardTitle>
-          <CardDescription>
-            Thank you for your order, {customerName}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 flex-grow">
-          <div className="rounded-lg border p-4">
-            <div className="flex justify-between items-center mb-2">
+        </div>
+      </div>
+
+      <div className="max-w-md mx-auto px-3 py-4">
+        {/* Compact Receipt Card */}
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+
+          {/* Compact Header */}
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-4 py-4 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-orange-600" />
+              </div>
+              <h2 className="text-lg font-bold text-white">Order Confirmed</h2>
+            </div>
+            <p className="text-orange-100 text-sm">
+              Thank you, <span className="font-semibold text-white">{customerName}</span>
+            </p>
+          </div>
+
+          {/* Compact Order Info */}
+          <div className="px-4 py-3 border-b border-orange-100 bg-orange-50/50">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="text-sm text-muted-foreground">Order Number</div>
-                <div className="font-medium">{orderNumber}</div>
+                <p className="text-xs text-orange-600 font-medium mb-1">Order #</p>
+                <p className="text-sm font-bold text-orange-900">{orderNumber}</p>
               </div>
-              <div className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor()}`}>
-                {status}
+              <div className="text-right">
+                <p className="text-xs text-orange-600 font-medium mb-1">Status</p>
+                <Badge className={`${getStatusColor()} text-xs px-2 py-0.5`}>
+                  {status}
+                </Badge>
               </div>
             </div>
-            <div className="flex items-center gap-2 mt-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm">Estimated time: {estimatedTime}</span>
+
+            <div className="mt-3 flex items-center gap-2 text-orange-700 bg-white/70 rounded px-2 py-1.5">
+              <Clock className="h-3 w-3 text-orange-600" />
+              <span className="text-xs">Est. time: <span className="font-semibold">{estimatedTime}</span></span>
             </div>
           </div>
+          {/* Compact Order Items */}
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-gray-900">Order Details</h3>
+              <div className="flex items-center gap-1 text-orange-600 bg-orange-50 rounded px-2 py-1">
+                <Receipt className="h-3 w-3" />
+                <span className="text-xs font-medium">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <h3 className="font-medium">Order Summary</h3>
-            <div className="space-y-2">
+            {/* Compact Items List */}
+            <div className="space-y-0 border border-orange-200 rounded-lg overflow-hidden">
               {items.map((item, index) => (
-                <div key={index} className="flex justify-between">
-                  <div className="flex gap-2">
-                    <span>{item.quantity}x</span>
-                    <span>{item.name}</span>
+                <div key={index} className={`${index !== items.length - 1 ? 'border-b border-orange-100' : ''}`}>
+                  <div className="px-3 py-2.5 hover:bg-orange-50/50 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center mt-0.5">
+                            <span className="text-xs font-bold text-white">{item.quantity}</span>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 text-sm leading-tight">{item.name}</h4>
+                            {item.notes && (
+                              <p className="text-xs text-orange-600 mt-1 italic">{item.notes}</p>
+                            )}
+                            <div className="mt-1 text-xs text-orange-600">
+                              {formatPrice(parseFloat(item.price))} × {item.quantity}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right ml-3">
+                        <p className="font-bold text-gray-900 text-sm">
+                          {formatPrice(parseFloat(item.price) * item.quantity)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <span>{formatPrice(parseFloat(item.price) * item.quantity)}</span>
                 </div>
               ))}
             </div>
-            <Separator className="my-2" />
-            <div className="flex justify-between font-bold">
-              <span>Total</span>
-              <span>{formatPrice(totalAmount)}</span>
-            </div>
-          </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg flex gap-3">
-            <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-blue-700">Order Status Updates</h4>
-              <p className="text-sm text-blue-600 mt-1">
-                You can check back here for updates on your order status. The staff will update your order as it progresses.
-              </p>
+            {/* Compact Total with GST */}
+            <div className="mt-3 space-y-1.5">
+              {/* Calculate subtotal from items */}
+              {(() => {
+                const subtotal = items.reduce((total, item) => {
+                  return total + (parseFloat(item.price) * item.quantity);
+                }, 0);
+                const gstAmount = subtotal * 0.05;
+                const finalTotal = subtotal + gstAmount;
+
+                return (
+                  <>
+                    <div className="flex justify-between items-center py-1 border-b border-orange-200">
+                      <span className="text-gray-600 text-sm">Subtotal</span>
+                      <span className="font-semibold text-gray-900 text-sm">{formatPrice(subtotal)}</span>
+                    </div>
+
+                    {/* GST Breakdown */}
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-500 text-xs">CGST (2.5%)</span>
+                      <span className="text-gray-700 text-xs">{formatPrice(gstAmount / 2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-gray-500 text-xs">SGST (2.5%)</span>
+                      <span className="text-gray-700 text-xs">{formatPrice(gstAmount / 2)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg px-3">
+                      <span className="text-sm font-bold text-white">Total (incl. GST)</span>
+                      <span className="text-lg font-bold text-white">{formatPrice(finalTotal)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-3 mt-auto">
-          <div className="bg-blue-50 p-4 rounded-lg flex gap-3 w-full">
-            <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-blue-700">Save Your Order Number</h4>
-              <p className="text-sm text-blue-600 mt-1">
-                Your order number is <span className="font-bold">{orderNumber}</span>. Save it to track your order status later.
-              </p>
+          {/* Compact Footer */}
+          <div className="bg-orange-50 px-4 py-3 border-t border-orange-200">
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center gap-1 text-orange-700">
+                <Star className="h-3 w-3 fill-current text-orange-500" />
+                <span className="text-xs font-medium">Thank you for your order!</span>
+                <Star className="h-3 w-3 fill-current text-orange-500" />
+              </div>
+
+              <div className="text-xs text-orange-600">
+                <p>{new Date().toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</p>
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {onTrackOrder && (
-              <Button variant="outline" onClick={onTrackOrder}>
-                <Clock className="mr-2 h-4 w-4" />
-                Track Your Order
-              </Button>
-            )}
-            <Button className={onTrackOrder ? "" : "w-full"} onClick={onBackToMenu}>
-              Return to Menu
+        </div>
+
+        {/* Compact Action Buttons */}
+        <div className="mt-4 space-y-3">
+          {onTrackOrder && (
+            <Button
+              variant="outline"
+              onClick={onTrackOrder}
+              className="w-full h-10 rounded-lg border border-orange-300 text-orange-700 hover:bg-orange-50 hover:border-orange-400 transition-all duration-200 text-sm font-medium"
+            >
+              <Timer className="mr-2 h-4 w-4" />
+              Track Order
             </Button>
+          )}
+
+          <Button
+            onClick={onBackToMenu}
+            className="w-full h-10 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white transition-all duration-200 text-sm font-medium"
+          >
+            Continue Browsing
+          </Button>
+        </div>
+
+        {/* Compact Info */}
+        <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+          <div className="flex items-start gap-2">
+            <Info className="h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-orange-700">
+              <p className="font-medium mb-1">Order Status</p>
+              <p>Your order is being prepared. You'll receive updates as it progresses.</p>
+            </div>
           </div>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

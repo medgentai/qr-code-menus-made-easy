@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useOrganization } from '@/contexts/organization-context';
 import { useAuth } from '@/contexts/auth-context';
@@ -21,16 +21,26 @@ export const OrganizationGuard: React.FC<OrganizationGuardProps> = ({
   showMessage = true,
 }) => {
   const { state: { isAuthenticated, isLoading: authLoading } } = useAuth();
-  const { organizations, isLoading: orgLoading } = useOrganization();
+  const { organizations, isLoading: orgLoading, hasLoaded, fetchOrganizations } = useOrganization();
   const location = useLocation();
+
+  // Fetch organizations when authenticated and not already loaded
+  useEffect(() => {
+    if (isAuthenticated && !authLoading && !hasLoaded && !orgLoading) {
+      // Only fetch if we're not on the create page to avoid unnecessary calls
+      if (location.pathname !== '/organizations/create' && location.pathname !== '/organizations/create-simple') {
+        fetchOrganizations(true);
+      }
+    }
+  }, [isAuthenticated, authLoading, hasLoaded, orgLoading, location.pathname, fetchOrganizations]);
 
   // Don't check organizations if user is not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Show loading while checking organizations
-  if (authLoading || orgLoading) {
+  // Show loading while auth is loading, organizations are loading, or haven't been loaded yet
+  if (authLoading || orgLoading || (!hasLoaded && isAuthenticated)) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="text-center">
@@ -41,8 +51,13 @@ export const OrganizationGuard: React.FC<OrganizationGuardProps> = ({
     );
   }
 
-  // If user has no organizations, redirect to create or show message
-  if (!organizations || organizations.length === 0) {
+  // If we're on the create page, allow access regardless of organization count
+  if (location.pathname === '/organizations/create' || location.pathname === '/organizations/create-simple') {
+    return <>{children}</>;
+  }
+
+  // Only redirect if we're sure the user has no organizations after fetching
+  if (isAuthenticated && hasLoaded && !orgLoading && organizations.length === 0) {
     if (showMessage) {
       return (
         <div className="flex h-screen w-full items-center justify-center p-4">

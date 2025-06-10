@@ -1,13 +1,13 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import { PublicMenuProvider } from '@/contexts/public-menu-context';
 import { CartProvider } from '@/contexts/cart-context';
-import PublicMenu from './PublicMenu';
 
 const PublicMenuWrapper: React.FC = () => {
   return (
     <PublicMenuProvider>
       <CartProvider>
-        <PublicMenu />
+        <Outlet />
       </CartProvider>
     </PublicMenuProvider>
   );

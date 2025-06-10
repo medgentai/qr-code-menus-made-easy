@@ -1,4 +1,5 @@
 
+import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -13,100 +14,119 @@ import { NavigationProvider } from "@/contexts/navigation-context";
 import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 import TokenRefreshManager from "@/components/TokenRefreshManager";
-
 import OrganizationGuard from "@/components/organization-guard";
 
-// Public pages
-import Index from "./pages/Index";
-import Features from "./pages/Features";
-import HowItWorks from "./pages/HowItWorks";
-import UseCases from "./pages/UseCases";
-import RestaurantUseCase from "./pages/RestaurantUseCase";
-import HotelUseCase from "./pages/HotelUseCase";
-import CafeUseCase from "./pages/CafeUseCase";
-import FoodTruckUseCase from "./pages/FoodTruckUseCase";
-import Pricing from "./pages/Pricing";
-import Contact from "./pages/Contact";
-import GetStarted from "./pages/GetStarted";
-import About from "./pages/About";
-import Blog from "./pages/Blog";
-import NotFound from "./pages/NotFound";
+// Loading component for lazy-loaded routes
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
 
-// Auth pages
+// Critical path pages (immediate load)
+import Index from "./pages/Index";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import VerifyOtp from "./pages/auth/VerifyOtp";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-
-// Dashboard pages
 import Dashboard from "./pages/dashboard/Dashboard";
-import Profile from "./pages/profile/Profile";
+import NotFound from "./pages/NotFound";
 
-// Staff Dashboard pages
-import KitchenDashboard from "./pages/staff/KitchenDashboard";
-import Subscriptions from "./pages/subscriptions/Subscriptions";
-import SubscriptionManage from "./pages/subscriptions/SubscriptionManage";
+// Lazy loaded public pages
+const Features = lazy(() => import("./pages/Features"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const UseCases = lazy(() => import("./pages/UseCases"));
+const RestaurantUseCase = lazy(() => import("./pages/RestaurantUseCase"));
+const HotelUseCase = lazy(() => import("./pages/HotelUseCase"));
+const CafeUseCase = lazy(() => import("./pages/CafeUseCase"));
+const FoodTruckUseCase = lazy(() => import("./pages/FoodTruckUseCase"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Contact = lazy(() => import("./pages/Contact"));
+const GetStarted = lazy(() => import("./pages/GetStarted"));
+const About = lazy(() => import("./pages/About"));
+const Blog = lazy(() => import("./pages/Blog"));
 
+// Lazy loaded auth pages
+const VerifyOtp = lazy(() => import("./pages/auth/VerifyOtp"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 
-// Organization pages
-import OrganizationList from "./pages/organizations/OrganizationList";
-import OrganizationCreate from "./pages/organizations/OrganizationCreate";
-import OrganizationCreateWithPayment from "./pages/organizations/OrganizationCreateWithPayment";
-import OrganizationDetails from "./pages/organizations/OrganizationDetails";
-import OrganizationSettings from "./pages/organizations/OrganizationSettings";
-import OrganizationMembers from "./pages/organizations/OrganizationMembers";
-import OrganizationQrCodes from "./pages/organizations/OrganizationQrCodes";
+// Lazy loaded dashboard pages
+const Profile = lazy(() => import("./pages/profile/Profile"));
 
-// Invitation pages
-import InvitationAccept from "./pages/invitation/InvitationAccept";
+// Lazy loaded staff dashboard pages
+const KitchenDashboard = lazy(() => import("./pages/staff/KitchenDashboard"));
+const Subscriptions = lazy(() => import("./pages/subscriptions/Subscriptions"));
+const SubscriptionManage = lazy(() => import("./pages/subscriptions/SubscriptionManage"));
 
-// Venue pages
-import VenueList from "./pages/venues/VenueList";
-import VenueCreateWithPayment from "./pages/venues/VenueCreateWithPayment";
-import VenueDetails from "./pages/venues/VenueDetails";
-import VenueEdit from "./pages/venues/VenueEdit";
-import VenueTables from "./pages/venues/VenueTables";
-import VenueSettings from "./pages/venues/VenueSettings";
-import TableCreate from "./pages/venues/TableCreate";
-import TableEdit from "./pages/venues/TableEdit";
+// Lazy loaded organization pages
+const OrganizationList = lazy(() => import("./pages/organizations/OrganizationList"));
+const OrganizationCreate = lazy(() => import("./pages/organizations/OrganizationCreate"));
+const OrganizationCreateWithPayment = lazy(() => import("./pages/organizations/OrganizationCreateWithPayment"));
+const OrganizationDetails = lazy(() => import("./pages/organizations/OrganizationDetails"));
+const OrganizationSettings = lazy(() => import("./pages/organizations/OrganizationSettings"));
+const OrganizationMembers = lazy(() => import("./pages/organizations/OrganizationMembers"));
+const OrganizationQrCodes = lazy(() => import("./pages/organizations/OrganizationQrCodes"));
 
-// Menu pages
-import MenuList from "./pages/menus/MenuList";
-import MenuCreate from "./pages/menus/MenuCreate";
-import MenuDetails from "./pages/menus/MenuDetails";
-import MenuEdit from "./pages/menus/MenuEdit";
-import CategoryCreate from "./pages/menus/CategoryCreate";
-import CategoryEdit from "./pages/menus/CategoryEdit";
-import MenuItemCreate from "./pages/menus/MenuItemCreate";
-import MenuItemEdit from "./pages/menus/MenuItemEdit";
-import MenuPreview from "./pages/menus/MenuPreview";
+// Lazy loaded invitation pages
+const InvitationAccept = lazy(() => import("./pages/invitation/InvitationAccept"));
 
-// QR Code pages
-import QrCodeCreate from "./pages/qr-codes/QrCodeCreate";
-import QrCodeDetails from "./pages/qr-codes/QrCodeDetails";
-import QrCodeEdit from "./pages/qr-codes/QrCodeEdit";
+// Lazy loaded venue pages
+const VenueList = lazy(() => import("./pages/venues/VenueList"));
+const VenueCreateWithPayment = lazy(() => import("./pages/venues/VenueCreateWithPayment"));
+const VenueDetails = lazy(() => import("./pages/venues/VenueDetails"));
+const VenueEdit = lazy(() => import("./pages/venues/VenueEdit"));
+const VenueTables = lazy(() => import("./pages/venues/VenueTables"));
+const VenueSettings = lazy(() => import("./pages/venues/VenueSettings"));
+const TableCreate = lazy(() => import("./pages/venues/TableCreate"));
+const TableEdit = lazy(() => import("./pages/venues/TableEdit"));
 
-// Order pages
-import OrderList from "./pages/orders/OrderList";
-import OrderDetails from "./pages/orders/OrderDetails";
-import OrderCreate from "./pages/orders/OrderCreate";
-import OrderEdit from "./pages/orders/OrderEdit";
+// Lazy loaded menu pages
+const MenuList = lazy(() => import("./pages/menus/MenuList"));
+const MenuCreate = lazy(() => import("./pages/menus/MenuCreate"));
+const MenuDetails = lazy(() => import("./pages/menus/MenuDetails"));
+const MenuEdit = lazy(() => import("./pages/menus/MenuEdit"));
+const CategoryCreate = lazy(() => import("./pages/menus/CategoryCreate"));
+const CategoryEdit = lazy(() => import("./pages/menus/CategoryEdit"));
+const MenuItemCreate = lazy(() => import("./pages/menus/MenuItemCreate"));
+const MenuItemEdit = lazy(() => import("./pages/menus/MenuItemEdit"));
+const MenuPreview = lazy(() => import("./pages/menus/MenuPreview"));
 
-// Public Menu pages
-import PublicMenuWrapper from "./pages/public/PublicMenuWrapper";
+// Lazy loaded QR code pages
+const QrCodeCreate = lazy(() => import("./pages/qr-codes/QrCodeCreate"));
+const QrCodeDetails = lazy(() => import("./pages/qr-codes/QrCodeDetails"));
+const QrCodeEdit = lazy(() => import("./pages/qr-codes/QrCodeEdit"));
 
-// Create React Query client with optimized options to reduce unnecessary API calls
+// Lazy loaded order pages
+const OrderList = lazy(() => import("./pages/orders/OrderList"));
+const OrderDetails = lazy(() => import("./pages/orders/OrderDetails"));
+const OrderCreate = lazy(() => import("./pages/orders/OrderCreate"));
+const OrderEdit = lazy(() => import("./pages/orders/OrderEdit"));
+
+// Lazy loaded public menu pages
+const PublicMenuWrapper = lazy(() => import("./pages/public/PublicMenuWrapper"));
+const PublicMenu = lazy(() => import("./pages/public/PublicMenu"));
+
+// Create React Query client with highly optimized options
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false, // Don't refetch when window regains focus
-      retry: 1, // Only retry failed queries once
-      staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh for 5 minutes
-      gcTime: 15 * 60 * 1000, // 15 minutes - keep unused data in cache for 15 minutes
-      refetchOnMount: false, // Don't automatically refetch on mount to prevent cascading API calls
-      refetchOnReconnect: false, // Don't refetch on reconnect to reduce API calls
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error?.response?.status >= 400 && error?.response?.status < 500) {
+          return false;
+        }
+        return failureCount < 2; // Only retry server errors twice
+      },
+      staleTime: 10 * 60 * 1000, // 10 minutes - increased for better caching
+      gcTime: 30 * 60 * 1000, // 30 minutes - keep data longer in cache
+      refetchOnMount: 'stale', // Only refetch if data is stale
+      refetchOnReconnect: 'stale', // Only refetch stale data on reconnect
       refetchInterval: false, // Disable periodic refetching
+      networkMode: 'online', // Only run queries when online
+    },
+    mutations: {
+      retry: 1, // Retry mutations once on failure
+      networkMode: 'online',
     },
   },
 });
@@ -125,24 +145,31 @@ const App = () => (
                     <NotificationProvider>
                       <TooltipProvider>
                     <Toaster />
-              <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/use-cases" element={<UseCases />} />
-              <Route path="/use-cases/restaurants" element={<RestaurantUseCase />} />
-              <Route path="/use-cases/hotels" element={<HotelUseCase />} />
-              <Route path="/use-cases/cafes" element={<CafeUseCase />} />
-              <Route path="/use-cases/food-trucks" element={<FoodTruckUseCase />} />
-              <Route path="/pricing" element={<Pricing />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/get-started" element={<GetStarted />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/blog" element={<Blog />} />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/features" element={<Features />} />
+                  <Route path="/how-it-works" element={<HowItWorks />} />
+                  <Route path="/use-cases" element={<UseCases />} />
+                  <Route path="/use-cases/restaurants" element={<RestaurantUseCase />} />
+                  <Route path="/use-cases/hotels" element={<HotelUseCase />} />
+                  <Route path="/use-cases/cafes" element={<CafeUseCase />} />
+                  <Route path="/use-cases/food-trucks" element={<FoodTruckUseCase />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/get-started" element={<GetStarted />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/blog" element={<Blog />} />
 
               {/* Public Menu routes */}
-              <Route path="/:slug" element={<PublicMenuWrapper />} />
+              <Route path="/:slug" element={<PublicMenuWrapper />}>
+                <Route index element={<PublicMenu />} />
+                <Route path="cart" element={<PublicMenu />} />
+                <Route path="checkout" element={<PublicMenu />} />
+                <Route path="confirmation" element={<PublicMenu />} />
+                <Route path="track" element={<PublicMenu />} />
+              </Route>
 
               {/* Authentication routes */}
               <Route path="/login" element={<Login />} />
@@ -509,9 +536,10 @@ const App = () => (
               {/* Invitation routes */}
               <Route path="/invitation" element={<InvitationAccept />} />
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-              </Routes>
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
               </TooltipProvider>
                 </NotificationProvider>
                   </NavigationProvider>

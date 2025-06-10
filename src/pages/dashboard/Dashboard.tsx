@@ -34,8 +34,10 @@ import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useDashboardAnalytics } from '../../hooks/useDashboardAnalytics';
-import { useActiveOrdersCount, useRecentActiveOrders } from '../../hooks/useActiveOrders';
+import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
+import { useActiveOrdersCount, useRecentActiveOrders } from '@/hooks/useActiveOrders';
+import { LoadingState, WidgetLoader } from '@/components/ui/loading';
+import { ErrorDisplay } from '@/components/ui/error-display';
 
 // Define widget types
 type WidgetType = 'qr-analytics' | 'recent-orders' | 'menu-performance' | 'customer-insights' | 'revenue' | 'peak-hours';
@@ -245,16 +247,14 @@ const Dashboard = () => {
         return (
           <div className="space-y-4">
             {analyticsLoading ? (
-              <div className="flex items-center justify-center h-[150px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <LoadingState height="150px" message="Loading QR analytics..." />
             ) : analyticsError ? (
-              <div className="flex items-center justify-center h-[150px] text-muted-foreground">
-                <div className="text-center">
-                  <QrCode className="h-8 w-8 mx-auto mb-2" />
-                  <p>Unable to load QR analytics</p>
-                </div>
-              </div>
+              <ErrorDisplay
+                type="general"
+                title="Unable to load QR analytics"
+                height="150px"
+                onRetry={refetchAnalytics}
+              />
             ) : (
               <>
                 <div className="flex items-center justify-between">
@@ -296,9 +296,7 @@ const Dashboard = () => {
         return (
           <div className="space-y-4">
             {recentActiveOrdersLoading ? (
-              <div className="flex items-center justify-center h-[150px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <LoadingState height="150px" message="Loading recent orders..." />
             ) : (
               <>
                 <div className="flex items-center gap-2">
@@ -344,16 +342,14 @@ const Dashboard = () => {
         return (
           <div className="space-y-4">
             {analyticsLoading ? (
-              <div className="flex items-center justify-center h-[200px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <LoadingState height="200px" message="Loading menu performance..." />
             ) : analyticsError ? (
-              <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                <div className="text-center">
-                  <Utensils className="h-8 w-8 mx-auto mb-2" />
-                  <p>Unable to load menu performance</p>
-                </div>
-              </div>
+              <ErrorDisplay
+                type="general"
+                title="Unable to load menu performance"
+                height="200px"
+                onRetry={refetchAnalytics}
+              />
             ) : (
               <>
                 <div className="text-sm text-muted-foreground mb-4">Today's Top Items</div>
@@ -392,9 +388,7 @@ const Dashboard = () => {
         return (
           <div className="space-y-4">
             {analyticsLoading ? (
-              <div className="flex items-center justify-center h-[150px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <LoadingState height="150px" message="Loading customer insights..." />
             ) : analyticsError ? (
               <div className="flex items-center justify-center h-[150px] text-muted-foreground">
                 <div className="text-center">
@@ -440,9 +434,7 @@ const Dashboard = () => {
         return (
           <div className="space-y-4">
             {analyticsLoading ? (
-              <div className="flex items-center justify-center h-[150px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <LoadingState height="150px" message="Loading revenue data..." />
             ) : analyticsError ? (
               <div className="flex items-center justify-center h-[150px] text-muted-foreground">
                 <div className="text-center">
@@ -499,9 +491,7 @@ const Dashboard = () => {
         return (
           <div className="space-y-4">
             {analyticsLoading ? (
-              <div className="flex items-center justify-center h-[150px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              </div>
+              <LoadingState height="150px" message="Loading peak hours..." />
             ) : analyticsError ? (
               <div className="flex items-center justify-center h-[150px] text-muted-foreground">
                 <div className="text-center">

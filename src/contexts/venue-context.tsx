@@ -43,7 +43,7 @@ interface VenueProviderProps {
 // Venue provider component
 export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   const { state: authState } = useAuth();
-  const { user, isAuthenticated } = authState;
+  const { user, isAuthenticated, isLoading: authLoading } = authState;
   const { currentOrganization, currentOrganizationDetails } = useOrganization();
 
   // Fallback authentication check - if auth context user is missing, check localStorage
@@ -71,7 +71,7 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       if (!isUserAuthenticated || !currentOrganization) return [];
       return await VenueService.getAllForOrganization(currentOrganization.id);
     },
-    enabled: !!isUserAuthenticated && !!currentOrganization,
+    enabled: !!isUserAuthenticated && !!currentOrganization && !authLoading,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     retry: 1

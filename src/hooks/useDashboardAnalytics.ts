@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import AnalyticsService, { DashboardAnalyticsDto, GetAnalyticsQueryDto } from '@/services/analytics-service';
+import AnalyticsService, { GetAnalyticsQueryDto } from '@/services/analytics-service';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 
@@ -99,14 +99,7 @@ export const useDashboardAnalyticsQuery = (params: GetAnalyticsQueryDto) => {
   });
 };
 
-// Hook for manual analytics aggregation
-export const useManualAggregation = () => {
-  return useQuery({
-    queryKey: ['analytics', 'manual-aggregation'],
-    queryFn: () => AnalyticsService.triggerManualAggregation(),
-    enabled: false, // Only run when manually triggered
-  });
-};
+
 
 // Hook for analytics service health
 export const useAnalyticsHealth = () => {

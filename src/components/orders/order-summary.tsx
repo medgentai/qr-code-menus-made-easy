@@ -31,7 +31,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderData, categories }) =>
     return (orderData.items || []).reduce((total, item) => {
       const menuItem = findMenuItem(item.menuItemId);
       if (menuItem) {
-        return total + (parseFloat(menuItem.price) * item.quantity);
+        // Use discounted price if available, otherwise use regular price
+        const price = parseFloat(menuItem.discountPrice || menuItem.price);
+        return total + (price * item.quantity);
       }
       return total;
     }, 0);
@@ -87,7 +89,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderData, categories }) =>
                 const menuItem = findMenuItem(item.menuItemId);
                 if (!menuItem) return null;
 
-                const itemTotal = parseFloat(menuItem.price) * item.quantity;
+                // Use discounted price if available, otherwise use regular price
+                const itemTotal = parseFloat(menuItem.discountPrice || menuItem.price) * item.quantity;
 
                 return (
                   <div key={index} className="flex justify-between text-sm">

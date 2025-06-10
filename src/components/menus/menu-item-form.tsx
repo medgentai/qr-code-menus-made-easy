@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { useMenu } from '@/contexts/menu-context';
 import { MenuItem, CreateMenuItemDto, UpdateMenuItemDto } from '@/services/menu-service';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Leaf, Wheat } from 'lucide-react';
 import { SpicyLevelLabels } from '@/types/menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -328,22 +328,39 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
         </div>
 
         <div className="space-y-4">
-          <div>
-            <Label>Dietary Information</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Leaf className="h-5 w-5 text-green-600" />
+              <Label className="text-base font-semibold">Dietary Information</Label>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Select the dietary categories that apply to this item. This helps customers filter menu items based on their preferences.
+              <br />
+              <span className="text-xs text-gray-500 mt-1 block">
+                💡 <strong>Note:</strong> If none of these are selected, the item will be considered non-vegetarian and will appear when customers filter for "Non-Vegetarian" items.
+              </span>
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="isVegetarian"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-all duration-200 ${
+                    field.value ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white hover:border-green-100'
+                  }`}>
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Vegetarian</FormLabel>
+                      <FormLabel className="flex items-center gap-2 cursor-pointer">
+                        <Leaf className="h-4 w-4 text-green-600" />
+                        Vegetarian
+                      </FormLabel>
+                      <p className="text-xs text-gray-500">Contains no meat or fish</p>
                     </div>
                   </FormItem>
                 )}
@@ -353,15 +370,22 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
                 control={form.control}
                 name="isVegan"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-all duration-200 ${
+                    field.value ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white hover:border-green-100'
+                  }`}>
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        className="data-[state=checked]:bg-green-700 data-[state=checked]:border-green-700"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Vegan</FormLabel>
+                      <FormLabel className="flex items-center gap-2 cursor-pointer">
+                        <Leaf className="h-4 w-4 text-green-700" />
+                        Vegan
+                      </FormLabel>
+                      <p className="text-xs text-gray-500">No animal products</p>
                     </div>
                   </FormItem>
                 )}
@@ -371,15 +395,22 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
                 control={form.control}
                 name="isGlutenFree"
                 render={({ field }) => (
-                  <FormItem className="flex items-center space-x-2">
+                  <FormItem className={`flex items-center space-x-3 p-3 rounded-lg border-2 transition-all duration-200 ${
+                    field.value ? 'border-amber-200 bg-amber-50' : 'border-gray-200 bg-white hover:border-amber-100'
+                  }`}>
                     <FormControl>
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        className="data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Gluten Free</FormLabel>
+                      <FormLabel className="flex items-center gap-2 cursor-pointer">
+                        <Wheat className="h-4 w-4 text-amber-600" />
+                        Gluten Free
+                      </FormLabel>
+                      <p className="text-xs text-gray-500">Contains no gluten</p>
                     </div>
                   </FormItem>
                 )}

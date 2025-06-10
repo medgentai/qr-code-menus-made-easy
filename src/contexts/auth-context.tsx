@@ -108,6 +108,10 @@ const getCookie = (name: string): string | null => {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const location = useLocation();
 
+  // Add flags to prevent duplicate initialization
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
   // Initialize state from cookies and memory
   const [state, setState] = useState<AuthState>(() => {
     // Access token should only be in memory, not localStorage
@@ -121,193 +125,105 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const user = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
 
     // Initialize auth state silently
-
-    // If we have a session ID or user data, try to refresh the token immediately
-    if (sessionId || user) {
-      // Set a global flag to indicate that token refresh is in progress
-      // This will help prevent 401 errors for API requests made before the token is refreshed
-      window.isRefreshingToken = true;
-
-      // Trigger a token refresh in the background
-      setTimeout(() => {
-        import('@/lib/api').then(({ refreshAccessToken }) => {
-          refreshAccessToken().then(success => {
-            // Clear the refresh flag
-            window.isRefreshingToken = false;
-
-            if (!success) {
-              // Only clear user data if we have no valid session
-              if (!sessionId) {
-                localStorage.removeItem(USER_KEY);
-
-                // Update state to reflect the cleared user data
-                setState(prev => ({
-                  ...prev,
-                  user: null,
-                  isAuthenticated: false,
-                  isLoading: false
-                }));
-              }
-            }
-          });
-        });
-      }, 0);
-    }
-
-    // Consider the user authenticated if we have user data
-    // We'll validate the session and refresh tokens as needed
-    const initiallyAuthenticated = !!user;
-
     return {
       user,
       accessToken,
-      refreshToken: null, // Refresh token is now stored in HttpOnly cookie
+      refreshToken: null,
       sessionId,
-      isAuthenticated: initiallyAuthenticated,
-      isLoading: true,
+      isAuthenticated: !!user && !!sessionId,
+      isLoading: true, // Start with loading true
       error: null,
     };
   });
 
-  // Check if the user is authenticated on mount
+  // Validate session on mount - simplified and deduplicated
   useEffect(() => {
     const validateSession = async () => {
-      // Check if we're on a public route - if so, skip session validation
-      const isPublic = isPublicRoute(location.pathname);
-
-      if (isPublic) {
-        // For public routes, just set loading to false and don't validate session
-        setState(prev => ({ ...prev, isLoading: false }));
+      // Prevent duplicate initialization
+      if (isInitializing || hasInitialized) {
         return;
       }
 
-      console.log('Validating session...');
+      setIsInitializing(true);
 
-      // Check for access token, session ID, and user data
-      const accessToken = state.accessToken;
-      const sessionId = state.sessionId;
-      const user = state.user;
+      try {
+        // Check if we're on a public route - if so, skip session validation
+        const isPublic = isPublicRoute(location.pathname);
 
-      console.log('Current auth state:', {
-        hasAccessToken: !!accessToken,
-        hasSessionId: !!sessionId,
-        hasUser: !!user,
-        isAuthenticated: state.isAuthenticated
-      });
-
-      // If we have user data but no access token, try to refresh
-      if (user && !accessToken) {
-        const refreshed = await refreshSession();
-        if (refreshed) {
-          setState(prev => ({
-            ...prev,
-            isLoading: false,
-            isAuthenticated: true
-          }));
-          return;
-        } else {
-          // Keep user authenticated but set loading to false
-          setState(prev => ({
-            ...prev,
-            isLoading: false,
-            isAuthenticated: true // Keep authenticated if we have user data
-          }));
+        if (isPublic) {
+          // For public routes, just set loading to false and don't validate session
+          setState(prev => ({ ...prev, isLoading: false }));
           return;
         }
-      }
 
-      // Case 1: We have both access token and session ID - validate with /auth/me
-      if (accessToken && sessionId) {
-        try {
-          const response = await api.get<User>('/auth/me', {
-            showErrorToast: false,
-            skipTokenRefresh: true // Skip automatic token refresh for this request
-          });
+        const user = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
+        const sessionId = getCookie('sessionId');
 
-          setState(prev => ({
-            ...prev,
-            user: response.data,
-            isAuthenticated: true,
-            isLoading: false,
-          }));
-        } catch (error: any) {
+        // If we have user data and session ID, try to refresh the token
+        if (user && sessionId) {
+          // Set global flag to prevent other requests
+          window.isRefreshingToken = true;
 
-          // Check if it's an authentication error
-          if (error.statusCode === 401) {
-            // Try to refresh the token if validation fails
+          try {
             const refreshed = await refreshSession();
-            if (!refreshed) {
-              // If refresh fails but we have user data, don't clear auth state
-              // Just set loading to false and let the API handle token refresh
+            if (refreshed) {
               setState(prev => ({
                 ...prev,
+                isAuthenticated: true,
                 isLoading: false,
-                // Keep authenticated if we have user data
-                isAuthenticated: !!user
               }));
-
-              // Don't show error messages for session validation failures
-              // This prevents confusing new users
             } else {
-              // If token refresh was successful, try to validate the session again
-              try {
-                const response = await api.get<User>('/auth/me', {
-                  showErrorToast: false,
-                  skipTokenRefresh: true // Prevent infinite loop
-                });
-
-                setState(prev => ({
-                  ...prev,
-                  user: response.data,
-                  isAuthenticated: true,
-                  isLoading: false,
-                }));
-              } catch (retryError) {
-                // If retry fails, don't clear auth state if we have user data
-                setState(prev => ({
-                  ...prev,
-                  isLoading: false,
-                  isAuthenticated: !!user
-                }));
-              }
+              // Keep user authenticated if we have user data, even if refresh fails
+              setState(prev => ({
+                ...prev,
+                isAuthenticated: !!user,
+                isLoading: false,
+              }));
             }
-          } else if (error.statusCode >= 500) {
-            toast.error('Server error. Please try again later.');
+          } catch (error) {
+            // Keep user authenticated if we have user data
+            setState(prev => ({
+              ...prev,
+              isAuthenticated: !!user,
+              isLoading: false,
+            }));
+          } finally {
+            window.isRefreshingToken = false;
           }
-
-          setState(prev => ({ ...prev, isLoading: false }));
-        }
-      }
-      // Case 2: We have user data but no token or session ID - try to refresh
-      else if (user && (!accessToken || !sessionId)) {
-        // Try to refresh the token
-        const refreshed = await refreshSession();
-
-        if (refreshed) {
-          setState(prev => ({ ...prev, isLoading: false }));
+        } else if (user) {
+          // We have user data but no session - try to refresh
+          try {
+            const refreshed = await refreshSession();
+            setState(prev => ({
+              ...prev,
+              isAuthenticated: refreshed,
+              isLoading: false,
+            }));
+          } catch (error) {
+            setState(prev => ({
+              ...prev,
+              isAuthenticated: false,
+              isLoading: false,
+            }));
+          }
         } else {
-          // Don't clear auth state yet - let the user try to use the app
-          // The API client will try to refresh the token again when needed
-          setState(prev => ({ ...prev, isLoading: false }));
+          // No user data - not authenticated
+          setState(prev => ({
+            ...prev,
+            isAuthenticated: false,
+            isLoading: false,
+          }));
         }
-      }
-      // Case 3: We don't have user data, token, or session ID
-      else if (!user) {
-        // Only set unauthenticated if we truly have no user data
+      } catch (error) {
+        console.error('Session validation error:', error);
         setState(prev => ({
           ...prev,
+          isAuthenticated: false,
           isLoading: false,
-          isAuthenticated: false
         }));
-      }
-      // Case 4: We have user data and access token - user is authenticated
-      else {
-        console.log('✅ User has data and access token - keeping authenticated');
-        setState(prev => ({
-          ...prev,
-          isLoading: false,
-          isAuthenticated: true
-        }));
+      } finally {
+        setIsInitializing(false);
+        setHasInitialized(true);
       }
     };
 
@@ -627,8 +543,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Refresh session function
+  // Refresh session function with deduplication
   const refreshSession = async (): Promise<boolean> => {
+    // Prevent duplicate refresh attempts
+    if (window.isRefreshingToken) {
+      // Wait for the current refresh to complete
+      return new Promise((resolve) => {
+        const checkRefresh = () => {
+          if (!window.isRefreshingToken) {
+            resolve(!!window.accessToken);
+          } else {
+            setTimeout(checkRefresh, 100);
+          }
+        };
+        checkRefresh();
+      });
+    }
+
     // Set the global flag to indicate that token refresh is in progress
     window.isRefreshingToken = true;
 
@@ -637,40 +568,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // We'll still try to get it for logging purposes
     const sessionId = state.sessionId || localStorage.getItem(SESSION_ID_KEY) || getCookie('sessionId');
 
-    // Session ID will be used from cookies if not available in state
-
     try {
-      // First check if the session is valid using the session status endpoint
-      // Use the 'current' endpoint to get the session from cookies if no sessionId is available
-      const sessionStatusUrl = sessionId
-        ? `${API_BASE_URL}${API_PREFIX}/auth/session-status/${sessionId}`
-        : `${API_BASE_URL}${API_PREFIX}/auth/session-status/current`;
-
-      // Check session status before refresh
-
-      const sessionStatusResponse = await fetch(sessionStatusUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Include credentials to send cookies
-        credentials: 'include'
-      });
-
-      if (!sessionStatusResponse.ok) {
-        clearAuthState();
-        return false;
-      }
-
-      const sessionStatus = await sessionStatusResponse.json();
-
-      // Check if session is valid or can be extended
-      const sessionData = sessionStatus.data || sessionStatus;
-
-      if (!sessionData.exists || sessionData.isRevoked) {
-        clearAuthState();
-        return false;
-      }
+      // Skip session status check to reduce API calls - go directly to refresh
+      // The refresh endpoint will validate the session internally
 
       // Response types are handled directly in the fetch call
 

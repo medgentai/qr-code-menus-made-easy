@@ -101,24 +101,6 @@ const AnalyticsService = {
     return response.data;
   },
 
-  // Trigger manual analytics aggregation
-  triggerManualAggregation: async (date?: string): Promise<{
-    message: string;
-    date: string | Date;
-    triggeredBy: string;
-    timestamp: string;
-  }> => {
-    const queryParams = new URLSearchParams();
-    
-    if (date) {
-      queryParams.append('date', date);
-    }
-
-    const url = `/analytics/aggregate/manual${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await api.post(url);
-    return response.data;
-  },
-
   // Get analytics service health status
   getHealthStatus: async (): Promise<{
     status: string;
@@ -130,7 +112,16 @@ const AnalyticsService = {
       manualAggregation: string;
     };
   }> => {
-    const response = await api.get('/analytics/health');
+    const response = await api.get<{
+      status: string;
+      service: string;
+      timestamp: string;
+      features: {
+        dashboardAnalytics: string;
+        scheduledAggregation: string;
+        manualAggregation: string;
+      };
+    }>('/analytics/health');
     return response.data;
   },
 };

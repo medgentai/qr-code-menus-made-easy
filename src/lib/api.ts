@@ -325,6 +325,17 @@ let isRefreshing = false;
 // Pending requests to retry after token refresh
 let pendingRequests: Array<() => void> = [];
 
+// Request deduplication cache
+const requestCache = new Map<string, Promise<any>>();
+
+/**
+ * Generate a cache key for request deduplication
+ */
+function generateCacheKey(endpoint: string, method: string, data?: any): string {
+  const dataKey = data ? JSON.stringify(data) : '';
+  return `${method}:${endpoint}:${dataKey}`;
+}
+
 /**
  * Process all pending requests after token refresh
  */
@@ -348,6 +359,15 @@ export async function apiRequest<T>(
   // Add API prefix to endpoint if it doesn't already start with it
   const prefixedEndpoint = endpoint.startsWith(API_PREFIX) ? endpoint : `${API_PREFIX}${endpoint}`;
   const url = `${API_BASE_URL}${prefixedEndpoint}`;
+
+  // Generate cache key for request deduplication
+  const cacheKey = generateCacheKey(prefixedEndpoint, method, data);
+
+  // Check if this exact request is already in progress (for GET requests and auth endpoints)
+  if ((method === 'GET' || prefixedEndpoint.includes('/auth/')) && requestCache.has(cacheKey)) {
+    console.log('Deduplicating request:', cacheKey);
+    return requestCache.get(cacheKey);
+  }
 
   // Prepare to execute the request
 
@@ -481,7 +501,20 @@ export async function apiRequest<T>(
     }
   }
 
-  return executeRequest();
+  // Cache the request promise for deduplication
+  const requestPromise = executeRequest();
+
+  // Store in cache for deduplication (for GET requests and auth endpoints)
+  if (method === 'GET' || prefixedEndpoint.includes('/auth/')) {
+    requestCache.set(cacheKey, requestPromise);
+
+    // Clean up cache after request completes (success or failure)
+    requestPromise.finally(() => {
+      requestCache.delete(cacheKey);
+    });
+  }
+
+  return requestPromise;
 }
 
 /**

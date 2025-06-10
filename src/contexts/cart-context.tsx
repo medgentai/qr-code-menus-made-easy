@@ -16,6 +16,8 @@ export interface CartContextType {
   updateNotes: (index: number, notes: string) => void;
   clearCart: () => void;
   totalItems: number;
+  subtotal: number;
+  gstAmount: number;
   totalAmount: number;
   customerName: string;
   setCustomerName: (name: string) => void;
@@ -86,9 +88,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   // Calculate total items
   const totalItems = items.reduce((total, item) => total + item.quantity, 0);
 
-  // Calculate total amount
-  const totalAmount = items.reduce((total, item) => {
-    const itemPrice = parseFloat(item.menuItem.price);
+  // Calculate subtotal (before GST)
+  const subtotal = items.reduce((total, item) => {
+    // Use discounted price if available, otherwise use regular price
+    const itemPrice = parseFloat(item.menuItem.discountPrice || item.menuItem.price);
     const modifiersPrice = item.modifiers?.reduce(
       (modTotal, mod) => {
         // Cast mod to any type with price property if it exists
@@ -99,6 +102,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     ) || 0;
     return total + (itemPrice + modifiersPrice) * item.quantity;
   }, 0);
+
+  // Calculate GST (5% total: 2.5% CGST + 2.5% SGST)
+  const gstAmount = subtotal * 0.05;
+
+  // Calculate total amount including GST
+  const totalAmount = subtotal + gstAmount;
 
   // Add item to cart
   const addItem = (
@@ -176,6 +185,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     updateNotes,
     clearCart,
     totalItems,
+    subtotal,
+    gstAmount,
     totalAmount,
     customerName,
     setCustomerName,
