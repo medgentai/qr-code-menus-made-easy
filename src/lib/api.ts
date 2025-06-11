@@ -20,14 +20,13 @@ const getApiBaseUrl = (): string => {
 
   // Auto-detect based on current hostname
   const currentHost = window.location.hostname;
-
   // If accessing via network IP, use the same IP for API
   if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
-    return `http://${currentHost}:3000`;
+    return `http://${currentHost}:3001`;
   }
 
   // Default to localhost for local development
-  return 'http://localhost:3000';
+  return 'http://localhost:3001';
 };
 
 /**
@@ -273,6 +272,29 @@ export async function refreshAccessToken(): Promise<boolean> {
     });
 
     if (!response.ok) {
+      // Check if it's a user account status issue
+      try {
+        const errorData = await response.json();
+        if (errorData.message && (
+          errorData.message.includes('not active') ||
+          errorData.message.includes('suspended') ||
+          errorData.message.includes('inactive')
+        )) {
+          console.warn('User account is suspended or inactive');
+          // Force immediate logout for suspended users
+          window.accessToken = undefined;
+          localStorage.removeItem('accessToken');
+          sessionStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          // Clear cookies
+          document.cookie = 'sessionId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+          window.location.href = '/account-suspended';
+          return false;
+        }
+      } catch (e) {
+        // Ignore JSON parsing errors
+      }
+
       // Clear invalid session data
       localStorage.removeItem('accessToken');
       localStorage.removeItem('sessionId');
@@ -308,14 +330,30 @@ export async function refreshAccessToken(): Promise<boolean> {
       // Error storing token in memory - continue anyway
     }
 
-    // Clear the refresh flag
+    // Clear the refresh flag and reset failure counter on success
     window.isRefreshingToken = false;
+    consecutiveRefreshFailures = 0;
     return true;
   } catch (error) {
-    // Token refresh not needed - normal for new users
+    // Increment failure counter
+    consecutiveRefreshFailures++;
 
     // Clear the refresh flag
     window.isRefreshingToken = false;
+
+    // If we've had too many consecutive failures, force logout
+    if (consecutiveRefreshFailures >= MAX_REFRESH_FAILURES) {
+      console.warn('Too many consecutive refresh failures. User may be suspended or session invalid.');
+      // Clear auth state and redirect to login
+      window.accessToken = undefined;
+      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('accessToken');
+
+      // Force page reload to trigger auth context logout with reason
+      window.location.href = '/login?reason=session_expired';
+      return false;
+    }
+
     return false;
   }
 }
@@ -324,6 +362,10 @@ export async function refreshAccessToken(): Promise<boolean> {
 let isRefreshing = false;
 // Pending requests to retry after token refresh
 let pendingRequests: Array<() => void> = [];
+
+// Track consecutive refresh failures to prevent infinite loops
+let consecutiveRefreshFailures = 0;
+const MAX_REFRESH_FAILURES = 3;
 
 // Request deduplication cache
 const requestCache = new Map<string, Promise<any>>();
@@ -412,6 +454,16 @@ export async function apiRequest<T>(
 
       // Handle 401 Unauthorized errors (token expired)
       if (response.status === 401 && !mergedOptions.skipTokenRefresh) {
+        // Check if we've already hit the max refresh failures
+        if (consecutiveRefreshFailures >= MAX_REFRESH_FAILURES) {
+          // Don't try to refresh anymore, just throw the error
+          const authError: ApiError = {
+            statusCode: 401,
+            message: 'Session expired. Please log in again.',
+          };
+          throw authError;
+        }
+
         // If we're already refreshing, wait for that to complete
         if (isRefreshing) {
           return new Promise((resolve, reject) => {

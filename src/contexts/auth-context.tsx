@@ -69,7 +69,7 @@ export interface AuthState {
 // Auth context interface
 export interface AuthContextType {
   state: AuthState;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<User | null>;
   register: (email: string, name: string, password: string) => Promise<boolean>;
   verifyOtp: (email: string, otpCode: string) => Promise<boolean>;
   resendOtp: (email: string) => Promise<boolean>;
@@ -281,6 +281,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Clear the global accessToken
     window.accessToken = undefined;
 
+    // Force disconnect WebSocket
+    try {
+      const { default: webSocketService } = require('@/services/websocket-service');
+      webSocketService.forceDisconnect();
+    } catch (error) {
+      // Ignore if websocket service is not available
+    }
+
     setState({
       user: null,
       accessToken: null,
@@ -293,7 +301,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Login function
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<User | null> => {
     try {
       setState(prev => ({ ...prev, isLoading: true }));
 
@@ -311,11 +319,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if ('requiresOtp' in responseData && responseData.requiresOtp === true) {
         toast.info('Please verify your email with the OTP code sent.');
         setState(prev => ({ ...prev, isLoading: false }));
-        return false;
+        return null;
       }
 
       // At this point, we know it's a LoginResponseWithToken
       const loginResponse = responseData as LoginResponseWithToken;
+
+      // Check user status before proceeding
+      if (loginResponse.user.status === 'SUSPENDED') {
+        toast.error('Your account has been suspended. Please contact support.');
+        setState(prev => ({ ...prev, isLoading: false }));
+        // Redirect to suspended page
+        window.location.href = '/account-suspended';
+        return null;
+      }
+
+      if (loginResponse.user.status === 'INACTIVE') {
+        toast.error('Your account is inactive. Please contact support.');
+        setState(prev => ({ ...prev, isLoading: false }));
+        return null;
+      }
 
       // Extract sessionId from the response
       const sessionId = loginResponse.sessionId;
@@ -325,7 +348,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!sessionId) {
         toast.error('Authentication error. Please try again.');
         setState(prev => ({ ...prev, isLoading: false }));
-        return false;
+        return null;
       }
 
       // Save user data to localStorage
@@ -363,10 +386,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.getItem(USER_KEY);
       getCookie('sessionId');
 
-      return true;
+      return loginResponse.user;
     } catch (error) {
       setState(prev => ({ ...prev, error: 'Login failed', isLoading: false }));
-      return false;
+      return null;
     }
   };
 
@@ -408,6 +431,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const responseData = 'data' in response.data
         ? (response.data as ApiResponseWrapper<VerifyOtpResponse>).data
         : response.data;
+
+      // Check user status before proceeding
+      if (responseData.user.status === 'SUSPENDED') {
+        toast.error('Your account has been suspended. Please contact support.');
+        setState(prev => ({ ...prev, isLoading: false }));
+        // Redirect to suspended page
+        window.location.href = '/account-suspended';
+        return false;
+      }
+
+      if (responseData.user.status === 'INACTIVE') {
+        toast.error('Your account is inactive. Please contact support.');
+        setState(prev => ({ ...prev, isLoading: false }));
+        return false;
+      }
 
       const sessionId = responseData.sessionId;
 
@@ -638,6 +676,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } catch (storageError) {
         // Try an alternative approach
         document.cookie = `accessToken=${newAccessToken}; path=/; max-age=3600`;
+      }
+
+      // Check if user status has changed (e.g., suspended while logged in)
+      if (state.user && (state.user.status === 'SUSPENDED' || state.user.status === 'INACTIVE')) {
+        clearAuthState();
+        toast.error('Your account has been suspended. Please contact support.');
+        window.location.href = '/account-suspended';
+        return false;
       }
 
       // Set the global accessToken for API requests

@@ -20,9 +20,14 @@ export const OrganizationGuard: React.FC<OrganizationGuardProps> = ({
   redirectTo = '/organizations/create',
   showMessage = true,
 }) => {
-  const { state: { isAuthenticated, isLoading: authLoading } } = useAuth();
+  const { state: { isAuthenticated, isLoading: authLoading, user } } = useAuth();
   const { organizations, isLoading: orgLoading, hasLoaded, fetchOrganizations } = useOrganization();
   const location = useLocation();
+
+  // Admin users don't need organizations - bypass the guard
+  if (user?.role === 'ADMIN') {
+    return <>{children}</>;
+  }
 
   // Fetch organizations when authenticated and not already loaded
   useEffect(() => {

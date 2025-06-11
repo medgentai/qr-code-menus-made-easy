@@ -15,6 +15,7 @@ import ErrorBoundary from "@/components/error-boundary";
 import ProtectedRoute from "@/components/protected-route";
 import TokenRefreshManager from "@/components/TokenRefreshManager";
 import OrganizationGuard from "@/components/organization-guard";
+import { AdminGuard } from "@/components/admin-guard";
 
 // Loading component for lazy-loaded routes
 const PageLoader = () => (
@@ -48,6 +49,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const VerifyOtp = lazy(() => import("./pages/auth/VerifyOtp"));
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const AccountSuspended = lazy(() => import("./pages/AccountSuspended"));
 
 // Lazy loaded dashboard pages
 const Profile = lazy(() => import("./pages/profile/Profile"));
@@ -56,6 +58,14 @@ const Profile = lazy(() => import("./pages/profile/Profile"));
 const KitchenDashboard = lazy(() => import("./pages/staff/KitchenDashboard"));
 const Subscriptions = lazy(() => import("./pages/subscriptions/Subscriptions"));
 const SubscriptionManage = lazy(() => import("./pages/subscriptions/SubscriptionManage"));
+
+// Lazy loaded admin pages
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
+const OrganizationManagement = lazy(() => import("./pages/admin/OrganizationManagement"));
+const Analytics = lazy(() => import("./pages/admin/Analytics"));
+const Settings = lazy(() => import("./pages/admin/Settings"));
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout").then(module => ({ default: module.AdminLayout })));
 
 // Lazy loaded organization pages
 const OrganizationList = lazy(() => import("./pages/organizations/OrganizationList"));
@@ -177,6 +187,7 @@ const App = () => (
               <Route path="/verify-otp" element={<VerifyOtp />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/account-suspended" element={<AccountSuspended />} />
 
               {/* Keep the /auth/* routes for backward compatibility */}
               <Route path="/auth/login" element={<Login />} />
@@ -218,6 +229,24 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+
+              {/* Admin Dashboard routes */}
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminGuard>
+                      <AdminLayout />
+                    </AdminGuard>
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<AdminDashboard />} />
+                <Route path="users" element={<UserManagement />} />
+                <Route path="organizations" element={<OrganizationManagement />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
 
               {/* Staff Dashboard routes */}
               <Route

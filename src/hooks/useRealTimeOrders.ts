@@ -144,7 +144,9 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
       return;
     }
 
-    // Connect to WebSocket
+    console.log('useRealTimeOrders: Setting up WebSocket connection...');
+
+    // Connect to WebSocket (will reuse existing connection if available)
     webSocketService.connect(token);
 
     // Join organization room for real-time updates
@@ -172,10 +174,12 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
     listenersSetup.current = true;
 
     return () => {
+      console.log('useRealTimeOrders: Cleaning up...');
       clearInterval(connectionInterval);
       webSocketService.off('newOrder', handleNewOrder);
       webSocketService.off('orderUpdated', handleOrderUpdate);
       webSocketService.off('orderItemUpdated', handleOrderItemUpdate);
+      webSocketService.disconnect(); // This will use reference counting
       listenersSetup.current = false;
     };
   }, [user, accessToken, currentOrganization, currentVenue, handleNewOrder, handleOrderUpdate, handleOrderItemUpdate, isConnected]);

@@ -281,11 +281,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     // Use both auth state token and window token for maximum compatibility
     const currentAccessToken = accessToken || (window as any).accessToken || null;
 
-    // Connect to WebSocket with authentication token
-    webSocketService.connect(currentAccessToken);
+    // Only connect if we have a token and aren't already connected
+    if (currentAccessToken && !webSocketService.isConnected()) {
+      console.log('NotificationContext: Connecting to WebSocket...');
+      webSocketService.connect(currentAccessToken);
+    }
 
     // Update token if it changes
-    if (currentAccessToken) {
+    if (currentAccessToken && webSocketService.getCurrentToken() !== currentAccessToken) {
       webSocketService.updateToken(currentAccessToken);
     }
 
@@ -374,6 +377,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     // Update WebSocket token if it has changed
     if (currentAccessToken && webSocketService.getCurrentToken() !== currentAccessToken) {
+      console.log('NotificationContext: Updating WebSocket token...');
       webSocketService.updateToken(currentAccessToken);
     }
   }, [isAuthenticated, accessToken]);

@@ -30,20 +30,36 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 2000; // 2 seconds
   private currentToken: string | null = null;
+  private connectionCount = 0; // Track how many components are using the connection
+  private isConnecting = false; // Prevent multiple simultaneous connections
 
   // Initialize the socket connection with optional authentication token
   connect(token?: string) {
+    // Increment connection count
+    this.connectionCount++;
+    console.log(`WebSocket connection requested. Count: ${this.connectionCount}`);
+
+    // If we're already connecting, wait for it to complete
+    if (this.isConnecting) {
+      console.log('WebSocket connection already in progress, waiting...');
+      return;
+    }
+
     if (this.socket) {
       // If we already have a socket but the token changed, disconnect and reconnect
       if (token && token !== this.currentToken) {
         console.log('Token changed, reconnecting WebSocket...');
         this.disconnect();
       } else {
+        console.log('WebSocket already connected, reusing connection');
         return;
       }
     }
 
+    this.isConnecting = true;
     this.currentToken = token || null;
+
+    console.log('Creating new WebSocket connection...');
 
     // Prepare connection options
     const connectionOptions: any = {
@@ -52,6 +68,7 @@ class WebSocketService {
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: this.reconnectDelay,
+      forceNew: false, // Reuse existing connection if possible
     };
 
     // Add authentication if token is provided
@@ -90,16 +107,22 @@ class WebSocketService {
     this.socket.on('connect', () => {
       this.connected = true;
       this.reconnectAttempts = 0;
+      this.isConnecting = false;
+      console.log('WebSocket connected successfully');
     });
 
     this.socket.on('disconnect', () => {
       this.connected = false;
+      console.log('WebSocket disconnected');
     });
 
-    this.socket.on('connect_error', () => {
+    this.socket.on('connect_error', (error) => {
       this.reconnectAttempts++;
+      this.isConnecting = false;
+      console.warn('WebSocket connection error:', error);
 
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        console.error('Max reconnection attempts reached, giving up');
         this.socket?.disconnect();
       }
     });
@@ -119,7 +142,15 @@ class WebSocketService {
 
     // Setup cleanup on page unload
     window.addEventListener('beforeunload', () => {
-      this.disconnect();
+      this.forceDisconnect();
+    });
+
+    // Also cleanup on visibility change (when tab becomes hidden)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        // Don't disconnect immediately, just reduce activity
+        console.log('Page hidden, WebSocket staying connected but reducing activity');
+      }
     });
   }
 
@@ -221,15 +252,43 @@ class WebSocketService {
     });
   }
 
-  // Disconnect the socket
+  // Disconnect the socket (with reference counting)
   disconnect() {
+    // Decrement connection count
+    this.connectionCount = Math.max(0, this.connectionCount - 1);
+    console.log(`WebSocket disconnect requested. Count: ${this.connectionCount}`);
+
+    // Only actually disconnect if no components are using it
+    if (this.connectionCount > 0) {
+      console.log('Other components still using WebSocket, keeping connection alive');
+      return;
+    }
+
+    console.log('Disconnecting WebSocket...');
     if (!this.socket) return;
+
     this.socket.disconnect();
     this.socket = null;
     this.connected = false;
+    this.isConnecting = false;
     this.listeners.clear();
     this.joinedRooms.clear(); // Clear joined rooms on disconnect
     this.currentToken = null; // Clear the current token
+  }
+
+  // Force disconnect (ignore reference counting)
+  forceDisconnect() {
+    console.log('Force disconnecting WebSocket...');
+    this.connectionCount = 0;
+    if (!this.socket) return;
+
+    this.socket.disconnect();
+    this.socket = null;
+    this.connected = false;
+    this.isConnecting = false;
+    this.listeners.clear();
+    this.joinedRooms.clear();
+    this.currentToken = null;
   }
 
   // Get connection status
@@ -240,6 +299,24 @@ class WebSocketService {
   // Get current token
   getCurrentToken(): string | null {
     return this.currentToken;
+  }
+
+  // Get connection statistics for debugging
+  getConnectionStats() {
+    return {
+      connected: this.connected,
+      connectionCount: this.connectionCount,
+      isConnecting: this.isConnecting,
+      socketId: this.socket?.id || null,
+      joinedRooms: Array.from(this.joinedRooms),
+      listenerCount: this.listeners.size,
+      currentToken: this.currentToken ? 'present' : 'none'
+    };
+  }
+
+  // Debug method to log connection status
+  logConnectionStatus() {
+    console.log('WebSocket Connection Status:', this.getConnectionStats());
   }
 }
 

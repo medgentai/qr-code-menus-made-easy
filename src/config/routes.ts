@@ -34,6 +34,7 @@ export const PUBLIC_ROUTES: RouteConfig[] = [
   { path: '/verify-otp', isPublic: true },
   { path: '/forgot-password', isPublic: true },
   { path: '/reset-password', isPublic: true },
+  { path: '/account-suspended', isPublic: true },
 
   // Legacy auth routes (backward compatibility)
   { path: '/auth/login', isPublic: true },

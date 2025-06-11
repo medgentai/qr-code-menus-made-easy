@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,7 +35,21 @@ const Login = () => {
 
   // Get the return URL from search params (for invitation flows) or location state, or default to dashboard
   const redirectUrl = searchParams.get('redirect');
+  const reason = searchParams.get('reason');
   const from = redirectUrl || (location.state as any)?.from?.pathname || '/dashboard';
+
+  // Show appropriate message based on redirect reason
+  useEffect(() => {
+    if (reason === 'suspended') {
+      toast.error('Your account has been suspended. Please contact support for assistance.', {
+        duration: 5000,
+      });
+    } else if (reason === 'session_expired') {
+      toast.warning('Your session has expired. Please log in again.', {
+        duration: 4000,
+      });
+    }
+  }, [reason]);
 
   // Initialize form
   const form = useForm<LoginFormValues>({
@@ -50,31 +64,36 @@ const Login = () => {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password);
+      const user = await login(data.email, data.password);
 
-      if (success) {
+      if (user) {
         toast.success('Login successful!');
-        
-        // Check if user has organizations before redirecting
-        try {
-          // Import here to avoid circular dependencies
-          const OrganizationService = (await import('@/services/organization-service')).default;
-          const organizations = await OrganizationService.getAll();
-          
-          if (organizations.length === 0) {
-            // New user with no organizations - redirect to create organization
-            navigate('/organizations/create', { replace: true });
-          } else {
-            // User has organizations - redirect to intended destination or dashboard
+
+        // Admin users should go to admin panel, regular users need organization check
+        if (user.role === 'ADMIN') {
+          navigate('/admin', { replace: true });
+        } else {
+          // Check if user has organizations before redirecting
+          try {
+            // Import here to avoid circular dependencies
+            const OrganizationService = (await import('@/services/organization-service')).default;
+            const organizations = await OrganizationService.getAll();
+
+            if (organizations.length === 0) {
+              // New user with no organizations - redirect to create organization
+              navigate('/organizations/create', { replace: true });
+            } else {
+              // User has organizations - redirect to intended destination or dashboard
+              navigate(from, { replace: true });
+            }
+          } catch (orgError) {
+            // If we can't fetch organizations, default to the intended destination
+            // The organization context will handle the redirect if needed
             navigate(from, { replace: true });
           }
-        } catch (orgError) {
-          // If we can't fetch organizations, default to the intended destination
-          // The organization context will handle the redirect if needed
-          navigate(from, { replace: true });
         }
       } else {
-        // If login returns false but no error was thrown, it might be because OTP is required
+        // If login returns null but no error was thrown, it might be because OTP is required
         // The auth context already shows a toast for this case
       }
     } catch (error: any) {

@@ -98,7 +98,9 @@ export const useRealTimeTables = (initialTables: Table[] = []) => {
       return;
     }
 
-    // Connect to WebSocket
+    console.log('useRealTimeTables: Setting up WebSocket connection...');
+
+    // Connect to WebSocket (will reuse existing connection if available)
     webSocketService.connect(accessToken);
     
     // Join organization room for real-time updates
@@ -124,9 +126,11 @@ export const useRealTimeTables = (initialTables: Table[] = []) => {
     listenersSetup.current = true;
 
     return () => {
+      console.log('useRealTimeTables: Cleaning up...');
       clearInterval(connectionInterval);
       webSocketService.off('tableUpdated', handleTableUpdate);
       webSocketService.off('orderTableUpdated', handleOrderTableUpdate);
+      webSocketService.disconnect(); // This will use reference counting
       listenersSetup.current = false;
     };
   }, [user, accessToken, currentOrganization, currentVenue, handleTableUpdate, handleOrderTableUpdate]);
