@@ -10,8 +10,10 @@ import {
   Building2,
   BarChart3,
   Settings,
+  CreditCard,
   Menu,
   Shield,
+  Package,
 } from 'lucide-react';
 
 interface NavItem {
@@ -45,6 +47,18 @@ const navItems: NavItem[] = [
     href: '/admin/analytics',
     icon: BarChart3,
     description: 'Platform analytics and reports',
+  },
+  {
+    title: 'Subscriptions',
+    href: '/admin/subscriptions',
+    icon: CreditCard,
+    description: 'Manage subscriptions and billing',
+  },
+  {
+    title: 'Plan Management',
+    href: '/admin/plans',
+    icon: Package,
+    description: 'Manage pricing plans and configuration',
   },
   {
     title: 'Settings',

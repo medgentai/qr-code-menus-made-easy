@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -222,16 +222,16 @@ const Settings = () => {
                 <div className="flex justify-between">
                   <span>Environment:</span>
                   <Badge variant="outline">
-                    {systemInfo?.application.environment || 'Development'}
+                    {systemInfo?.application.environment}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span>Uptime:</span>
-                  <span>{systemInfo?.application.uptime || '2 days, 14 hours'}</span>
+                  <span>{systemInfo?.application.uptime}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Node.js:</span>
-                  <span className="font-mono">{systemInfo?.application.nodeVersion || 'v18.0.0'}</span>
+                  <span className="font-mono">{systemInfo?.application.nodeVersion}</span>
                 </div>
               </div>
             </div>
@@ -241,11 +241,11 @@ const Settings = () => {
               <div className="text-sm space-y-1">
                 <div className="flex justify-between">
                   <span>Type:</span>
-                  <span>{systemInfo?.database.type || 'PostgreSQL'}</span>
+                  <span>{systemInfo?.database.type}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Version:</span>
-                  <span className="font-mono">{systemInfo?.database.version || '15.4'}</span>
+                  <span className="font-mono">{systemInfo?.database.version}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Records:</span>
@@ -264,12 +264,12 @@ const Settings = () => {
               <div className="text-sm space-y-1">
                 <div className="flex justify-between">
                   <span>CPU Usage:</span>
-                  <span>{systemInfo?.performance.cpuUsage || '12%'}</span>
+                  <span>{systemInfo?.performance.cpuUsage}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Memory Usage:</span>
                   <span>
-                    {systemInfo?.performance.memoryUsage || '68%'}
+                    {systemInfo?.performance.memoryUsage}
                     {systemInfo?.performance.memoryPercentage &&
                       ` (${systemInfo.performance.memoryPercentage}%)`
                     }

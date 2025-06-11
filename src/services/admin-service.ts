@@ -1,4 +1,15 @@
 import { api } from '@/lib/api';
+import {
+  PlanEntity,
+  PlanListResponse,
+  PlanStatsEntity,
+  PlanUsageEntity,
+  PlanOrganizationsResponse,
+  CreatePlanDto,
+  UpdatePlanDto,
+  GetPlansDto,
+  GetPlanOrganizationsDto,
+} from '@/types/plan-management';
 
 export interface PlatformStats {
   totalUsers: number;
@@ -255,6 +266,132 @@ class AdminService {
 
   async getSystemInfo(): Promise<SystemInfo> {
     const response = await api.get('/admin/system-info');
+    return response.data;
+  }
+
+  // Subscription Management
+  async getAllSubscriptions(params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    billingCycle?: string;
+    organizationType?: string;
+  }) {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/admin/subscriptions?${queryParams}`);
+    return response.data;
+  }
+
+  async getSubscriptionStats() {
+    const response = await api.get('/admin/subscriptions/stats');
+    return response.data;
+  }
+
+  async getSubscriptionById(id: string) {
+    const response = await api.get(`/admin/subscriptions/${id}`);
+    return response.data;
+  }
+
+  async updateSubscriptionStatus(id: string, status: string, reason?: string) {
+    const response = await api.patch(`/admin/subscriptions/${id}/status`, {
+      status,
+      reason,
+    });
+    return response.data;
+  }
+
+  async pauseSubscription(id: string, reason?: string, resumeDate?: string) {
+    const response = await api.post(`/admin/subscriptions/${id}/pause`, {
+      reason,
+      resumeDate,
+    });
+    return response.data;
+  }
+
+  async cancelSubscription(id: string, immediate: boolean = false, reason?: string, offerRefund: boolean = false) {
+    const response = await api.post(`/admin/subscriptions/${id}/cancel`, {
+      immediate,
+      reason,
+      offerRefund,
+    });
+    return response.data;
+  }
+
+  async modifySubscription(id: string, modifications: {
+    planId?: string;
+    billingCycle?: string;
+    venuesIncluded?: number;
+    immediate?: boolean;
+    reason?: string;
+  }) {
+    const response = await api.patch(`/admin/subscriptions/${id}/modify`, modifications);
+    return response.data;
+  }
+
+  // Plan Management Methods
+  async getPlanStats(): Promise<PlanStatsEntity> {
+    const response = await api.get('/admin/plan-management/stats');
+    return response.data;
+  }
+
+  async getPlans(params: GetPlansDto = {}): Promise<PlanListResponse> {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/admin/plan-management?${queryParams}`);
+    return response.data;
+  }
+
+  async getPlanById(id: string): Promise<PlanEntity> {
+    const response = await api.get(`/admin/plan-management/${id}`);
+    return response.data;
+  }
+
+  async createPlan(data: CreatePlanDto): Promise<PlanEntity> {
+    const response = await api.post('/admin/plan-management', data);
+    return response.data;
+  }
+
+  async updatePlan(id: string, data: UpdatePlanDto): Promise<PlanEntity> {
+    const response = await api.patch(`/admin/plan-management/${id}`, data);
+    return response.data;
+  }
+
+  async deletePlan(id: string): Promise<{ message: string }> {
+    const response = await api.delete(`/admin/plan-management/${id}`);
+    return response.data;
+  }
+
+  async togglePlanStatus(id: string): Promise<PlanEntity> {
+    const response = await api.patch(`/admin/plan-management/${id}/toggle-status`, {});
+    return response.data;
+  }
+
+  async getPlanUsage(id: string): Promise<PlanUsageEntity> {
+    const response = await api.get(`/admin/plan-management/${id}/usage`);
+    return response.data;
+  }
+
+  async getPlanOrganizations(id: string, params: GetPlanOrganizationsDto = {}): Promise<PlanOrganizationsResponse> {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await api.get(`/admin/plan-management/${id}/organizations?${queryParams}`);
     return response.data;
   }
 }

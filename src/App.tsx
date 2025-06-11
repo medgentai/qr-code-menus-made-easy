@@ -64,6 +64,8 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const UserManagement = lazy(() => import("./pages/admin/UserManagement"));
 const OrganizationManagement = lazy(() => import("./pages/admin/OrganizationManagement"));
 const Analytics = lazy(() => import("./pages/admin/Analytics"));
+const SubscriptionManagement = lazy(() => import("./pages/admin/SubscriptionManagement"));
+const PlanManagement = lazy(() => import("./pages/admin/PlanManagement"));
 const Settings = lazy(() => import("./pages/admin/Settings"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout").then(module => ({ default: module.AdminLayout })));
 
@@ -129,8 +131,8 @@ const queryClient = new QueryClient({
       },
       staleTime: 10 * 60 * 1000, // 10 minutes - increased for better caching
       gcTime: 30 * 60 * 1000, // 30 minutes - keep data longer in cache
-      refetchOnMount: 'stale', // Only refetch if data is stale
-      refetchOnReconnect: 'stale', // Only refetch stale data on reconnect
+      refetchOnMount: false, // Don't refetch on mount to improve performance
+      refetchOnReconnect: false, // Don't refetch on reconnect to reduce network calls
       refetchInterval: false, // Disable periodic refetching
       networkMode: 'online', // Only run queries when online
     },
@@ -245,6 +247,8 @@ const App = () => (
                 <Route path="users" element={<UserManagement />} />
                 <Route path="organizations" element={<OrganizationManagement />} />
                 <Route path="analytics" element={<Analytics />} />
+                <Route path="subscriptions" element={<SubscriptionManagement />} />
+                <Route path="plans" element={<PlanManagement />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
 
