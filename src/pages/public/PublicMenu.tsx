@@ -148,7 +148,7 @@ const PublicMenu: React.FC = () => {
   const [dietaryFilter, setDietaryFilter] = useState<DietaryFilter>(DietaryFilter.ALL);
   const [itemQuantity, setItemQuantity] = useState(1);
   const [itemNotes, setItemNotes] = useState('');
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+
   const viewState = getCurrentView();
   const [activeFooterTab, setActiveFooterTab] = useState<FooterTab>(() => {
     // Set initial footer tab based on current view
@@ -276,25 +276,7 @@ const PublicMenu: React.FC = () => {
     }
   };
 
-  // Helper functions for card expansion
-  const toggleCardExpansion = (itemId: string) => {
-    setExpandedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId);
-      } else {
-        newSet.add(itemId);
-      }
-      return newSet;
-    });
-  };
 
-  const isCardExpanded = (itemId: string) => expandedCards.has(itemId);
-
-  // Helper function to check if text needs truncation
-  const shouldTruncate = (text: string, maxLength: number = 50) => {
-    return text && text.length > maxLength;
-  };
 
   const handleAddToCart = async () => {
     if (selectedItem && !isAddingToCart) {
@@ -859,18 +841,6 @@ const PublicMenu: React.FC = () => {
 
         <div className="space-y-3">
           {activeItems.map((item, index) => {
-            const isExpanded = isCardExpanded(item.id);
-
-            // Smart truncation - leave space for "read more" on the same line
-            const nameMaxLength = 35; // Leave space for "read more"
-            const descMaxLength = 60; // Leave space for "read more"
-            const nameNeedsTruncation = shouldTruncate(item.name, nameMaxLength);
-            const descriptionNeedsTruncation = shouldTruncate(item.description || '', descMaxLength);
-
-            // Calculate truncation point to fit "read more" on same line
-            const nameTruncateAt = nameNeedsTruncation ? nameMaxLength - 12 : item.name.length; // -12 for "... read more"
-            const descTruncateAt = descriptionNeedsTruncation ? descMaxLength - 12 : (item.description?.length || 0);
-
             return (
               <div
                 key={item.id}
@@ -903,75 +873,8 @@ const PublicMenu: React.FC = () => {
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-gray-900 text-base leading-tight mb-1">
-                          {nameNeedsTruncation && !isExpanded ? (
-                            <>
-                              {item.name.substring(0, nameTruncateAt)}...{' '}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleCardExpansion(item.id);
-                                }}
-                                className="text-primary text-sm font-medium hover:text-primary/80 transition-colors duration-200 inline"
-                              >
-                                read more
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              {item.name}
-                              {nameNeedsTruncation && isExpanded && (
-                                <>
-                                  {' '}
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleCardExpansion(item.id);
-                                    }}
-                                    className="text-primary text-sm font-medium hover:text-primary/80 transition-colors duration-200 inline"
-                                  >
-                                    read less
-                                  </button>
-                                </>
-                              )}
-                            </>
-                          )}
+                          {item.name}
                         </h3>
-                        {item.description && (
-                          <p className="text-gray-600 text-sm leading-relaxed">
-                            {descriptionNeedsTruncation && !isExpanded ? (
-                              <>
-                                {item.description.substring(0, descTruncateAt)}...{' '}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleCardExpansion(item.id);
-                                  }}
-                                  className="text-primary text-sm font-medium hover:text-primary/80 transition-colors duration-200 inline"
-                                >
-                                  read more
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                {item.description}
-                                {descriptionNeedsTruncation && isExpanded && (
-                                  <>
-                                    {' '}
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleCardExpansion(item.id);
-                                      }}
-                                      className="text-primary text-sm font-medium hover:text-primary/80 transition-colors duration-200 inline"
-                                    >
-                                      read less
-                                    </button>
-                                  </>
-                                )}
-                              </>
-                            )}
-                          </p>
-                        )}
                       </div>
                       <div className="flex-shrink-0 ml-3 text-right">
                         {item.discountPrice ? (

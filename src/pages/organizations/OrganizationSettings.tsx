@@ -56,6 +56,15 @@ import {
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
 import { ImageUploadField } from '@/components/ui/image-upload-field';
 import { useUploadOrganizationLogo } from '@/hooks/useImageUpload';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Edit } from 'lucide-react';
 
 // Form validation schema
 const updateOrganizationSchema = z.object({
@@ -109,7 +118,7 @@ const OrganizationSettings = () => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isOwner, setIsOwner] = useState(false);
   const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
-  const [logoUploadMethod, setLogoUploadMethod] = useState<'url' | 'upload'>('url');
+  const [isLogoDialogOpen, setIsLogoDialogOpen] = useState(false);
   const uploadLogo = useUploadOrganizationLogo();
 
   // Initialize form
@@ -178,44 +187,40 @@ const OrganizationSettings = () => {
     checkOwnership();
   }, [currentOrganizationDetails, user]);
 
+  // Handle logo upload
+  const handleLogoUpload = async () => {
+    if (!selectedLogoFile || !id) return;
+
+    try {
+      await uploadLogo.mutateAsync({
+        file: selectedLogoFile,
+        organizationId: id,
+        data: { altText: 'Organization logo' },
+      });
+
+      setSelectedLogoFile(null);
+      setIsLogoDialogOpen(false);
+      toast.success('Organization logo updated successfully');
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+    }
+  };
+
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     if (!id) return;
 
     setIsSubmitting(true);
     try {
-      // Upload logo if file was selected
-      if (selectedLogoFile && logoUploadMethod === 'upload') {
-        try {
-          await uploadLogo.mutateAsync({
-            file: selectedLogoFile,
-            organizationId: id,
-            data: {
-              altText: `${data.name} logo`,
-            },
-          });
-          // Logo URL will be automatically updated in the organization via the upload service
-          // Don't update logoUrl in the organization update call since it's handled by upload
-        } catch (uploadError) {
-          console.error('Logo upload failed:', uploadError);
-          // Continue with organization update even if logo upload fails
-        }
-      }
-
-      // Only update logoUrl if using URL method, not upload method
-      const updateData: any = {
+      const updateData = {
         name: data.name,
         slug: data.slug,
         description: data.description || undefined,
+        logoUrl: data.logoUrl || undefined,
         websiteUrl: data.websiteUrl || undefined,
         type: data.type,
         isActive: data.isActive,
       };
-
-      // Only set logoUrl if using URL method
-      if (logoUploadMethod === 'url') {
-        updateData.logoUrl = data.logoUrl || undefined;
-      }
 
       await updateOrganization(id, updateData);
     } catch (error) {
@@ -269,15 +274,66 @@ const OrganizationSettings = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 flex-shrink-0">
-            {currentOrganization?.logoUrl ? (
-              <AvatarImage src={currentOrganization.logoUrl} alt={currentOrganization.name} />
-            ) : (
-              <AvatarFallback>
-                {currentOrganization?.name ? getInitials(currentOrganization.name) : 'ORG'}
-              </AvatarFallback>
-            )}
-          </Avatar>
+          <div className="relative group">
+            <Avatar className="h-12 w-12 flex-shrink-0">
+              {currentOrganization?.logoUrl ? (
+                <AvatarImage src={currentOrganization.logoUrl} alt={currentOrganization.name} />
+              ) : (
+                <AvatarFallback>
+                  {currentOrganization?.name ? getInitials(currentOrganization.name) : 'ORG'}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <Dialog open={isLogoDialogOpen} onOpenChange={setIsLogoDialogOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Update Organization Logo</DialogTitle>
+                  <DialogDescription>
+                    Upload a new logo for your organization
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <ImageUploadField
+                    value={currentOrganization?.logoUrl || ''}
+                    onChange={() => {}} // We handle this through file selection
+                    onFileSelect={setSelectedLogoFile}
+                    placeholder="Upload your organization logo"
+                    isUploading={uploadLogo.isPending}
+                    maxSize={5 * 1024 * 1024} // 5MB limit
+                  />
+                  {selectedLogoFile && (
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedLogoFile(null);
+                          setIsLogoDialogOpen(false);
+                        }}
+                        disabled={uploadLogo.isPending}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleLogoUpload}
+                        disabled={uploadLogo.isPending}
+                      >
+                        {uploadLogo.isPending ? 'Uploading...' : 'Upload Logo'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           <div>
             <h1 className="text-3xl font-bold">Organization Settings</h1>
             <p className="text-muted-foreground mt-1">
@@ -292,7 +348,6 @@ const OrganizationSettings = () => {
           <div className="overflow-auto">
             <TabsList className="inline-flex w-auto min-w-full sm:min-w-full md:w-auto md:min-w-0">
               <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="subscription">Subscription</TabsTrigger>
               <TabsTrigger value="danger">Danger Zone</TabsTrigger>
             </TabsList>
           </div>
@@ -430,37 +485,28 @@ const OrganizationSettings = () => {
                         name="logoUrl"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Organization Logo (Optional)</FormLabel>
+                            <div className="flex items-center justify-between">
+                              <FormLabel>Organization Logo (Optional)</FormLabel>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsLogoDialogOpen(true)}
+                                className="text-xs"
+                              >
+                                <Edit className="h-3 w-3 mr-1" />
+                                {currentOrganization?.logoUrl ? 'Change' : 'Add'} Logo
+                              </Button>
+                            </div>
                             <FormControl>
-                              <Tabs value={logoUploadMethod} onValueChange={(value) => setLogoUploadMethod(value as 'url' | 'upload')}>
-                                <TabsList className="grid w-full grid-cols-2">
-                                  <TabsTrigger value="url">URL</TabsTrigger>
-                                  <TabsTrigger value="upload">Upload</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="url" className="space-y-2">
-                                  <Input
-                                    placeholder="https://example.com/logo.png"
-                                    {...field}
-                                    disabled={isSubmitting}
-                                  />
-                                  <p className="text-xs text-muted-foreground">
-                                    Enter a URL to your organization's logo
-                                  </p>
-                                </TabsContent>
-                                <TabsContent value="upload" className="space-y-2">
-                                  <ImageUploadField
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    onFileSelect={setSelectedLogoFile}
-                                    placeholder="Upload your organization logo"
-                                    maxSize={5 * 1024 * 1024} // 5MB limit for logos
-                                    disabled={isSubmitting}
-                                  />
-                                </TabsContent>
-                              </Tabs>
+                              <Input
+                                placeholder="https://example.com/logo.png"
+                                {...field}
+                                disabled={isSubmitting}
+                              />
                             </FormControl>
                             <FormDescription>
-                              Add a logo for your organization using a URL or by uploading a file
+                              Enter a URL to your organization's logo, or use the button above to upload a file
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
@@ -512,26 +558,7 @@ const OrganizationSettings = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="subscription">
-            <Card>
-              <CardHeader>
-                <CardTitle>Subscription Management</CardTitle>
-                <CardDescription>
-                  Manage your subscription plan and billing
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <Building2 className="h-16 w-16 text-muted-foreground/60 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Free Plan</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  You are currently on the free plan. Upgrade to access premium features like advanced analytics, custom branding, and more.
-                </p>
-                <Button>
-                  Upgrade Plan
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
 
           <TabsContent value="danger">
             <Card className="border-destructive/50">

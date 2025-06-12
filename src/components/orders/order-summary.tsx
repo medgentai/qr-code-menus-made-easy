@@ -47,9 +47,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderData, categories }) =>
     }).format(price);
   };
 
-  // Calculate tax and total with memoization
-  const tax = useMemo(() => subtotal * 0.08, [subtotal]); // Assuming 8% tax
-  const total = useMemo(() => subtotal + tax, [subtotal, tax]);
+  // Calculate total without tax
+  const total = useMemo(() => subtotal, [subtotal]);
 
   return (
     <Card className="flex flex-col min-h-[280px]">
@@ -121,15 +120,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ orderData, categories }) =>
 
         {/* Order Totals */}
         <div className="space-y-1">
-          <div className="flex justify-between text-sm">
-            <span>Subtotal</span>
-            <span>{formatPrice(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span>Tax (8%)</span>
-            <span>{formatPrice(tax)}</span>
-          </div>
-          <div className="flex justify-between font-medium mt-2">
+          <div className="flex justify-between font-medium">
             <span>Total</span>
             <span>{formatPrice(total)}</span>
           </div>

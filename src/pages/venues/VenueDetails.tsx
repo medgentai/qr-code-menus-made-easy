@@ -57,6 +57,16 @@ import { TableStatus, TableStatusColors, TableStatusLabels } from '@/types/venue
 import { OrganizationType } from '@/types/organization';
 import { formatDate } from '@/lib/utils';
 import { VenueImageUpload } from '@/components/venues/venue-image-upload';
+import { useUploadVenueImage } from '@/hooks/useImageUpload';
+import { ImageUploadField } from '@/components/ui/image-upload-field';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const VenueDetails = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId: string }>();
@@ -73,6 +83,9 @@ const VenueDetails = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [isLoadingQrCodes, setIsLoadingQrCodes] = useState(true);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const uploadVenueImage = useUploadVenueImage();
 
   // Note: Organization details are automatically fetched by the organization context
   // when the current organization changes, so we don't need to fetch them here
@@ -132,30 +145,60 @@ const VenueDetails = () => {
     }
   };
 
+  const handleImageUpload = async () => {
+    if (!selectedImageFile || !venueId) return;
+
+    try {
+      await uploadVenueImage.mutateAsync({
+        file: selectedImageFile,
+        data: {
+          venueId,
+          altText: 'Venue image',
+        },
+      });
+
+      setSelectedImageFile(null);
+      setIsImageDialogOpen(false);
+      toast.success('Venue image updated successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  };
+
   return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Mobile-optimized header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/organizations/${organizationId}/venues`)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="truncate">
+                  <Link to={`/organizations/${organizationId}`} className="hover:text-foreground transition-colors">
+                    {currentOrganization?.name}
+                  </Link>
+                </li>
                 <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
+                <li className="truncate">
+                  <Link to={`/organizations/${organizationId}/venues`} className="hover:text-foreground transition-colors">
+                    Venues
+                  </Link>
+                </li>
                 <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/venues`}>Venues</Link></li>
-                <li>•</li>
-                <li className="text-foreground font-medium">{currentVenue?.name || 'Venue'}</li>
+                <li className="text-foreground font-medium truncate">{currentVenue?.name || 'Venue'}</li>
               </ul>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
                   <MoreHorizontal className="h-4 w-4" />
+                  <span className="sr-only sm:not-sr-only sm:ml-2">Actions</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -185,7 +228,7 @@ const VenueDetails = () => {
               <AlertDialogTrigger asChild>
                 <button id="delete-venue-dialog" className="hidden">Delete</button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="sm:max-w-[425px]">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -193,12 +236,12 @@ const VenueDetails = () => {
                     and all associated tables and QR codes.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+                  <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteVenue}
                     disabled={isDeleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     {isDeleting ? 'Deleting...' : 'Delete'}
                   </AlertDialogAction>
@@ -208,74 +251,128 @@ const VenueDetails = () => {
           </div>
         </div>
 
-        <div>
-          <h1 className="text-3xl font-bold">
-            {isLoading ? <Skeleton className="h-9 w-40" /> : currentVenue?.name}
+        {/* Mobile-optimized venue header */}
+        <div className="space-y-3">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">
+            {isLoading ? <Skeleton className="h-8 sm:h-9 w-40" /> : currentVenue?.name}
           </h1>
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             {!isLoading && (
-              <Badge variant={currentVenue?.isActive ? "default" : "secondary"}>
+              <Badge variant={currentVenue?.isActive ? "default" : "secondary"} className="w-fit">
                 {currentVenue?.isActive ? "Active" : "Inactive"}
               </Badge>
             )}
             {currentVenue?.address && (
-              <div className="flex items-center text-muted-foreground">
-                <MapPin className="h-3.5 w-3.5 mr-1" />
-                <span className="text-sm">{currentVenue.address}</span>
+              <div className="flex items-center text-muted-foreground min-w-0">
+                <MapPin className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                <span className="text-sm truncate">{currentVenue.address}</span>
               </div>
             )}
           </div>
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className={`grid w-full mb-6 ${isFoodTruck ? 'grid-cols-1' : 'grid-cols-3'}`}>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            {!isFoodTruck && <TabsTrigger value="tables">Tables</TabsTrigger>}
-            {!isFoodTruck && <TabsTrigger value="qrcodes">QR Codes</TabsTrigger>}
+          <TabsList className={`grid w-full mb-4 sm:mb-6 ${isFoodTruck ? 'grid-cols-1' : 'grid-cols-3'}`}>
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            {!isFoodTruck && <TabsTrigger value="tables" className="text-xs sm:text-sm">Tables</TabsTrigger>}
+            {!isFoodTruck && <TabsTrigger value="qrcodes" className="text-xs sm:text-sm">QR Codes</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <CardTitle>Venue Information</CardTitle>
-                  <CardDescription>Details about this venue</CardDescription>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg sm:text-xl">Venue Information</CardTitle>
+                  <CardDescription className="text-sm">Details about this venue</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Venue Image */}
+                <CardContent className="space-y-4 px-3 sm:px-6">
+                  {/* Professional Venue Image Section */}
                   <div>
-                    <div className="text-sm text-muted-foreground mb-2">Venue Image</div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-sm text-muted-foreground">Venue Image</div>
+                      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="text-xs">
+                            <Edit className="h-3 w-3 mr-1" />
+                            {currentVenue?.imageUrl ? 'Change' : 'Add'} Image
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[425px]">
+                          <DialogHeader>
+                            <DialogTitle>Update Venue Image</DialogTitle>
+                            <DialogDescription>
+                              Upload a new image to showcase your venue
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <ImageUploadField
+                              value={currentVenue?.imageUrl || ''}
+                              onChange={() => {}} // We handle this through file selection
+                              onFileSelect={setSelectedImageFile}
+                              placeholder="Upload your venue image"
+                              isUploading={uploadVenueImage.isPending}
+                              maxSize={5 * 1024 * 1024} // 5MB limit
+                            />
+                            {selectedImageFile && (
+                              <div className="flex justify-end space-x-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedImageFile(null);
+                                    setIsImageDialogOpen(false);
+                                  }}
+                                  disabled={uploadVenueImage.isPending}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  onClick={handleImageUpload}
+                                  disabled={uploadVenueImage.isPending}
+                                >
+                                  {uploadVenueImage.isPending ? 'Uploading...' : 'Upload Image'}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+
                     {currentVenue?.imageUrl ? (
-                      <div className="w-full h-48 bg-muted rounded-lg overflow-hidden">
+                      <div className="relative group w-full h-40 sm:h-48 bg-muted rounded-lg overflow-hidden">
                         <img
                           src={currentVenue.imageUrl}
                           alt={currentVenue.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
                         />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setIsImageDialogOpen(true)}
+                            className="bg-white/90 hover:bg-white text-black"
+                          >
+                            <Edit className="h-3 w-3 mr-1" />
+                            Change Image
+                          </Button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
-                        <div className="text-center text-muted-foreground">
-                          <div>No image available</div>
-                          <div className="text-xs mt-2">
-                            Upload an image to display here
+                      <div
+                        className="w-full h-40 sm:h-48 bg-muted/50 border-2 border-dashed border-muted-foreground/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/70 transition-colors"
+                        onClick={() => setIsImageDialogOpen(true)}
+                      >
+                        <div className="text-center text-muted-foreground px-4">
+                          <Building2 className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <div className="text-sm font-medium">No venue image</div>
+                          <div className="text-xs mt-1 opacity-75">
+                            Click to add an image to showcase your venue
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
-
-                  {/* Venue Image Upload Component */}
-                  {currentVenue && (
-                    <VenueImageUpload
-                      venueId={currentVenue.id}
-                      currentImageUrl={currentVenue.imageUrl}
-                      onSuccess={(imageUrl) => {
-                        // The upload hook will automatically update the venue cache
-                        console.log('Venue image uploaded successfully:', imageUrl);
-                      }}
-                    />
-                  )}
 
                   {isLoading ? (
                     <div className="space-y-4">
@@ -354,11 +451,11 @@ const VenueDetails = () => {
               </Card>
 
               <Card>
-                <CardHeader>
-                  <CardTitle>Statistics</CardTitle>
-                  <CardDescription>Venue usage statistics</CardDescription>
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg sm:text-xl">Statistics</CardTitle>
+                  <CardDescription className="text-sm">Venue usage statistics</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 px-3 sm:px-6">
                   {isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-5 w-full" />
@@ -370,23 +467,23 @@ const VenueDetails = () => {
                       {!isFoodTruck && (
                         <div className="flex justify-between items-center">
                           <div className="text-sm text-muted-foreground">Tables</div>
-                          <div className="font-medium">{tables.length}</div>
+                          <div className="font-medium text-sm sm:text-base">{tables.length}</div>
                         </div>
                       )}
                       {!isFoodTruck && (
                         <div className="flex justify-between items-center">
                           <div className="text-sm text-muted-foreground">QR Codes</div>
-                          <div className="font-medium">{isLoadingQrCodes ? '...' : qrCodes.length}</div>
+                          <div className="font-medium text-sm sm:text-base">{isLoadingQrCodes ? '...' : qrCodes.length}</div>
                         </div>
                       )}
                       <div className="flex justify-between items-center">
                         <div className="text-sm text-muted-foreground">Total Scans</div>
-                        <div className="font-medium">0</div>
+                        <div className="font-medium text-sm sm:text-base">0</div>
                       </div>
                       {isFoodTruck && (
                         <div className="flex justify-between items-center">
                           <div className="text-sm text-muted-foreground">Mobile Location</div>
-                          <div className="font-medium">Active</div>
+                          <div className="font-medium text-sm sm:text-base">Active</div>
                         </div>
                       )}
                     </>
@@ -399,19 +496,20 @@ const VenueDetails = () => {
           {!isFoodTruck && (
             <TabsContent value="tables">
               <Card>
-                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
                   <div>
-                    <CardTitle>Tables</CardTitle>
-                    <CardDescription>Manage tables for this venue</CardDescription>
+                    <CardTitle className="text-lg sm:text-xl">Tables</CardTitle>
+                    <CardDescription className="text-sm">Manage tables for this venue</CardDescription>
                   </div>
                   <Button
                     onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/create`)}
                     className="w-full sm:w-auto"
+                    size="sm"
                   >
                     <Plus className="h-4 w-4 mr-1" /> Add Table
                   </Button>
                 </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 sm:px-6">
                 {isLoading ? (
                   <div className="space-y-4">
                     <Skeleton className="h-12 w-full" />
@@ -430,51 +528,100 @@ const VenueDetails = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium">Name</th>
-                          <th className="text-left py-3 px-4 font-medium">Capacity</th>
-                          <th className="text-left py-3 px-4 font-medium">Status</th>
-                          <th className="text-left py-3 px-4 font-medium">Location</th>
-                          <th className="text-right py-3 px-4 font-medium">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tables.map((table) => (
-                          <tr key={table.id} className="border-b hover:bg-muted/50">
-                            <td className="py-3 px-4">{table.name}</td>
-                            <td className="py-3 px-4">{table.capacity || '-'}</td>
-                            <td className="py-3 px-4">
-                              <Badge className={TableStatusColors[table.status]}>
-                                {TableStatusLabels[table.status]}
-                              </Badge>
-                            </td>
-                            <td className="py-3 px-4">{table.location || '-'}</td>
-                            <td className="py-3 px-4 text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
-                                >
-                                  QR Code
-                                </Button>
-                              </div>
-                            </td>
+                  <>
+                    {/* Desktop table view */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b">
+                            <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Capacity</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
+                            <th className="text-left py-3 px-4 font-medium text-sm">Location</th>
+                            <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody>
+                          {tables.map((table) => (
+                            <tr key={table.id} className="border-b hover:bg-muted/50">
+                              <td className="py-3 px-4 text-sm">{table.name}</td>
+                              <td className="py-3 px-4 text-sm">{table.capacity || '-'}</td>
+                              <td className="py-3 px-4">
+                                <Badge className={TableStatusColors[table.status]} variant="outline">
+                                  {TableStatusLabels[table.status]}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4 text-sm">{table.location || '-'}</td>
+                              <td className="py-3 px-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
+                                  >
+                                    Edit
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
+                                  >
+                                    QR Code
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile card view */}
+                    <div className="sm:hidden space-y-3">
+                      {tables.map((table) => (
+                        <Card key={table.id} className="p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h4 className="font-medium text-sm">{table.name}</h4>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge className={TableStatusColors[table.status]} variant="outline">
+                                  {TableStatusLabels[table.status]}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-2 text-xs text-muted-foreground mb-3">
+                            <div className="flex justify-between">
+                              <span>Capacity:</span>
+                              <span>{table.capacity || '-'}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Location:</span>
+                              <span>{table.location || '-'}</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs"
+                              onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs"
+                              onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
+                            >
+                              QR Code
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -483,10 +630,12 @@ const VenueDetails = () => {
 
           {!isFoodTruck && (
             <TabsContent value="qrcodes">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
               <div></div>
               <Button
                 onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/qrcodes/create`)}
+                className="w-full sm:w-auto"
+                size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Create QR Code

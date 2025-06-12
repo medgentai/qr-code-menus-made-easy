@@ -68,25 +68,26 @@ const VenueList = () => {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/organizations/${organizationId}`)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name || 'Organization'}</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li><Link to={`/organizations/${organizationId}`} className="truncate">{currentOrganization?.name || 'Organization'}</Link></li>
                 <li>•</li>
                 <li className="text-foreground font-medium">Venues</li>
               </ul>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
             <Button
               onClick={() => navigate(`/organizations/${organizationId}/venues/create`)}
               size="sm"
+              className="flex-1 sm:flex-none"
             >
               <Plus className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Create Venue</span>
@@ -94,7 +95,7 @@ const VenueList = () => {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="flex-shrink-0">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -123,15 +124,15 @@ const VenueList = () => {
         <Separator />
 
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(3)].map((_, i) => (
               <Card key={i} className="overflow-hidden">
                 <CardHeader className="p-0">
-                  <div className="h-40 bg-muted">
+                  <div className="h-32 sm:h-40 bg-muted">
                     <Skeleton className="h-full w-full" />
                   </div>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-full mb-4" />
                   <div className="flex items-center gap-2 mb-2">
@@ -143,7 +144,7 @@ const VenueList = () => {
                     <Skeleton className="h-4 w-1/3" />
                   </div>
                 </CardContent>
-                <CardFooter className="flex flex-col sm:flex-row gap-2 justify-between pt-0">
+                <CardFooter className="flex flex-col sm:flex-row gap-2 justify-between pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
                   <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
                     <Skeleton className="h-9 w-full sm:w-24" />
                     <Skeleton className="h-9 w-full sm:w-24" />
@@ -171,11 +172,11 @@ const VenueList = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {venues.map((venue) => (
               <Card key={venue.id} className="overflow-hidden hover:shadow-md transition-shadow">
                 <CardHeader className="p-0">
-                  <div className="h-40 bg-muted flex items-center justify-center overflow-hidden">
+                  <div className="h-32 sm:h-40 bg-muted flex items-center justify-center overflow-hidden">
                     {venue.imageUrl ? (
                       <img
                         src={venue.imageUrl}
@@ -183,51 +184,53 @@ const VenueList = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Building2 className="h-16 w-16 text-muted-foreground/40" />
+                      <Building2 className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground/40" />
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold">{venue.name}</h3>
-                    <Badge variant={venue.isActive ? "default" : "secondary"}>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <h3 className="text-base sm:text-lg font-semibold truncate">{venue.name}</h3>
+                    <Badge variant={venue.isActive ? "default" : "secondary"} className="flex-shrink-0">
                       {venue.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   {venue.description && (
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                    <p className="text-sm text-muted-foreground mb-3 sm:mb-4 line-clamp-2">
                       {venue.description}
                     </p>
                   )}
-                  {venue.address && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">
-                        {[venue.address, venue.city, venue.state].filter(Boolean).join(', ')}
-                      </span>
-                    </div>
-                  )}
-                  {venue.phoneNumber && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span>{venue.phoneNumber}</span>
-                    </div>
-                  )}
-                  {venue.email && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Mail className="h-3.5 w-3.5 flex-shrink-0" />
-                      <span className="truncate">{venue.email}</span>
-                    </div>
-                  )}
+                  <div className="space-y-1.5 sm:space-y-2">
+                    {venue.address && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">
+                          {[venue.address, venue.city, venue.state].filter(Boolean).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                    {venue.phoneNumber && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span>{venue.phoneNumber}</span>
+                      </div>
+                    )}
+                    {venue.email && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">{venue.email}</span>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
-                <CardFooter className="flex flex-col sm:flex-row gap-2 justify-between pt-0">
-                  <div className={`grid gap-2 w-full sm:w-auto ${isFoodTruck ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <CardFooter className="flex flex-col gap-2 pt-0 px-4 sm:px-6 pb-4 sm:pb-6">
+                  <div className={`grid gap-2 w-full ${isFoodTruck ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     {!isFoodTruck && (
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => navigate(`/organizations/${organizationId}/venues/${venue.id}/tables`)}
-                        className="w-full sm:w-auto"
+                        className="w-full"
                       >
                         <TableIcon className="h-4 w-4 mr-1" /> Tables
                       </Button>
@@ -236,7 +239,7 @@ const VenueList = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => navigate(`/organizations/${organizationId}/venues/${venue.id}/settings`)}
-                      className="w-full sm:w-auto"
+                      className="w-full"
                     >
                       <Settings className="h-4 w-4 mr-1" /> Settings
                     </Button>
@@ -244,9 +247,9 @@ const VenueList = () => {
                   <Button
                     size="sm"
                     onClick={() => navigate(`/organizations/${organizationId}/venues/${venue.id}`)}
-                    className="w-full sm:w-auto"
+                    className="w-full"
                   >
-                    View <ArrowRight className="h-4 w-4 ml-1" />
+                    View Details <ArrowRight className="h-4 w-4 ml-1" />
                   </Button>
                 </CardFooter>
               </Card>

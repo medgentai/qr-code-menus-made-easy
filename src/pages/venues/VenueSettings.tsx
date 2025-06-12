@@ -56,11 +56,8 @@ const VenueSettings = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
-  useEffect(() => {
-    if (organizationId) {
-      fetchOrganizationDetails(organizationId);
-    }
-  }, [organizationId, fetchOrganizationDetails]);
+  // Organization details are automatically fetched by the organization context
+  // when the current organization changes, so we don't need to fetch them here
 
   useEffect(() => {
     if (venueId) {
@@ -102,25 +99,25 @@ const VenueSettings = () => {
     <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}`)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/venues`}>Venues</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/venues/${venueId}`}>{currentVenue?.name || 'Venue'}</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}/venues`}>Venues</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li><Link to={`/organizations/${organizationId}/venues/${venueId}`} className="truncate">{currentVenue?.name || 'Venue'}</Link></li>
                 <li>•</li>
                 <li className="text-foreground font-medium">Settings</li>
               </ul>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -151,8 +148,8 @@ const VenueSettings = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>General Settings</CardTitle>
@@ -168,7 +165,7 @@ const VenueSettings = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between space-x-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-0.5">
                         <h3 className="text-base font-medium">Active Status</h3>
                         <p className="text-sm text-muted-foreground">
@@ -181,7 +178,7 @@ const VenueSettings = () => {
                       />
                     </div>
                     <Separator />
-                    <div className="flex items-center justify-between space-x-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-0.5">
                         <h3 className="text-base font-medium">Edit Venue</h3>
                         <p className="text-sm text-muted-foreground">
@@ -191,6 +188,7 @@ const VenueSettings = () => {
                       <Button
                         variant="outline"
                         onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/edit`)}
+                        className="w-full sm:w-auto"
                       >
                         <Edit className="h-4 w-4 mr-2" /> Edit
                       </Button>
@@ -215,7 +213,7 @@ const VenueSettings = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between space-x-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-0.5">
                         <h3 className="text-base font-medium">QR Code Prefix</h3>
                         <p className="text-sm text-muted-foreground">
@@ -225,12 +223,13 @@ const VenueSettings = () => {
                       <Button
                         variant="outline"
                         disabled
+                        className="w-full sm:w-auto"
                       >
                         Coming Soon
                       </Button>
                     </div>
                     <Separator />
-                    <div className="flex items-center justify-between space-x-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-0.5">
                         <h3 className="text-base font-medium">QR Code Design</h3>
                         <p className="text-sm text-muted-foreground">
@@ -240,6 +239,7 @@ const VenueSettings = () => {
                       <Button
                         variant="outline"
                         disabled
+                        className="w-full sm:w-auto"
                       >
                         Coming Soon
                       </Button>

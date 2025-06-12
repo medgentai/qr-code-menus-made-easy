@@ -128,33 +128,35 @@ const MenuDetails: React.FC = () => {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={handleBackToMenus}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
-                <li>•</li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}`} className="truncate">{currentOrganization?.name}</Link></li>
+                <li className="hidden sm:block">•</li>
                 <li><Link to={`/organizations/${organizationId}/menus`}>Menus</Link></li>
                 <li>•</li>
-                <li className="text-foreground font-medium">{currentMenu.name}</li>
+                <li className="text-foreground font-medium truncate">{currentMenu.name}</li>
               </ul>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate(`/organizations/${organizationId}/menus/${menuId}/preview`)}
+              className="flex-1 sm:flex-none"
             >
               <Eye className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Preview</span>
+              <span className="inline sm:hidden">Preview</span>
             </Button>
-            <Button size="sm" onClick={handleEditMenu}>
+            <Button size="sm" onClick={handleEditMenu} className="flex-1 sm:flex-none">
               <Edit className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Edit Menu</span>
               <span className="inline sm:hidden">Edit</span>
@@ -162,16 +164,16 @@ const MenuDetails: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-bold tracking-tight">{currentMenu.name}</h1>
-              <Badge variant={currentMenu.isActive ? "default" : "secondary"}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{currentMenu.name}</h1>
+              <Badge variant={currentMenu.isActive ? "default" : "secondary"} className="w-fit">
                 {currentMenu.isActive ? "Active" : "Inactive"}
               </Badge>
             </div>
-            <div className="flex items-center gap-3 mt-1 text-muted-foreground">
-              <p>{currentMenu.description || 'No description provided'}</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 mt-1 text-muted-foreground">
+              <p className="text-sm sm:text-base">{currentMenu.description || 'No description provided'}</p>
               <div className="flex items-center text-xs">
                 <Clock className="h-3 w-3 mr-1" />
                 <span>Created {format(new Date(currentMenu.createdAt), 'MMM d, yyyy')}</span>
@@ -273,9 +275,9 @@ const MenuDetails: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="categories" className="space-y-4 mt-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Categories & Menu Items</h2>
-              <Button onClick={handleAddCategory}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+              <h2 className="text-lg sm:text-xl font-semibold">Categories & Menu Items</h2>
+              <Button onClick={handleAddCategory} className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" /> Add Category
               </Button>
             </div>
@@ -334,20 +336,20 @@ const MenuDetails: React.FC = () => {
                         ) : (
                           <div className="space-y-2">
                             {category.items?.map((item) => (
-                              <div key={item.id} className="flex justify-between items-center p-3 border rounded-md hover:bg-accent">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-medium">{item.name}</h4>
+                              <div key={item.id} className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center p-3 border rounded-md hover:bg-accent">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                                    <h4 className="font-medium truncate">{item.name}</h4>
                                     {!item.isAvailable && (
-                                      <Badge variant="outline" className="text-xs">Out of Stock</Badge>
+                                      <Badge variant="outline" className="text-xs w-fit">Out of Stock</Badge>
                                     )}
                                   </div>
-                                  <p className="text-sm text-muted-foreground line-clamp-1">
+                                  <p className="text-sm text-muted-foreground line-clamp-2 sm:line-clamp-1">
                                     {item.description || 'No description'}
                                   </p>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium">{formatPrice(item.price)}</p>
+                                <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
+                                  <p className="font-medium text-lg sm:text-base">{formatPrice(item.price)}</p>
                                   <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="ghost" size="icon">

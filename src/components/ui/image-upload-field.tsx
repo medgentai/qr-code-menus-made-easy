@@ -18,6 +18,7 @@ export interface ImageUploadFieldProps {
   placeholder?: string;
   isUploading?: boolean;
   uploadProgress?: number;
+  aspectRatio?: 'square' | 'video' | 'portrait' | 'auto';
 }
 
 export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
@@ -31,6 +32,7 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
   placeholder = 'Click to upload or drag and drop',
   isUploading = false,
   uploadProgress = 0,
+  aspectRatio = 'video',
 }) => {
   const [preview, setPreview] = useState<string | null>(value || null);
 
@@ -81,12 +83,28 @@ export const ImageUploadField: React.FC<ImageUploadFieldProps> = ({
     setPreview(value || null);
   }, [value]);
 
+  // Get aspect ratio class
+  const getAspectRatioClass = () => {
+    switch (aspectRatio) {
+      case 'square':
+        return 'aspect-square';
+      case 'video':
+        return 'aspect-video';
+      case 'portrait':
+        return 'aspect-[3/4]';
+      case 'auto':
+        return '';
+      default:
+        return 'aspect-video';
+    }
+  };
+
   return (
     <div className={cn('w-full', className)}>
       {preview ? (
         <Card className="relative">
           <CardContent className="p-4">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+            <div className={cn("relative w-full overflow-hidden rounded-lg", getAspectRatioClass())}>
               <img
                 src={preview}
                 alt="Upload preview"

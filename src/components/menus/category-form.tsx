@@ -249,11 +249,11 @@ export const CategoryForm: React.FC<CategoryFormProps> = ({ menuId, category, on
           )}
         />
 
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={onSuccess}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:space-x-4 sm:gap-0">
+          <Button type="button" variant="outline" onClick={onSuccess} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditing ? 'Update Category' : 'Create Category'}
           </Button>

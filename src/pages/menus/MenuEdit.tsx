@@ -100,20 +100,20 @@ const MenuEdit: React.FC = () => {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={handleCancel}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/menus`}>Menus</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/menus/${menuId}`}>{menuName}</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}`} className="truncate">{currentOrganization?.name}</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}/menus`}>Menus</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li><Link to={`/organizations/${organizationId}/menus/${menuId}`} className="truncate">{menuName}</Link></li>
                 <li>•</li>
                 <li className="text-foreground font-medium">Edit</li>
               </ul>
@@ -202,24 +202,25 @@ const MenuEdit: React.FC = () => {
                   )}
                 />
 
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsDeleteDialogOpen(true)}
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive w-full sm:w-auto"
                   >
                     Delete Menu
                   </Button>
-                  <div className="flex space-x-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:space-x-4 sm:gap-0">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleCancel}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={isLoading}>
+                    <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                       {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                       Save Changes
                     </Button>

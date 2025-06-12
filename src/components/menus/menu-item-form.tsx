@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -18,6 +18,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CommonAllergens } from '@/types/menu';
 import { ImageUploadField } from '@/components/ui/image-upload-field';
 import { useUploadMenuItemImage } from '@/hooks/useImageUpload';
+
+import { Edit, ImageIcon } from 'lucide-react';
+import { toast } from 'sonner';
 
 // Form schema
 const formSchema = z.object({
@@ -61,6 +64,7 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
     menuItem?.allergens ? menuItem.allergens.split(',').map(a => a.trim()) : []
   );
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -98,6 +102,66 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
   React.useEffect(() => {
     form.setValue('allergens', selectedAllergens.join(', '));
   }, [selectedAllergens, form]);
+
+  // Handle image upload (for editing existing items)
+  const handleImageUpload = async () => {
+    if (!selectedFile || !menuItem?.id) return;
+
+    try {
+      const result = await uploadMenuItemImage.mutateAsync({
+        file: selectedFile,
+        data: { menuItemId: menuItem.id },
+      });
+
+      form.setValue('imageUrl', result.url);
+      setSelectedFile(null);
+      setIsImageDialogOpen(false);
+      toast.success('Menu item image updated successfully');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  };
+
+  // Handle image selection for new items (preview only)
+  const handleImageSelect = (file: File | null) => {
+    setSelectedFile(file);
+    if (file) {
+      // Create a preview URL for new items
+      const previewUrl = URL.createObjectURL(file);
+      form.setValue('imageUrl', previewUrl);
+    }
+  };
+
+  // Trigger file input click
+  const triggerFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection from input
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (isEditing && menuItem?.id) {
+        // For editing, upload immediately
+        setSelectedFile(file);
+        uploadMenuItemImage.mutateAsync({
+          file,
+          data: { menuItemId: menuItem.id },
+        }).then((result) => {
+          form.setValue('imageUrl', result.url);
+          setSelectedFile(null);
+          toast.success('Menu item image updated successfully');
+        }).catch((error) => {
+          console.error('Error uploading image:', error);
+        });
+      } else {
+        // For creating, just preview
+        handleImageSelect(file);
+      }
+    }
+    // Reset the input value so the same file can be selected again
+    event.target.value = '';
+  };
 
   // Form submission handler
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -273,18 +337,52 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
           render={({ field }) => (
             <FormItem>
               <FormLabel>Menu Item Image (Optional)</FormLabel>
-              <FormControl>
-                <ImageUploadField
-                  value={field.value}
-                  onChange={field.onChange}
-                  onFileSelect={setSelectedFile}
-                  placeholder="Upload an image of this menu item"
-                  isUploading={uploadMenuItemImage.isPending}
-                  disabled={isLoading}
-                />
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {field.value ? (
+                <div
+                  className="relative group w-48 h-48 bg-muted rounded-lg overflow-hidden mx-auto sm:mx-0 cursor-pointer"
+                  onClick={triggerFileSelect}
+                >
+                  <img
+                    src={field.value}
+                    alt="Menu item"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-white/90 rounded-lg px-3 py-2 text-black text-sm font-medium">
+                      Click to change
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="w-48 h-48 bg-muted/50 border-2 border-dashed border-muted-foreground/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/70 transition-colors mx-auto sm:mx-0"
+                  onClick={triggerFileSelect}
+                >
+                  <div className="text-center text-muted-foreground px-4">
+                    <ImageIcon className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                    <div className="text-sm font-medium">No image</div>
+                    <div className="text-xs mt-1 opacity-75">
+                      Click to add
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <FormControl className="hidden">
+                <Input {...field} />
               </FormControl>
               <FormDescription>
-                Upload an image to showcase this menu item. Supports JPEG, PNG, and WebP formats.
+                Click the image area above to select a photo for this menu item.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -514,11 +612,11 @@ export const MenuItemForm: React.FC<MenuItemFormProps> = ({ categoryId, menuItem
           )}
         />
 
-        <div className="flex justify-end space-x-4">
-          <Button type="button" variant="outline" onClick={onSuccess}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:space-x-4 sm:gap-0">
+          <Button type="button" variant="outline" onClick={onSuccess} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isEditing ? 'Update Item' : 'Add Item'}
           </Button>

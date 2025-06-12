@@ -38,20 +38,20 @@ const MenuItemCreate: React.FC = () => {
 
   return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={handleBackToMenu}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/menus`}>Menus</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/menus/${menuId}`}>{currentMenu?.name}</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}`} className="truncate">{currentOrganization?.name}</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}/menus`}>Menus</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li><Link to={`/organizations/${organizationId}/menus/${menuId}`} className="truncate">{currentMenu?.name}</Link></li>
                 <li>•</li>
                 <li className="text-foreground font-medium">Add Menu Item</li>
               </ul>
@@ -60,8 +60,8 @@ const MenuItemCreate: React.FC = () => {
         </div>
 
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Add Menu Item</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Add Menu Item</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Create a new menu item for this category.
           </p>
         </div>

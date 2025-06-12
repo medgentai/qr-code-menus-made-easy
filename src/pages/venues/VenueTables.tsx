@@ -92,25 +92,25 @@ const VenueTables = () => {
   return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}`)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/venues`}>Venues</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${organizationId}/venues/${venueId}`}>{currentVenue?.name || 'Venue'}</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}`}>{currentOrganization?.name}</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="hidden sm:block"><Link to={`/organizations/${organizationId}/venues`}>Venues</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li><Link to={`/organizations/${organizationId}/venues/${venueId}`} className="truncate">{currentVenue?.name || 'Venue'}</Link></li>
                 <li>•</li>
                 <li className="text-foreground font-medium">Tables</li>
               </ul>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -173,76 +173,147 @@ const VenueTables = () => {
                 </Button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4 font-medium">Name</th>
-                      <th className="text-left py-3 px-4 font-medium">Capacity</th>
-                      <th className="text-left py-3 px-4 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 font-medium">Location</th>
-                      <th className="text-right py-3 px-4 font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tables.map((table) => (
-                      <tr key={table.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">{table.name}</td>
-                        <td className="py-3 px-4">{table.capacity || '-'}</td>
-                        <td className="py-3 px-4">
-                          <Badge className={TableStatusColors[table.status]}>
-                            {TableStatusLabels[table.status]}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-4">{table.location || '-'}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
-                            >
-                              QR Code
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm">
-                                  Delete
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the table
-                                    and any associated QR codes.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteTable(table.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </td>
+              <>
+                {/* Desktop table view */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium text-sm">Name</th>
+                        <th className="text-left py-3 px-4 font-medium text-sm">Capacity</th>
+                        <th className="text-left py-3 px-4 font-medium text-sm">Status</th>
+                        <th className="text-left py-3 px-4 font-medium text-sm">Location</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {tables.map((table) => (
+                        <tr key={table.id} className="border-b hover:bg-muted/50">
+                          <td className="py-3 px-4 text-sm">{table.name}</td>
+                          <td className="py-3 px-4 text-sm">{table.capacity || '-'}</td>
+                          <td className="py-3 px-4">
+                            <Badge className={TableStatusColors[table.status]} variant="outline">
+                              {TableStatusLabels[table.status]}
+                            </Badge>
+                          </td>
+                          <td className="py-3 px-4 text-sm">{table.location || '-'}</td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
+                              >
+                                QR Code
+                              </Button>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="sm">
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone. This will permanently delete the table
+                                      and any associated QR codes.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleDeleteTable(table.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile card view */}
+                <div className="sm:hidden space-y-3">
+                  {tables.map((table) => (
+                    <Card key={table.id} className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-medium text-base">{table.name}</h3>
+                          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                            <span>Capacity: {table.capacity || '-'}</span>
+                            {table.location && <span>Location: {table.location}</span>}
+                          </div>
+                        </div>
+                        <Badge className={TableStatusColors[table.status]} variant="outline">
+                          {TableStatusLabels[table.status]}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
+                          >
+                            <QrCode className="h-4 w-4 mr-1" />
+                            QR Code
+                          </Button>
+                        </div>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="w-full">
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete Table
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the table
+                                and any associated QR codes.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDeleteTable(table.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

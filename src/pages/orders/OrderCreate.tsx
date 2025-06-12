@@ -155,17 +155,18 @@ const OrderCreate: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={handleBack}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold">Create New Order</h1>
+            <h1 className="text-xl sm:text-2xl font-bold truncate">Create New Order</h1>
           </div>
           <Button
             onClick={form.handleSubmit(onSubmit)}
             disabled={isSubmitting || createOrderMutation.isPending}
+            className="w-full sm:w-auto"
           >
             <Save className="mr-2 h-4 w-4" />
             {isSubmitting || createOrderMutation.isPending ? 'Creating...' : 'Create Order'}
@@ -173,10 +174,10 @@ const OrderCreate: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="details">Order Details</TabsTrigger>
-            <TabsTrigger value="items">Menu Items</TabsTrigger>
-            <TabsTrigger value="summary">Order Summary</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="details" className="text-xs sm:text-sm">Order Details</TabsTrigger>
+            <TabsTrigger value="items" className="text-xs sm:text-sm">Menu Items</TabsTrigger>
+            <TabsTrigger value="summary" className="text-xs sm:text-sm">Summary</TabsTrigger>
           </TabsList>
 
           <Form {...form}>

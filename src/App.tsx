@@ -74,6 +74,7 @@ const OrganizationList = lazy(() => import("./pages/organizations/OrganizationLi
 const OrganizationCreate = lazy(() => import("./pages/organizations/OrganizationCreate"));
 const OrganizationCreateWithPayment = lazy(() => import("./pages/organizations/OrganizationCreateWithPayment"));
 const OrganizationDetails = lazy(() => import("./pages/organizations/OrganizationDetails"));
+const OrganizationEdit = lazy(() => import("./pages/organizations/OrganizationEdit"));
 const OrganizationSettings = lazy(() => import("./pages/organizations/OrganizationSettings"));
 const OrganizationMembers = lazy(() => import("./pages/organizations/OrganizationMembers"));
 const OrganizationQrCodes = lazy(() => import("./pages/organizations/OrganizationQrCodes"));
@@ -291,6 +292,16 @@ const App = () => (
                   <ProtectedRoute>
                     <OrganizationGuard>
                       <OrganizationDetails />
+                    </OrganizationGuard>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/organizations/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <OrganizationGuard>
+                      <OrganizationEdit />
                     </OrganizationGuard>
                   </ProtectedRoute>
                 }

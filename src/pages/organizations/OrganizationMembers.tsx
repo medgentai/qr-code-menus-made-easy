@@ -290,30 +290,35 @@ const OrganizationMembers = () => {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+      <div className="space-y-4 sm:space-y-6">
+        {/* Mobile-optimized header */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(`/organizations/${id}`)}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm breadcrumbs">
-              <ul className="flex items-center gap-1 text-muted-foreground">
-                <li><Link to="/organizations">Organizations</Link></li>
-                <li>•</li>
-                <li><Link to={`/organizations/${id}`}>{currentOrganization?.name}</Link></li>
+            <div className="text-sm breadcrumbs min-w-0 flex-1">
+              <ul className="flex items-center gap-1 text-muted-foreground overflow-hidden">
+                <li className="hidden sm:block"><Link to="/organizations">Organizations</Link></li>
+                <li className="hidden sm:block">•</li>
+                <li className="truncate max-w-[120px] sm:max-w-none">
+                  <Link to={`/organizations/${id}`} className="hover:text-foreground transition-colors">
+                    {currentOrganization?.name}
+                  </Link>
+                </li>
                 <li>•</li>
                 <li className="text-foreground font-medium">Team Members</li>
               </ul>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             {isOwner || isAdmin ? (
               <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
-                    <UserPlus className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Send Invitation</span>
-                    <span className="inline sm:hidden">Invite</span>
+                  <Button size="sm" className="w-full sm:w-auto">
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    <span className="hidden xs:inline sm:hidden">Invite</span>
+                    <span className="inline xs:hidden sm:inline">Send Invitation</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -486,10 +491,10 @@ const OrganizationMembers = () => {
             ) : (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <LogOut className="h-4 w-4 mr-1" />
-                    <span className="hidden sm:inline">Leave Organization</span>
-                    <span className="inline sm:hidden">Leave</span>
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    <span className="hidden xs:inline sm:hidden">Leave</span>
+                    <span className="inline xs:hidden sm:inline">Leave Organization</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -514,8 +519,9 @@ const OrganizationMembers = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12 flex-shrink-0">
+        {/* Mobile-optimized organization header */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Avatar className="h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
             {currentOrganization?.logoUrl ? (
               <AvatarImage src={currentOrganization.logoUrl} alt={currentOrganization.name} />
             ) : (
@@ -524,9 +530,9 @@ const OrganizationMembers = () => {
               </AvatarFallback>
             )}
           </Avatar>
-          <div>
-            <h1 className="text-3xl font-bold">Team Members</h1>
-            <p className="text-muted-foreground mt-1">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Team Members</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base truncate">
               Manage members of {currentOrganization?.name}
             </p>
           </div>
@@ -535,22 +541,23 @@ const OrganizationMembers = () => {
         <Separator />
 
         <Card>
-          <CardHeader>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg sm:text-xl">Team Members</CardTitle>
+            <CardDescription className="text-sm">
               People with access to {currentOrganization?.name}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+          <CardContent className="px-3 sm:px-6">
+            <div className="space-y-3 sm:space-y-4">
               {currentOrganizationDetails?.members.map((member) => {
                 const isCurrentUser = member.user.id === user?.id;
                 const canManageMember = (isOwner || isAdmin) && !isCurrentUser && member.role !== MemberRole.OWNER;
 
                 return (
-                  <div key={member.id} className="flex flex-col sm:flex-col md:flex-row md:items-center justify-between py-3 px-2 border rounded-md">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+                  <div key={member.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 sm:py-3 sm:px-4 border rounded-lg bg-card hover:bg-muted/30 transition-colors">
+                    {/* Member Info Section */}
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <Avatar className="h-10 w-10 flex-shrink-0">
                         {member.user.profileImageUrl ? (
                           <AvatarImage src={member.user.profileImageUrl} alt={member.user.name} />
                         ) : (
@@ -559,26 +566,31 @@ const OrganizationMembers = () => {
                           </AvatarFallback>
                         )}
                       </Avatar>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium">
-                            {member.user.name}
-                            {isCurrentUser && <span className="text-xs text-muted-foreground ml-1">(You)</span>}
-                          </p>
-                          {member.role === MemberRole.OWNER && (
-                            <Badge variant="default" className="ml-1">Owner</Badge>
-                          )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <p className="font-medium truncate">
+                              {member.user.name}
+                            </p>
+                            {isCurrentUser && (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">(You)</span>
+                            )}
+                            {member.role === MemberRole.OWNER && (
+                              <Badge variant="default" className="text-xs">Owner</Badge>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-[300px] md:max-w-none">
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {member.user.email}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-2 sm:mt-2 md:mt-0 self-end sm:self-end md:self-auto">
-                      <div className="flex flex-wrap items-center gap-1">
+                    {/* Badges and Actions Section */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                         <Badge
                           variant="outline"
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 text-xs"
                         >
                           {getRoleIcon(member.role)}
                           <span className="hidden xs:inline">{MemberRoleLabels[member.role]}</span>
@@ -594,7 +606,11 @@ const OrganizationMembers = () => {
                         {member.role === MemberRole.STAFF && member.venueIds && member.venueIds.length > 0 && (
                           <Badge
                             variant="outline"
-                            className="text-xs"
+                            className="text-xs max-w-[100px] truncate"
+                            title={(() => {
+                              const assignedVenue = venues.find(v => v.id === member.venueIds[0]);
+                              return assignedVenue ? assignedVenue.name : 'Specific Venue';
+                            })()}
                           >
                             {(() => {
                               const assignedVenue = venues.find(v => v.id === member.venueIds[0]);
@@ -607,7 +623,7 @@ const OrganizationMembers = () => {
                       {canManageMember && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>
@@ -655,8 +671,8 @@ const OrganizationMembers = () => {
             </div>
           </CardContent>
           {(isOwner || isAdmin) && (
-            <CardFooter className="border-t bg-muted/50 px-6 py-4">
-              <div className="flex items-center justify-between w-full">
+            <CardFooter className="border-t bg-muted/50 px-3 sm:px-6 py-3 sm:py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
                 <p className="text-sm text-muted-foreground">
                   {currentOrganizationDetails?.members.length} members in this organization
                 </p>
@@ -664,8 +680,10 @@ const OrganizationMembers = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setIsInviteDialogOpen(true)}
+                  className="w-full sm:w-auto"
                 >
-                  <Plus className="h-4 w-4 mr-1" /> Send Invitation
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span>Send Invitation</span>
                 </Button>
               </div>
             </CardFooter>
@@ -676,40 +694,45 @@ const OrganizationMembers = () => {
         {(isOwner || isAdmin) && currentOrganizationDetails?.invitations &&
          currentOrganizationDetails.invitations.filter(inv => inv.status === InvitationStatus.PENDING).length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg sm:text-xl">Pending Invitations</CardTitle>
+              <CardDescription className="text-sm">
                 Invitations that have been sent but not yet accepted
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="px-3 sm:px-6">
+              <div className="space-y-3 sm:space-y-4">
                 {currentOrganizationDetails.invitations
                   .filter(invitation => invitation.status === InvitationStatus.PENDING)
                   .map((invitation) => (
-                  <div key={invitation.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 px-2 border rounded-md">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                  <div key={invitation.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-3 sm:py-3 sm:px-4 border rounded-lg bg-card hover:bg-muted/30 transition-colors">
+                    {/* Invitation Info Section */}
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
                         <UserPlus className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium">{invitation.email}</p>
-                          <Badge
-                            variant={invitation.status === InvitationStatus.PENDING ? "default" :
-                                   invitation.status === InvitationStatus.EXPIRED ? "destructive" : "secondary"}
-                          >
-                            {InvitationStatusLabels[invitation.status]}
-                          </Badge>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <p className="font-medium truncate">{invitation.email}</p>
+                            <Badge
+                              variant={invitation.status === InvitationStatus.PENDING ? "default" :
+                                     invitation.status === InvitationStatus.EXPIRED ? "destructive" : "secondary"}
+                              className="text-xs"
+                            >
+                              {InvitationStatusLabels[invitation.status]}
+                            </Badge>
+                          </div>
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           Invited by {invitation.inviter?.name} • {new Date(invitation.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                      <div className="flex flex-wrap items-center gap-1">
-                        <Badge variant="outline" className="flex items-center gap-1">
+                    {/* Invitation Badges and Actions Section */}
+                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <Badge variant="outline" className="flex items-center gap-1 text-xs">
                           {getRoleIcon(invitation.role)}
                           <span className="hidden xs:inline">{MemberRoleLabels[invitation.role]}</span>
                         </Badge>
@@ -722,7 +745,7 @@ const OrganizationMembers = () => {
                       {invitation.status === InvitationStatus.PENDING && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
                               <MoreHorizontal className="h-4 w-4" />
                               <span className="sr-only">Open menu</span>
                             </Button>

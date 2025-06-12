@@ -178,9 +178,9 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* Menu Items Selection */}
-      <div className="w-full md:w-2/3">
+      <div className="w-full lg:w-2/3">
         <div className="mb-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -212,21 +212,31 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
                   <h3 className="font-medium text-lg">{category.name}</h3>
                   {category.items?.map((item) => (
                     <Card key={item.id} className="cursor-pointer hover:bg-accent/50">
-                      <CardContent className="p-3 flex justify-between items-center">
-                        <div className="flex-1" onClick={() => addItem(item)}>
-                          <div className="font-medium">{item.name}</div>
-                          {item.description && (
-                            <div className="text-sm text-muted-foreground line-clamp-1">{item.description}</div>
-                          )}
-                          <div className="flex gap-1 mt-1">
-                            {item.isVegetarian && <Badge variant="outline" className="text-xs">Vegetarian</Badge>}
-                            {item.isVegan && <Badge variant="outline" className="text-xs">Vegan</Badge>}
-                            {item.isGlutenFree && <Badge variant="outline" className="text-xs">Gluten-Free</Badge>}
+                      <CardContent className="p-3">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                          <div className="flex-1" onClick={() => addItem(item)}>
+                            <div className="font-medium">{item.name}</div>
+                            {item.description && (
+                              <div className="text-sm text-muted-foreground line-clamp-1">{item.description}</div>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.isVegetarian && <Badge variant="outline" className="text-xs">Vegetarian</Badge>}
+                              {item.isVegan && <Badge variant="outline" className="text-xs">Vegan</Badge>}
+                              {item.isGlutenFree && <Badge variant="outline" className="text-xs">Gluten-Free</Badge>}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right flex items-center gap-2">
-                          <div className="font-medium">{formatPrice(item.price)}</div>
-                          <Dialog>
+                          <div className="flex items-center justify-between sm:justify-end gap-2">
+                            <div className="font-medium">
+                              {item.discountPrice ? (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                  <span className="text-primary">{formatPrice(item.discountPrice)}</span>
+                                  <span className="text-sm line-through text-muted-foreground">{formatPrice(item.price)}</span>
+                                </div>
+                              ) : (
+                                formatPrice(item.price)
+                              )}
+                            </div>
+                            <Dialog>
                             <DialogTrigger asChild>
                               <Button
                                 type="button"
@@ -289,15 +299,16 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => addItem(item)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              onClick={() => addItem(item)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -333,21 +344,31 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
                 <ScrollArea className="h-[400px]">
                   {category.items?.map((item) => (
                     <Card key={item.id} className="mb-2 cursor-pointer hover:bg-accent/50">
-                      <CardContent className="p-3 flex justify-between items-center">
-                        <div className="flex-1" onClick={() => addItem(item)}>
-                          <div className="font-medium">{item.name}</div>
-                          {item.description && (
-                            <div className="text-sm text-muted-foreground line-clamp-1">{item.description}</div>
-                          )}
-                          <div className="flex gap-1 mt-1">
-                            {item.isVegetarian && <Badge variant="outline" className="text-xs">Vegetarian</Badge>}
-                            {item.isVegan && <Badge variant="outline" className="text-xs">Vegan</Badge>}
-                            {item.isGlutenFree && <Badge variant="outline" className="text-xs">Gluten-Free</Badge>}
+                      <CardContent className="p-3">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                          <div className="flex-1" onClick={() => addItem(item)}>
+                            <div className="font-medium">{item.name}</div>
+                            {item.description && (
+                              <div className="text-sm text-muted-foreground line-clamp-1">{item.description}</div>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item.isVegetarian && <Badge variant="outline" className="text-xs">Vegetarian</Badge>}
+                              {item.isVegan && <Badge variant="outline" className="text-xs">Vegan</Badge>}
+                              {item.isGlutenFree && <Badge variant="outline" className="text-xs">Gluten-Free</Badge>}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-right flex items-center gap-2">
-                          <div className="font-medium">{formatPrice(item.price)}</div>
-                          <Dialog>
+                          <div className="flex items-center justify-between sm:justify-end gap-2">
+                            <div className="font-medium">
+                              {item.discountPrice ? (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                  <span className="text-primary">{formatPrice(item.discountPrice)}</span>
+                                  <span className="text-sm line-through text-muted-foreground">{formatPrice(item.price)}</span>
+                                </div>
+                              ) : (
+                                formatPrice(item.price)
+                              )}
+                            </div>
+                            <Dialog>
                             <DialogTrigger asChild>
                               <Button
                                 type="button"
@@ -410,15 +431,16 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
                               </DialogFooter>
                             </DialogContent>
                           </Dialog>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0"
-                            onClick={() => addItem(item)}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              onClick={() => addItem(item)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -431,11 +453,11 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
       </div>
 
       {/* Selected Items */}
-      <div className="w-full md:w-1/3">
-        <div className="bg-accent/20 rounded-lg p-4">
-          <h3 className="font-medium text-lg mb-2">Selected Items</h3>
+      <div className="w-full lg:w-1/3">
+        <div className="bg-accent/20 rounded-lg p-3 lg:p-4">
+          <h3 className="font-medium text-base lg:text-lg mb-2">Selected Items</h3>
           {selectedItems.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-6 lg:py-8 text-muted-foreground text-sm">
               No items selected. Click on menu items to add them to the order.
             </div>
           ) : (
@@ -541,7 +563,7 @@ const MenuItemSelector: React.FC<MenuItemSelectorProps> = ({
                         <Plus className="h-3 w-3" />
                       </Button>
                       <span className="ml-auto font-medium">
-                        {formatPrice((parseFloat(menuItem.price) * item.quantity).toString())}
+                        {formatPrice((parseFloat(menuItem.discountPrice || menuItem.price) * item.quantity).toString())}
                       </span>
                     </div>
                     {item.notes && (
