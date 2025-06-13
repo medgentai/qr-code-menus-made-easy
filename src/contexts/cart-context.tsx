@@ -103,11 +103,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     return total + (itemPrice + modifiersPrice) * item.quantity;
   }, 0);
 
-  // Calculate GST (5% total: 2.5% CGST + 2.5% SGST)
-  const gstAmount = subtotal * 0.05;
+  // No GST calculation
+  const gstAmount = 0;
 
-  // Calculate total amount including GST
-  const totalAmount = subtotal + gstAmount;
+  // Total amount is the same as subtotal (no GST)
+  const totalAmount = subtotal;
 
   // Add item to cart
   const addItem = (

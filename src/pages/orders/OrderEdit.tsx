@@ -18,7 +18,7 @@ import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { useMenu } from '@/contexts/menu-context';
 import { useOrder } from '@/hooks/useOrder';
-import { CreateOrderDto, CreateOrderItemDto, OrderStatus, UpdateOrderDto, Order } from '@/services/order-service';
+import { CreateOrderItemDto, OrderStatus, UpdateOrderDto, Order } from '@/services/order-service';
 import MenuItemSelector from '@/components/orders/menu-item-selector';
 import OrderSummary from '@/components/orders/order-summary';
 import PartySizeInput from '@/components/orders/PartySizeInput';
@@ -49,7 +49,7 @@ const OrderEdit: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { currentOrganization } = useOrganization();
-  const { currentVenue, venues, tables, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
+  const { venues, tables, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
   const { menus, fetchMenusForOrganization } = useMenu();
   const { currentOrder, fetchOrderById, updateOrder, isLoading, selectOrder } = useOrder();
 
@@ -409,11 +409,6 @@ const OrderEdit: React.FC = () => {
     setItemsToRemove(prev => [...prev, itemId]);
   };
 
-  // Handle adding a new item
-  const handleAddItem = (item: CreateOrderItemDto) => {
-    setSelectedItems(prev => [...prev, item]);
-  };
-
   // Handle updating quantity for existing item
   const handleUpdateItemQuantity = (itemId: string, newQuantity: number, notes?: string) => {
     setItemsToUpdate(prev => {
@@ -754,7 +749,7 @@ const OrderEdit: React.FC = () => {
                                   <div className="font-medium">{item.menuItem?.name}</div>
                                   {item.menuItem?.price && (
                                     <div className="text-sm text-muted-foreground">
-                                      ${parseFloat(item.menuItem.price).toFixed(2)} each
+                                      ${parseFloat(item.menuItem.discountPrice || item.menuItem.price).toFixed(2)} each
                                     </div>
                                   )}
                                 </div>

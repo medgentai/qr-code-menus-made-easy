@@ -1,8 +1,6 @@
 import React from 'react';
-import { CheckCircle, ArrowLeft, Clock, Info, Receipt, Timer, User, MapPin, Phone, Mail, CreditCard, Star } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Clock, Info, Receipt, Timer, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { formatPrice } from '@/lib/utils';
 import { OrderStatus } from '@/services/order-service';
@@ -25,11 +23,9 @@ interface OrderConfirmationProps {
 }
 
 const OrderConfirmation: React.FC<OrderConfirmationProps> = ({
-  orderId,
   orderNumber,
   status,
   items,
-  totalAmount,
   customerName,
   estimatedTime = '15-20 minutes',
   onBackToMenu,
@@ -165,8 +161,8 @@ const OrderConfirmation: React.FC<OrderConfirmationProps> = ({
                 const subtotal = items.reduce((total, item) => {
                   return total + (parseFloat(item.price) * item.quantity);
                 }, 0);
-                const gstAmount = subtotal * 0.05;
-                const finalTotal = subtotal + gstAmount;
+                // No GST calculation
+                const finalTotal = subtotal;
 
                 return (
                   <>
@@ -175,18 +171,8 @@ const OrderConfirmation: React.FC<OrderConfirmationProps> = ({
                       <span className="font-semibold text-gray-900 text-sm">{formatPrice(subtotal)}</span>
                     </div>
 
-                    {/* GST Breakdown */}
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-500 text-xs">CGST (2.5%)</span>
-                      <span className="text-gray-700 text-xs">{formatPrice(gstAmount / 2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center py-1">
-                      <span className="text-gray-500 text-xs">SGST (2.5%)</span>
-                      <span className="text-gray-700 text-xs">{formatPrice(gstAmount / 2)}</span>
-                    </div>
-
                     <div className="flex justify-between items-center py-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg px-3">
-                      <span className="text-sm font-bold text-white">Total (incl. GST)</span>
+                      <span className="text-sm font-bold text-white">Total</span>
                       <span className="text-lg font-bold text-white">{formatPrice(finalTotal)}</span>
                     </div>
                   </>

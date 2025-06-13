@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { Clock, Info, Leaf, Wheat, Flame, Search, X, Plus, Minus, ShoppingCart, Menu, Timer, ArrowLeft, Filter } from 'lucide-react';
+import { Clock, Info, Leaf, Wheat, Flame, Search, X, Plus, Minus, ShoppingCart, ArrowLeft, Filter } from 'lucide-react';
 import { usePublicMenu } from '@/contexts/public-menu-context';
 import { useCart } from '@/contexts/cart-context';
 import { MenuItem } from '@/services/menu-service';
@@ -60,7 +60,6 @@ const MobileHeader: React.FC<MobileHeaderProps> = ({
   title,
   showBackButton = false,
   onBackClick,
-  rightAction,
   subtitle
 }) => (
   <div className="sticky top-0 z-40 bg-gradient-to-r from-white via-white to-orange-50/30 backdrop-blur-md border-b border-gray-100 px-4 py-4 transition-all duration-300 shadow-sm">
@@ -426,7 +425,7 @@ const PublicMenu: React.FC = () => {
       const orderItems = items.map(item => ({
         name: item.menuItem.name,
         quantity: item.quantity,
-        price: item.menuItem.price,
+        price: item.menuItem.discountPrice || item.menuItem.price,
         notes: item.notes,
       }));
 
@@ -595,7 +594,7 @@ const PublicMenu: React.FC = () => {
                       )}
                     </div>
                     <div className="text-lg font-bold text-primary ml-2">
-                      {formatPrice((parseFloat(item.menuItem.price) * item.quantity).toString())}
+                      {formatPrice((parseFloat(item.menuItem.discountPrice || item.menuItem.price) * item.quantity).toString())}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">

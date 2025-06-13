@@ -15,11 +15,15 @@ import {
 } from '@/components/ui/form';
 import { useCart } from '@/contexts/cart-context';
 import { formatPrice } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowLeft, ShoppingBag, User, CreditCard } from 'lucide-react';
-import { CreatePublicOrderDto } from '@/services/public-order-service';
+import { CreateOrderItemModifierDto } from '@/services/order-service';
 import PartySizeInput from '@/components/orders/PartySizeInput';
+
+// Extended modifier interface that includes name and price for display
+interface CartItemModifier extends CreateOrderItemModifierDto {
+  name: string;
+  price: string;
+}
 
 // Form schema
 const formSchema = z.object({
@@ -46,7 +50,6 @@ interface CheckoutFormProps {
 }
 
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
-  venueId,
   tableId,
   tableCapacity,
   onBack,
@@ -56,8 +59,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   const {
     items,
     totalItems,
-    subtotal,
-    gstAmount,
     totalAmount,
     customerName,
     customerEmail,
@@ -152,8 +153,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                       <div className="text-right ml-3">
                         <p className="font-bold text-gray-900 text-sm">
                           {formatPrice((
-                            parseFloat(item.menuItem.discountPrice || item.menuItem.price) +
-                            (item.modifiers?.reduce((total, mod) => total + parseFloat(mod.price), 0) || 0)
+                            parseFloat(item.menuItem.discountPrice || item.menuItem.price) +                            (item.modifiers?.reduce((total, mod) => {
+                              // Cast mod to CartItemModifier type to access price property
+                              const modPrice = (mod as CartItemModifier).price ? parseFloat((mod as CartItemModifier).price) : 0;
+                              return total + modPrice;
+                            }, 0) || 0)
                           ) * item.quantity)}
                         </p>
                       </div>
@@ -163,23 +167,11 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
               ))}
             </div>
 
-            {/* GST Breakdown */}
+            {/* Total */}
             <div className="px-4 py-3 bg-orange-50 border-t border-orange-200">
               <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-orange-600">Subtotal</span>
-                  <span className="text-xs font-semibold text-orange-800">{formatPrice(subtotal)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-orange-500">CGST (2.5%)</span>
-                  <span className="text-xs text-orange-700">{formatPrice(gstAmount / 2)}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-orange-500">SGST (2.5%)</span>
-                  <span className="text-xs text-orange-700">{formatPrice(gstAmount / 2)}</span>
-                </div>
-                <div className="flex justify-between items-center pt-1 border-t border-orange-300">
-                  <span className="text-sm font-bold text-orange-900">Total (incl. GST)</span>
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-sm font-bold text-orange-900">Total</span>
                   <span className="text-sm font-bold text-orange-900">{formatPrice(totalAmount)}</span>
                 </div>
               </div>

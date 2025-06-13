@@ -48,6 +48,7 @@ export interface OrderItem {
     name: string;
     description?: string | null;
     price: string;
+    discountPrice?: string | null;
     imageUrl?: string | null;
   };
   modifiers?: OrderItemModifier[];

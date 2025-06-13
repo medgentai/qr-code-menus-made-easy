@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingCart, X, Plus, Minus, Trash2, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from '@/components/ui/sheet';
@@ -16,11 +16,10 @@ interface CartItemModifier extends CreateOrderItemModifierDto {
 }
 
 interface CartProps {
-  venueId: string;
   onCheckout: () => void;
 }
 
-const Cart: React.FC<CartProps> = ({ venueId, onCheckout }) => {
+const Cart: React.FC<CartProps> = ({ onCheckout }) => {
   const {
     items,
     removeItem,
@@ -134,7 +133,7 @@ const Cart: React.FC<CartProps> = ({ venueId, onCheckout }) => {
                         </div>
                         <div className="font-medium">
                           {formatPrice((
-                            parseFloat(item.menuItem.price) +
+                            parseFloat(item.menuItem.discountPrice || item.menuItem.price) +
                             (item.modifiers?.reduce((total, mod) => total + parseFloat((mod as CartItemModifier).price), 0) || 0)
                           ) * item.quantity)}
                         </div>

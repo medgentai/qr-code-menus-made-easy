@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CreateOrderDto, CreateOrderItemDto, OrderStatus } from '@/services/order-service';
+import { CreateOrderDto, OrderStatus } from '@/services/order-service';
 import { Category, MenuItem } from '@/services/menu-service';
 
 interface OrderSummaryProps {
