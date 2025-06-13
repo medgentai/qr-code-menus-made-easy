@@ -7,6 +7,7 @@ export interface PublicMenu extends Menu {
     id: string;
     name: string;
     slug: string;
+    logoUrl?: string;
   };
   table?: {
     id: string;
