@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,6 +18,9 @@ import { formatPrice } from '@/lib/utils';
 import { ArrowLeft, ShoppingBag, User, CreditCard } from 'lucide-react';
 import { CreateOrderItemModifierDto } from '@/services/order-service';
 import PartySizeInput from '@/components/orders/PartySizeInput';
+import { useQuery } from '@tanstack/react-query';
+import { TaxService } from '@/services/tax-service';
+import { ServiceType } from '@/types/tax';
 
 // Extended modifier interface that includes name and price for display
 interface CartItemModifier extends CreateOrderItemModifierDto {
@@ -44,6 +47,7 @@ interface CheckoutFormProps {
   venueId: string;
   tableId: string | null;
   tableCapacity?: number | null;
+  organizationId: string;
   onBack: () => void;
   onSubmit: (data: FormValues) => void;
   isSubmitting: boolean;
@@ -52,6 +56,7 @@ interface CheckoutFormProps {
 const CheckoutForm: React.FC<CheckoutFormProps> = ({
   tableId,
   tableCapacity,
+  organizationId,
   onBack,
   onSubmit,
   isSubmitting,
@@ -66,6 +71,61 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
     roomNumber,
     partySize,
   } = useCart();
+
+  // Debug logging
+  console.log('Checkout form props:', { organizationId, tableId });
+  console.log('Cart items:', items);
+
+  // Convert cart items to tax calculation format
+  const taxItems = useMemo(() => {
+    return items.map(item => {
+      const modifiersPrice = item.modifiers?.reduce((total, mod) => {
+        const modPrice = (mod as any).price ? parseFloat((mod as any).price) : 0;
+        return total + modPrice;
+      }, 0) || 0;
+
+      const taxItem: any = {
+        menuItemId: item.menuItemId,
+        quantity: item.quantity,
+        unitPrice: parseFloat(item.menuItem.discountPrice || item.menuItem.price),
+      };
+
+      // Only include modifiersPrice if it's greater than 0
+      if (modifiersPrice > 0) {
+        taxItem.modifiersPrice = modifiersPrice;
+      }
+
+      return taxItem;
+    });
+  }, [items]);
+
+  // Calculate tax for the order
+  const {
+    data: taxCalculation,
+    isLoading: isCalculatingTax,
+    error: taxError,
+  } = useQuery({
+    queryKey: ['checkout-tax-calculation', organizationId, taxItems],
+    queryFn: () => {
+      console.log('Tax calculation request:', {
+        organizationId,
+        serviceType: ServiceType.DINE_IN,
+        items: taxItems,
+      });
+      return TaxService.calculateTax({
+        organizationId,
+        serviceType: ServiceType.DINE_IN, // Default to dine in for checkout
+        items: taxItems,
+      });
+    },
+    enabled: items.length > 0 && !!organizationId,
+    staleTime: 30000, // Cache for 30 seconds
+    onError: (error: any) => {
+      console.error('Tax calculation error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+    },
+  });
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -167,14 +227,51 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
               ))}
             </div>
 
-            {/* Total */}
+            {/* Tax Breakdown */}
             <div className="px-4 py-3 bg-orange-50 border-t border-orange-200">
-              <div className="space-y-1">
-                <div className="flex justify-between items-center pt-1">
-                  <span className="text-sm font-bold text-orange-900">Total</span>
-                  <span className="text-sm font-bold text-orange-900">{formatPrice(totalAmount)}</span>
+              {taxCalculation ? (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-orange-700">Subtotal:</span>
+                    <span className="text-xs text-orange-700">{formatPrice(taxCalculation.subtotalAmount)}</span>
+                  </div>
+
+                  {!taxCalculation.taxBreakdown.isTaxExempt && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-orange-700">
+                        Tax ({taxCalculation.taxBreakdown.taxRate}%):
+                      </span>
+                      <span className="text-xs text-orange-700">{formatPrice(taxCalculation.taxBreakdown.taxAmount)}</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center pt-1 border-t border-orange-200">
+                    <span className="text-sm font-bold text-orange-900">Total</span>
+                    <span className="text-sm font-bold text-orange-900">{formatPrice(taxCalculation.totalAmount)}</span>
+                  </div>
+
+                  {taxCalculation.displayMessage && (
+                    <div className="text-xs text-orange-600 text-center">
+                      * {taxCalculation.displayMessage}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : isCalculatingTax ? (
+                <div className="flex justify-center items-center py-2">
+                  <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin"></div>
+                  <span className="ml-2 text-xs text-orange-700">Calculating tax...</span>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center pt-1">
+                    <span className="text-sm font-bold text-orange-900">Total</span>
+                    <span className="text-sm font-bold text-orange-900">{formatPrice(totalAmount)}</span>
+                  </div>
+                  <div className="text-xs text-orange-600 text-center">
+                    Tax will be calculated at checkout
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -325,7 +422,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
                     ) : (
                       <div className="flex items-center gap-2">
                         <CreditCard className="h-4 w-4" />
-                        <span>Confirm Order • {formatPrice(totalAmount)}</span>
+                        <span>Confirm Order • {formatPrice(taxCalculation?.totalAmount || totalAmount)}</span>
                       </div>
                     )}
                   </Button>

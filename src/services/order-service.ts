@@ -64,7 +64,14 @@ export interface Order {
   roomNumber?: string | null;
   partySize?: number | null;
   status: OrderStatus;
+  subtotalAmount?: string;
+  taxAmount?: string;
+  taxRate?: number;
+  taxType?: string;
+  serviceType?: string;
   totalAmount: string;
+  isTaxExempt?: boolean;
+  isPriceInclusive?: boolean;
   notes?: string | null;
   createdAt: string;
   updatedAt: string;

@@ -449,6 +449,7 @@ const OrderCreate: React.FC = () => {
                     items: selectedItems
                   }}
                   categories={activeMenu?.categories || []}
+                  organizationId={organizationId}
                 />
               </TabsContent>
             </form>

@@ -65,6 +65,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Edit } from 'lucide-react';
+import { toast } from 'sonner';
+import { TaxConfigurationList } from '@/components/tax/TaxConfigurationList';
 
 // Form validation schema
 const updateOrganizationSchema = z.object({
@@ -348,6 +350,7 @@ const OrganizationSettings = () => {
           <div className="overflow-auto">
             <TabsList className="inline-flex w-auto min-w-full sm:min-w-full md:w-auto md:min-w-0">
               <TabsTrigger value="general">General</TabsTrigger>
+              <TabsTrigger value="tax">Tax Configuration</TabsTrigger>
               <TabsTrigger value="danger">Danger Zone</TabsTrigger>
             </TabsList>
           </div>
@@ -558,7 +561,25 @@ const OrganizationSettings = () => {
             </Card>
           </TabsContent>
 
-
+          <TabsContent value="tax">
+            <Card>
+              <CardHeader>
+                <CardTitle>Tax Configuration</CardTitle>
+                <CardDescription>
+                  Manage tax rates and settings for your organization
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {currentOrganization && (
+                  <TaxConfigurationList
+                    organizationId={currentOrganization.id}
+                    organizationType={currentOrganization.type}
+                    canManage={isOwner || ['ADMINISTRATOR', 'MANAGER'].includes(user?.role || '')}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="danger">
             <Card className="border-destructive/50">

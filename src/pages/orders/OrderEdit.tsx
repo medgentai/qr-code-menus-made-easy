@@ -906,6 +906,7 @@ const OrderEdit: React.FC = () => {
                     ]
                   }}
                   categories={activeMenu?.categories || []}
+                  organizationId={currentOrder.table?.venue?.organizationId}
                 />
               </TabsContent>
             </form>

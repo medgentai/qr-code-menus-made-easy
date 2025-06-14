@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { TaxService } from '@/services/tax-service';
 
 interface PaginatedOrderListProps {
   onSelectOrder?: (order: Order) => void;
@@ -100,9 +101,17 @@ export const PaginatedOrderList: React.FC<PaginatedOrderListProps> = ({
                 <Badge variant="outline" className="mb-2">
                   {order.status}
                 </Badge>
-                <span className="font-medium">
-                  ${parseFloat(order.totalAmount).toFixed(2)}
-                </span>
+                <div className="text-right">
+                  <span className="font-medium">
+                    {TaxService.formatCurrency(parseFloat(order.totalAmount))}
+                  </span>
+                  {order.isTaxExempt && (
+                    <div className="text-xs text-muted-foreground">Tax Exempt</div>
+                  )}
+                  {order.isPriceInclusive && (
+                    <div className="text-xs text-muted-foreground">Tax Inclusive</div>
+                  )}
+                </div>
                 <span className="text-sm text-gray-500">
                   {order.items?.length || 0} items
                 </span>

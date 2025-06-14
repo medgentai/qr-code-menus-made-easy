@@ -509,6 +509,7 @@ const PublicMenu: React.FC = () => {
         venueId={venueId || ''}
         tableId={tableId}
         tableCapacity={menu?.table?.capacity}
+        organizationId={menu?.organization?.id || ''}
         onBack={handleBackToMenu}
         onSubmit={handlePlaceOrder}
         isSubmitting={isSubmitting}

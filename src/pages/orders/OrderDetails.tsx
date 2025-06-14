@@ -56,6 +56,8 @@ import {
   useUpdateOrderItemMutation,
   useDeleteOrderMutation
 } from '@/hooks/useOrderQuery';
+import { TaxBreakdown } from '@/components/orders/TaxBreakdown';
+import { TaxService } from '@/services/tax-service';
 
 const OrderDetails: React.FC = () => {
   const { id: organizationId, venueId, orderId } = useParams<{
@@ -456,9 +458,41 @@ const OrderDetails: React.FC = () => {
                   </div>
                 ))}
 
-                <div className="flex justify-between items-center pt-4 border-t">
-                  <span className="font-bold text-lg">Total</span>
-                  <span className="font-bold text-lg">{formatCurrency(currentOrder.totalAmount)}</span>
+                <div className="pt-4 border-t space-y-3">
+                  {/* Tax Breakdown */}
+                  <div className="space-y-2">
+                    {currentOrder.subtotalAmount && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Subtotal:</span>
+                        <span className="font-mono">{formatCurrency(currentOrder.subtotalAmount)}</span>
+                      </div>
+                    )}
+
+                    {currentOrder.isTaxExempt ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Tax:</span>
+                        <span className="text-muted-foreground">Exempt</span>
+                      </div>
+                    ) : currentOrder.taxAmount && parseFloat(currentOrder.taxAmount) > 0 ? (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Tax ({TaxService.formatTaxRate(currentOrder.taxRate)}):
+                        </span>
+                        <span className="font-mono">{formatCurrency(currentOrder.taxAmount)}</span>
+                      </div>
+                    ) : null}
+
+                    <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
+                      <span>Total</span>
+                      <span className="font-mono">{formatCurrency(currentOrder.totalAmount)}</span>
+                    </div>
+
+                    {currentOrder.isPriceInclusive && (
+                      <div className="text-xs text-muted-foreground text-right">
+                        * Tax inclusive pricing
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -466,6 +500,11 @@ const OrderDetails: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Tax Breakdown Card */}
+        {(currentOrder.taxType || currentOrder.taxAmount || currentOrder.isTaxExempt) && (
+          <TaxBreakdown order={currentOrder} />
+        )}
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
