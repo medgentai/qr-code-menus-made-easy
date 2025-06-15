@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
@@ -9,19 +8,19 @@ const useCases = [
   {
     title: "Restaurants",
     description: "Streamline table service with instant orders and dynamic menu updates.",
-    image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=500&auto=format&fit=crop",
+    image: "retsaurant.jpeg",
     link: "/use-cases/restaurants"
   },
   {
     title: "Hotels",
     description: "Enhance room service and in-house dining with contactless ordering.",
-    image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=500&auto=format&fit=crop",
+    image: "hotel.jpeg",
     link: "/use-cases/hotels"
   },
   {
     title: "Cafés & Bars",
     description: "Increase turnover with faster service and simplified order management.",
-    image: "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=500&auto=format&fit=crop",
+    image: "cafe.jpeg",
     link: "/use-cases/cafes"
   }
 ];

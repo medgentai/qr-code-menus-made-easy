@@ -1,5 +1,3 @@
-
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 
@@ -8,25 +6,25 @@ const steps = [
     number: "01",
     title: "Sign Up & Create Menu",
     description: "Create your account and build your digital menu with categories, items, descriptions, and images.",
-    image: "https://images.unsplash.com/photo-1579468118864-1b9ea3c0db4a?w=500&auto=format&fit=crop"
+    image: "step1.jpeg"
   },
   {
     number: "02",
     title: "Generate QR Codes",
     description: "Create custom QR codes for your menus that can be printed and placed throughout your establishment.",
-    image: "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=500&auto=format&fit=crop"
+    image: "step2.jpeg"
   },
   {
     number: "03",
     title: "Customers Scan & Order",
     description: "Customers scan the QR code with their phone, browse your menu, and place orders directly.",
-    image: "https://images.unsplash.com/photo-1593508512255-86ab42a8e24c?w=500&auto=format&fit=crop"
+    image: "step3.jpeg"
   },
   {
     number: "04",
     title: "Receive & Fulfill Orders",
     description: "Get notified of new orders instantly, manage them from your dashboard, and serve your customers faster.",
-    image: "https://images.unsplash.com/photo-1564218989864-0d562e8b9371?w=500&auto=format&fit=crop"
+    image: "step4.jpeg"
   }
 ];
 

@@ -1,10 +1,9 @@
 
-import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, ClipboardCheck, Clock, FileText, ImageIcon, LayoutDashboard, List, QrCode, Settings, Users } from 'lucide-react';
+import { CheckCircle, ClipboardCheck, Clock, FileText, ImageIcon, LayoutDashboard, List, QrCode, Settings, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
 
 const FeaturesList = [

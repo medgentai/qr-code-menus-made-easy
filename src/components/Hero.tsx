@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Scan, Smartphone, Utensils, LayoutDashboard } from 'lucide-react';
@@ -72,7 +71,7 @@ const Hero = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-sky-300/20 rounded-2xl blur-lg"></div>
               <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-3">
                 <img
-                  src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=800&auto=format&fit=crop"
+                  src="heropage.jpeg"
                   alt="ScanServe QR code menu in action"
                   className="w-full h-auto rounded-xl shadow-sm image-hover"
                 />
