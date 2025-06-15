@@ -45,7 +45,8 @@ const venueFormSchema = z.object({
   phoneNumber: z.string().max(20, 'Phone number must be less than 20 characters').optional(),
   email: z.string().email('Invalid email address').max(100, 'Email must be less than 100 characters').optional().or(z.literal('')),
   imageUrl: z.string().url('Invalid URL').max(255, 'URL must be less than 255 characters').optional().or(z.literal('')),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+  viewOnlyMode: z.boolean().default(false)
 });
 
 type VenueFormValues = z.infer<typeof venueFormSchema>;
@@ -74,7 +75,8 @@ const VenueEdit = () => {
       phoneNumber: '',
       email: '',
       imageUrl: '',
-      isActive: true
+      isActive: true,
+      viewOnlyMode: false
     }
   });
 
@@ -96,7 +98,8 @@ const VenueEdit = () => {
             phoneNumber: venue.phoneNumber || '',
             email: venue.email || '',
             imageUrl: venue.imageUrl || '',
-            isActive: venue.isActive
+            isActive: venue.isActive,
+            viewOnlyMode: venue.viewOnlyMode || false
           });
         }
       });
@@ -435,6 +438,27 @@ const VenueEdit = () => {
                         <FormLabel className="text-base">Active Status</FormLabel>
                         <FormDescription>
                           Set whether this venue is active and visible to customers
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="viewOnlyMode"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 border-orange-200 bg-orange-50/50">
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-base">View-Only Mode</FormLabel>
+                        <FormDescription>
+                          When enabled, customers can view menus and track orders but cannot place new orders. This overrides the organization setting.
                         </FormDescription>
                       </div>
                       <FormControl>

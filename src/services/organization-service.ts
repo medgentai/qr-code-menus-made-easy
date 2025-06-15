@@ -15,6 +15,7 @@ export interface Organization {
   planStartDate?: string;
   planEndDate?: string;
   isActive: boolean;
+  viewOnlyMode?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -69,6 +70,7 @@ export interface OrganizationDetails {
   websiteUrl?: string;
   type: OrganizationType;
   isActive: boolean;
+  viewOnlyMode?: boolean;
   createdAt: string;
   updatedAt: string;
   owner: UserBasicInfo;
@@ -96,6 +98,7 @@ export interface UpdateOrganizationDto {
   websiteUrl?: string;
   type?: OrganizationType;
   isActive?: boolean;
+  viewOnlyMode?: boolean;
 }
 
 export interface AddMemberDto {

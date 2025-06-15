@@ -16,6 +16,7 @@ export interface Venue {
   email?: string;
   imageUrl?: string;
   isActive: boolean;
+  viewOnlyMode?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,6 +59,7 @@ export interface UpdateVenueDto {
   email?: string;
   imageUrl?: string;
   isActive?: boolean;
+  viewOnlyMode?: boolean;
 }
 
 export interface CreateTableDto {

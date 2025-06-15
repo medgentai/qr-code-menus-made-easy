@@ -97,6 +97,7 @@ const updateOrganizationSchema = z.object({
     errorMap: () => ({ message: 'Please select a valid organization type' }),
   }),
   isActive: z.boolean(),
+  viewOnlyMode: z.boolean(),
 });
 
 type FormValues = z.infer<typeof updateOrganizationSchema>;
@@ -134,6 +135,7 @@ const OrganizationSettings = () => {
       websiteUrl: '',
       type: OrganizationType.RESTAURANT,
       isActive: true,
+      viewOnlyMode: false,
     },
   });
 
@@ -151,6 +153,7 @@ const OrganizationSettings = () => {
         websiteUrl: currentOrganization.websiteUrl || '',
         type: currentOrganization.type,
         isActive: currentOrganization.isActive,
+        viewOnlyMode: currentOrganization.viewOnlyMode || false,
       });
     }
   }, [currentOrganization, form]);
@@ -222,6 +225,7 @@ const OrganizationSettings = () => {
         websiteUrl: data.websiteUrl || undefined,
         type: data.type,
         isActive: data.isActive,
+        viewOnlyMode: data.viewOnlyMode,
       };
 
       await updateOrganization(id, updateData);
@@ -526,6 +530,27 @@ const OrganizationSettings = () => {
                             <FormLabel className="text-base">Active Status</FormLabel>
                             <FormDescription>
                               When inactive, the organization will not be accessible to customers
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="viewOnlyMode"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 border-orange-200 bg-orange-50/50">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">View-Only Mode</FormLabel>
+                            <FormDescription>
+                              When enabled, customers can view menus and track orders but cannot place new orders. This affects all venues in this organization.
                             </FormDescription>
                           </div>
                           <FormControl>

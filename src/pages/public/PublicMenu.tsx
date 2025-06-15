@@ -125,6 +125,9 @@ const PublicMenu: React.FC = () => {
   };
 
   const { menu, isLoading, error, activeCategory, setActiveCategory, loadMenuByOrganizationSlug } = usePublicMenu();
+
+  // Check if view-only mode is enabled
+  const isViewOnlyMode = menu?.viewOnlyMode || false;
   const {
     items,
     addItem,
@@ -284,6 +287,10 @@ const PublicMenu: React.FC = () => {
   };
 
   const handleItemClick = (item: MenuItem) => {
+    // Don't allow item selection in view-only mode
+    if (isViewOnlyMode) {
+      return;
+    }
     setSelectedItem(item);
     setItemQuantity(1);
     setItemNotes('');
@@ -504,6 +511,14 @@ const PublicMenu: React.FC = () => {
 
   // Render different views based on the current state
   if (viewState === ViewState.CHECKOUT) {
+    // Redirect to menu if in view-only mode
+    if (isViewOnlyMode) {
+      const searchParamsString = searchParams.toString();
+      const queryString = searchParamsString ? `?${searchParamsString}` : '';
+      navigate(`/${slug}${queryString}`, { replace: true });
+      return null;
+    }
+
     return (
       <CheckoutForm
         venueId={venueId || ''}
@@ -539,6 +554,14 @@ const PublicMenu: React.FC = () => {
   }
 
   if (viewState === ViewState.CART) {
+    // Redirect to menu if in view-only mode
+    if (isViewOnlyMode) {
+      const searchParamsString = searchParams.toString();
+      const queryString = searchParamsString ? `?${searchParamsString}` : '';
+      navigate(`/${slug}${queryString}`, { replace: true });
+      return null;
+    }
+
     return (
       <div className="min-h-screen bg-gray-50 pb-16 animate-in fade-in duration-300">
         {/* Mobile Header */}
@@ -872,6 +895,25 @@ const PublicMenu: React.FC = () => {
         </div>
       </div>
 
+      {/* View-Only Mode Banner */}
+      {isViewOnlyMode && (
+        <div className="bg-orange-50 border-b border-orange-200">
+          <div className="container mx-auto px-4 py-3 max-w-md">
+            <div className="flex items-center gap-3 p-3 bg-orange-100 rounded-lg border border-orange-200">
+              <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <Info className="h-4 w-4 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-orange-800">View-Only Mode</h3>
+                <p className="text-xs text-orange-700 mt-1">
+                  You can browse the menu and track orders, but ordering is currently disabled.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto px-4 py-4 max-w-md">
         {/* Filter Status and Search Results */}
         {(dietaryFilter !== DietaryFilter.ALL || isSearching) && (
@@ -957,7 +999,11 @@ const PublicMenu: React.FC = () => {
                     {categoryItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-b border-gray-50 last:border-b-0"
+                        className={`flex p-4 transition-colors duration-200 border-b border-gray-50 last:border-b-0 ${
+                          isViewOnlyMode
+                            ? 'cursor-default'
+                            : 'cursor-pointer hover:bg-gray-50'
+                        }`}
                         onClick={() => handleItemClick(item)}
                       >
                         {/* Item Image */}
@@ -1033,7 +1079,11 @@ const PublicMenu: React.FC = () => {
                 className="bg-white rounded-lg border border-gray-200 overflow-hidden"
               >
                 <div
-                  className="flex p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                  className={`flex p-4 transition-colors duration-200 ${
+                    isViewOnlyMode
+                      ? 'cursor-default'
+                      : 'cursor-pointer hover:bg-gray-50'
+                  }`}
                   onClick={() => handleItemClick(item)}
                 >
                   {/* Image Section */}
@@ -1119,7 +1169,11 @@ const PublicMenu: React.FC = () => {
                     className="bg-white rounded-lg border border-gray-200 overflow-hidden"
                   >
                     <div
-                      className="flex p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                      className={`flex p-4 transition-colors duration-200 ${
+                        isViewOnlyMode
+                          ? 'cursor-default'
+                          : 'cursor-pointer hover:bg-gray-50'
+                      }`}
                       onClick={() => handleItemClick(item)}
                     >
                       {item.imageUrl ? (
@@ -1181,7 +1235,11 @@ const PublicMenu: React.FC = () => {
                   className="bg-white rounded-lg border border-gray-200 overflow-hidden"
                 >
                   <div
-                    className="flex p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+                    className={`flex p-4 transition-colors duration-200 ${
+                      isViewOnlyMode
+                        ? 'cursor-default'
+                        : 'cursor-pointer hover:bg-gray-50'
+                    }`}
                     onClick={() => handleItemClick(item)}
                   >
                     {item.imageUrl ? (
@@ -1408,34 +1466,55 @@ const PublicMenu: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="bg-white border-t border-gray-100 p-4">
-              <div className="flex gap-3">
-                <SheetClose asChild>
+              {isViewOnlyMode ? (
+                <div className="text-center">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-3">
+                    <p className="text-sm text-orange-800 font-medium">
+                      Ordering is currently disabled
+                    </p>
+                    <p className="text-xs text-orange-700 mt-1">
+                      You can view menu items but cannot place orders at this time.
+                    </p>
+                  </div>
+                  <SheetClose asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl h-12 border-gray-300 hover:bg-gray-50 font-medium"
+                    >
+                      Close
+                    </Button>
+                  </SheetClose>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <SheetClose asChild>
+                    <Button
+                      variant="outline"
+                      className="flex-1 rounded-xl h-12 border-gray-300 hover:bg-gray-50 font-medium"
+                      disabled={isAddingToCart}
+                    >
+                      Cancel
+                    </Button>
+                  </SheetClose>
                   <Button
-                    variant="outline"
-                    className="flex-1 rounded-xl h-12 border-gray-300 hover:bg-gray-50 font-medium"
+                    className="flex-1 rounded-xl h-12 bg-orange-600 hover:bg-orange-700 font-medium text-white"
+                    onClick={handleAddToCart}
                     disabled={isAddingToCart}
                   >
-                    Cancel
+                    {isAddingToCart ? (
+                      <>
+                        <LoadingSpinner size="sm" />
+                        <span className="ml-2">Adding...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="mr-2 h-4 w-4" />
+                        Add to Cart
+                      </>
+                    )}
                   </Button>
-                </SheetClose>
-                <Button
-                  className="flex-1 rounded-xl h-12 bg-orange-600 hover:bg-orange-700 font-medium text-white"
-                  onClick={handleAddToCart}
-                  disabled={isAddingToCart}
-                >
-                  {isAddingToCart ? (
-                    <>
-                      <LoadingSpinner size="sm" />
-                      <span className="ml-2">Adding...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      Add to Cart
-                    </>
-                  )}
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           </SheetContent>
         </Sheet>
@@ -1443,7 +1522,7 @@ const PublicMenu: React.FC = () => {
         {/* Item Detail Sheet */}
         {/* Compact Mobile Footer Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-2 z-50">
-        <div className="flex justify-around items-center max-w-md mx-auto">
+        <div className={`flex items-center max-w-md mx-auto ${isViewOnlyMode ? 'justify-around' : 'justify-around'}`}>
           {/* Menu Tab */}
           <button
             onClick={() => handleFooterTabChange(FooterTab.MENU)}
@@ -1478,27 +1557,29 @@ const PublicMenu: React.FC = () => {
             <span className="text-xs font-medium">Orders</span>
           </button>
 
-          {/* Cart Tab */}
-          <button
-            onClick={() => handleFooterTabChange(FooterTab.CART)}
-            className={`flex flex-col items-center py-2 px-3 transition-all duration-200 relative min-w-[60px] ${
-              activeFooterTab === FooterTab.CART
-                ? 'text-orange-600'
-                : 'text-gray-500'
-            }`}
-          >
-            <div className="w-6 h-6 mb-1 flex items-center justify-center relative">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-              </svg>
-              {totalItems > 0 && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">{totalItems}</span>
-                </div>
-              )}
-            </div>
-            <span className="text-xs font-medium">Cart</span>
-          </button>
+          {/* Cart Tab - Hidden in view-only mode */}
+          {!isViewOnlyMode && (
+            <button
+              onClick={() => handleFooterTabChange(FooterTab.CART)}
+              className={`flex flex-col items-center py-2 px-3 transition-all duration-200 relative min-w-[60px] ${
+                activeFooterTab === FooterTab.CART
+                  ? 'text-orange-600'
+                  : 'text-gray-500'
+              }`}
+            >
+              <div className="w-6 h-6 mb-1 flex items-center justify-center relative">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                </svg>
+                {totalItems > 0 && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">{totalItems}</span>
+                  </div>
+                )}
+              </div>
+              <span className="text-xs font-medium">Cart</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -55,6 +55,7 @@ const VenueSettings = () => {
   } = useVenue();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [viewOnlyMode, setViewOnlyMode] = useState(false);
 
   // Organization details are automatically fetched by the organization context
   // when the current organization changes, so we don't need to fetch them here
@@ -64,6 +65,7 @@ const VenueSettings = () => {
       fetchVenueById(venueId).then(venue => {
         if (venue) {
           setIsActive(venue.isActive);
+          setViewOnlyMode(venue.viewOnlyMode || false);
         }
       });
     }
@@ -92,6 +94,17 @@ const VenueSettings = () => {
 
     await updateVenue(venueId, {
       isActive: newStatus
+    });
+  };
+
+  const handleToggleViewOnlyMode = async () => {
+    if (!venueId) return;
+
+    const newStatus = !viewOnlyMode;
+    setViewOnlyMode(newStatus);
+
+    await updateVenue(venueId, {
+      viewOnlyMode: newStatus
     });
   };
 
@@ -175,6 +188,19 @@ const VenueSettings = () => {
                       <Switch
                         checked={isActive}
                         onCheckedChange={handleToggleActive}
+                      />
+                    </div>
+                    <Separator />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-orange-200 bg-orange-50/50">
+                      <div className="space-y-0.5">
+                        <h3 className="text-base font-medium">View-Only Mode</h3>
+                        <p className="text-sm text-muted-foreground">
+                          When enabled, customers can view menus and track orders but cannot place new orders. This overrides the organization setting.
+                        </p>
+                      </div>
+                      <Switch
+                        checked={viewOnlyMode}
+                        onCheckedChange={handleToggleViewOnlyMode}
                       />
                     </div>
                     <Separator />

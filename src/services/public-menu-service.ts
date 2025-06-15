@@ -8,12 +8,19 @@ export interface PublicMenu extends Menu {
     name: string;
     slug: string;
     logoUrl?: string;
+    viewOnlyMode?: boolean;
   };
   table?: {
     id: string;
     name: string;
     capacity?: number | null;
   };
+  venue?: {
+    id: string;
+    name: string;
+    viewOnlyMode?: boolean;
+  };
+  viewOnlyMode?: boolean;
 }
 
 // Public menu service
