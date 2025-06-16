@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useOrder } from '@/hooks/useOrder';
 import { Order, OrderStatus } from '@/services/order-service';
 import { Button } from '@/components/ui/button';

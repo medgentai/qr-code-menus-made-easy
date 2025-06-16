@@ -103,7 +103,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
   const {
     data: taxCalculation,
     isLoading: isCalculatingTax,
-    error: taxError,
   } = useQuery({
     queryKey: ['checkout-tax-calculation', organizationId, taxItems],
     queryFn: () => {
@@ -120,11 +119,6 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({
     },
     enabled: items.length > 0 && !!organizationId,
     staleTime: 30000, // Cache for 30 seconds
-    onError: (error: any) => {
-      console.error('Tax calculation error:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-    },
   });
 
   // Initialize form

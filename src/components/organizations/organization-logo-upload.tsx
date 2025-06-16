@@ -17,7 +17,7 @@ export const OrganizationLogoUpload: React.FC<OrganizationLogoUploadProps> = ({
   currentLogoUrl,
   onSuccess,
 }) => {
-  const { user } = useAuth();
+  const { state: { user } } = useAuth();
   const uploadLogo = useUploadOrganizationLogo();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(currentLogoUrl || null);

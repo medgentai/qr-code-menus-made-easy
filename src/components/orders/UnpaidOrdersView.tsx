@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Card,
@@ -28,9 +28,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { format } from 'date-fns';
-import OrderService, { Order, OrderPaymentStatus } from '@/services/order-service';
+import OrderService, { Order } from '@/services/order-service';
 import { PaymentStatusDialog } from './PaymentStatusDialog';
-import { toast } from 'sonner';
 
 interface UnpaidOrdersViewProps {
   venueId: string;
@@ -61,7 +60,7 @@ export const UnpaidOrdersView: React.FC<UnpaidOrdersViewProps> = ({
     setIsPaymentDialogOpen(true);
   };
 
-  const handlePaymentStatusChanged = (updatedOrder: Order) => {
+  const handlePaymentStatusChanged = () => {
     // Refetch the unpaid orders list
     refetch();
     if (onRefresh) {

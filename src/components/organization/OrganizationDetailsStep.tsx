@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/select';
 import { OrganizationType, OrganizationTypeLabels } from '@/types/organization';
 import { ImageUploadField } from '@/components/ui/image-upload-field';
-import { useUploadOrganizationLogo } from '@/hooks/useImageUpload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const organizationDetailsSchema = z.object({
@@ -69,7 +68,6 @@ const OrganizationDetailsStep: React.FC<OrganizationDetailsStepProps> = ({
   onSubmit,
   onBack,
 }) => {
-  const uploadLogo = useUploadOrganizationLogo();
   const [selectedLogoFile, setSelectedLogoFile] = React.useState<File | null>(null);
   const [logoUploadMethod, setLogoUploadMethod] = React.useState<'url' | 'upload'>('url');
 

@@ -47,6 +47,7 @@ export interface CreateQrCodeData {
 
 export interface UpdateQrCodeData {
   menuId?: string;
+  tableId?: string;
   name?: string;
   description?: string;
   isActive?: boolean;

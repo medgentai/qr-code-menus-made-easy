@@ -38,7 +38,6 @@ import {
   TaxType,
   ServiceType,
   TaxTypeLabels,
-  ServiceTypeLabels,
   CreateTaxConfigurationDto,
   UpdateTaxConfigurationDto,
 } from '@/types/tax';

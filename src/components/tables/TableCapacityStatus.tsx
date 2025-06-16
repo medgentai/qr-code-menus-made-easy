@@ -6,8 +6,6 @@ import {
   Users, 
   Table as TableIcon, 
   AlertTriangle,
-  CheckCircle,
-  Clock,
   Utensils
 } from 'lucide-react';
 

@@ -25,9 +25,6 @@ export const TaxPreviewCard: React.FC<TaxPreviewCardProps> = ({ organizationId }
     queryKey: ['tax-preview', organizationId],
     queryFn: () => TaxService.getTaxPreview(organizationId, serviceType),
     retry: 1,
-    onError: (error: any) => {
-      console.error('Error fetching tax preview:', error);
-    },
   });
 
   if (isLoading) {

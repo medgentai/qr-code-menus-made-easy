@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, Eye, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,11 +14,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { TaxService } from '@/services/tax-service';
-import { TaxConfiguration, ServiceTypeLabels, TaxTypeLabels } from '@/types/tax';
+import { TaxConfiguration, TaxTypeLabels } from '@/types/tax';
 import { TaxConfigurationForm } from './TaxConfigurationForm';
 import { TaxPreviewCard } from './TaxPreviewCard';
 import { TaxConfigurationPlaceholder } from './TaxConfigurationPlaceholder';
@@ -49,10 +48,6 @@ export const TaxConfigurationList: React.FC<TaxConfigurationListProps> = ({
     queryKey: ['tax-configurations', organizationId],
     queryFn: () => TaxService.getTaxConfigurations(organizationId),
     retry: 1,
-    onError: (error: any) => {
-      console.error('Error fetching tax configurations:', error);
-      toast.error('Failed to load tax configurations');
-    },
   });
 
   // Delete mutation
