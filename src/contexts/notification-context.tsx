@@ -200,6 +200,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Handle order status change event
   const handleOrderStatusChange = useCallback((event: OrderEvent) => {
+    // Skip payment status change notifications (user preference)
+    if (event.message.includes('marked as PAID') || event.message.includes('marked as UNPAID')) {
+      return;
+    }
+
     // Create a unique key for this status change event
     const statusChangeKey = `${event.orderId}-${event.status}-${event.timestamp}`;
 

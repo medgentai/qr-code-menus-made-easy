@@ -97,10 +97,13 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
       });
     });
 
-    // Show notification for status changes
-    toast.info(event.message, {
-      duration: 3000,
-    });
+    // Skip payment status change notifications (user preference)
+    if (!event.message.includes('marked as PAID') && !event.message.includes('marked as UNPAID')) {
+      // Show notification for status changes
+      toast.info(event.message, {
+        duration: 3000,
+      });
+    }
 
     setLastUpdate(new Date());
   }, []);

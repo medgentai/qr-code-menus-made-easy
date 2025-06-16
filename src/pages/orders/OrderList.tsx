@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -11,8 +11,7 @@ import {
   Clock,
   Calendar,
   User,
-  Phone,
-  Mail,
+
   FileText,
   RefreshCw,
   ChevronDown,
@@ -39,7 +38,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,21 +65,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
 import { usePermissions } from '@/contexts/permission-context';
 import { useOrder } from '@/hooks/useOrder';
 import { useRoleBasedOrders } from '@/hooks/useRoleBasedOrders';
-import OrderService, { Order, OrderStatus, FilterOrdersDto } from '@/services/order-service';
+import OrderService, { Order, OrderStatus, OrderPaymentStatus } from '@/services/order-service';
+import { PaymentStatusDialog } from '@/components/orders/PaymentStatusDialog';
 import { toast } from 'sonner';
 import {
-  useInfiniteFilteredOrdersQuery,
   useUpdateOrderStatusMutation,
   useDeleteOrderMutation,
   orderKeys
@@ -91,9 +85,9 @@ const OrderList: React.FC = () => {
   const { venueId } = useParams<{ venueId: string }>();
   const navigate = useNavigate();
   const { currentOrganization } = useOrganization();
-  const { currentVenue, venues, fetchVenuesForOrganization, fetchTablesForVenue } = useVenue();
+  const { currentVenue, venues, fetchTablesForVenue } = useVenue();
   const { selectOrder } = useOrder();
-  const { userRole, userStaffType, userVenueIds } = usePermissions();
+  const { userRole, userVenueIds } = usePermissions();
   const queryClient = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
@@ -129,6 +123,9 @@ const OrderList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [paymentDialogOrder, setPaymentDialogOrder] = useState<Order | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+
 
   // State to track orders with pending status updates - for immediate UI updates
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState<Record<string, OrderStatus>>({});
@@ -157,13 +154,35 @@ const OrderList: React.FC = () => {
     const confirmed = infiniteOrders.filter((o: Order) => o.status === OrderStatus.CONFIRMED).length;
     const preparing = infiniteOrders.filter((o: Order) => o.status === OrderStatus.PREPARING).length;
     const ready = infiniteOrders.filter((o: Order) => o.status === OrderStatus.READY).length;
-    const delivered = infiniteOrders.filter((o: Order) => o.status === OrderStatus.DELIVERED).length;
+    const served = infiniteOrders.filter((o: Order) => o.status === OrderStatus.SERVED).length;
     const completed = infiniteOrders.filter((o: Order) => o.status === OrderStatus.COMPLETED).length;
     const cancelled = infiniteOrders.filter((o: Order) => o.status === OrderStatus.CANCELLED).length;
+
+    // Payment statistics - exclude cancelled orders from unpaid count
+    const paid = infiniteOrders.filter((o: Order) => o.paymentStatus === OrderPaymentStatus.PAID).length;
+    const unpaid = infiniteOrders.filter((o: Order) =>
+      o.paymentStatus === OrderPaymentStatus.UNPAID &&
+      o.status !== OrderStatus.CANCELLED
+    ).length;
 
     const totalAmount = infiniteOrders.reduce((sum: number, order: Order) => {
       return sum + parseFloat(order.totalAmount);
     }, 0);
+
+    const paidAmount = infiniteOrders
+      .filter((o: Order) => o.paymentStatus === OrderPaymentStatus.PAID)
+      .reduce((sum: number, order: Order) => {
+        return sum + parseFloat(order.totalAmount);
+      }, 0);
+
+    const unpaidAmount = infiniteOrders
+      .filter((o: Order) =>
+        o.paymentStatus === OrderPaymentStatus.UNPAID &&
+        o.status !== OrderStatus.CANCELLED
+      )
+      .reduce((sum: number, order: Order) => {
+        return sum + parseFloat(order.totalAmount);
+      }, 0);
 
     return {
       total,
@@ -171,10 +190,14 @@ const OrderList: React.FC = () => {
       confirmed,
       preparing,
       ready,
-      delivered,
+      served,
       completed,
       cancelled,
-      totalAmount
+      totalAmount,
+      paid,
+      unpaid,
+      paidAmount,
+      unpaidAmount
     };
   }, [infiniteOrders]);  // Refresh function - always refetch when user explicitly clicks refresh
   const handleRefresh = useCallback(async () => {
@@ -301,6 +324,46 @@ const OrderList: React.FC = () => {
     }
   };
 
+  const handlePaymentStatusClick = (order: Order) => {
+    setPaymentDialogOrder(order);
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handlePaymentStatusChanged = (updatedOrder: Order) => {
+    // Update the order in the cache using a predicate to match all filtered infinite queries
+    queryClient.setQueriesData(
+      {
+        predicate: (query) => {
+          const queryKey = query.queryKey;
+          return (
+            Array.isArray(queryKey) &&
+            queryKey[0] === 'orders' &&
+            queryKey[1] === 'list' &&
+            queryKey[2] === 'filtered' &&
+            queryKey[queryKey.length - 1] === 'infinite'
+          );
+        }
+      },
+      (oldData: any) => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page: any) => {
+            if (!page || !page.data) return page;
+
+            return {
+              ...page,
+              data: page.data.map((order: Order) =>
+                order.id === updatedOrder.id ? updatedOrder : order
+              )
+            };
+          })
+        };
+      }
+    );
+  };
+
   // Filter infinite orders - status filtering is now handled by the backend
   const filteredInfiniteOrders = useMemo(() => {
     return infiniteOrders.filter((order: Order) => {
@@ -341,9 +404,20 @@ const OrderList: React.FC = () => {
     if (orderToUpdate) {
       const updatedOrder = { ...orderToUpdate, status };
 
-      // Update the order in the infinite query cache
+      // Update the order in the infinite query cache using a predicate to match all filtered infinite queries
       queryClient.setQueriesData(
-        { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+        {
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === 'orders' &&
+              queryKey[1] === 'list' &&
+              queryKey[2] === 'filtered' &&
+              queryKey[queryKey.length - 1] === 'infinite'
+            );
+          }
+        },
         (oldData: any) => {
           if (!oldData) return oldData;
 
@@ -398,9 +472,20 @@ const OrderList: React.FC = () => {
             // Revert the order in the cache
             const revertedOrder = { ...orderToUpdate, status: oldStatus };
 
-            // Update the order in the infinite query cache
+            // Update the order in the infinite query cache using a predicate to match all filtered infinite queries
             queryClient.setQueriesData(
-              { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+              {
+                predicate: (query) => {
+                  const queryKey = query.queryKey;
+                  return (
+                    Array.isArray(queryKey) &&
+                    queryKey[0] === 'orders' &&
+                    queryKey[1] === 'list' &&
+                    queryKey[2] === 'filtered' &&
+                    queryKey[queryKey.length - 1] === 'infinite'
+                  );
+                }
+              },
               (oldData: any) => {
                 if (!oldData) return oldData;
 
@@ -444,7 +529,7 @@ const OrderList: React.FC = () => {
         return <Utensils className="h-4 w-4" />;
       case OrderStatus.READY:
         return <CheckCircle2 className="h-4 w-4" />;
-      case OrderStatus.DELIVERED:
+      case OrderStatus.SERVED:
         return <CheckCircle2 className="h-4 w-4" />;
       case OrderStatus.COMPLETED:
         return <CheckCircle2 className="h-4 w-4" />;
@@ -484,70 +569,61 @@ const OrderList: React.FC = () => {
           </div>
         </div>
 
-        {/* Order Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Simplified Order Management */}
+        {/* Responsive Statistics */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           <Card className="bg-card">
-            <CardHeader className="pb-2 pt-4">
-              <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardHeader className="pb-1 pt-2 px-3">
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Total Orders</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orderStats.total}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {formatCurrency(orderStats.totalAmount.toFixed(2))} total value
+            <CardContent className="px-3 pb-2">
+              <div className="text-lg sm:text-xl font-bold">{orderStats.total}</div>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                {formatCurrency(orderStats.totalAmount.toFixed(2))} total
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-card">
-            <CardHeader className="pb-2 pt-4">
-              <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+            <CardHeader className="pb-1 pt-2 px-3">
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Active Orders</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
+            <CardContent className="px-3 pb-2">
+              <div className="text-lg sm:text-xl font-bold">
                 {orderStats.pending + orderStats.confirmed + orderStats.preparing + orderStats.ready}
               </div>
-              <div className="flex gap-2 mt-2">
-                <Badge variant="outline" className={getStatusBadgeClass(OrderStatus.PENDING)}>
-                  {orderStats.pending} Pending
-                </Badge>
-                <Badge variant="outline" className={getStatusBadgeClass(OrderStatus.PREPARING)}>
-                  {orderStats.preparing} Preparing
-                </Badge>
-              </div>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                In progress
+              </p>
             </CardContent>
           </Card>
 
           <Card className="bg-card">
-            <CardHeader className="pb-2 pt-4">
-              <CardTitle className="text-sm font-medium">Ready Orders</CardTitle>
+            <CardHeader className="pb-1 pt-2 px-3">
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Paid Orders</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orderStats.ready}</div>
-              <div className="flex gap-2 mt-2">
-                <Badge variant="outline" className={getStatusBadgeClass(OrderStatus.READY)}>
-                  Ready for Pickup/Delivery
-                </Badge>
-              </div>
+            <CardContent className="px-3 pb-2">
+              <div className="text-lg sm:text-xl font-bold text-green-600">{orderStats.paid}</div>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                {formatCurrency(orderStats.paidAmount.toFixed(2))} collected
+              </p>
             </CardContent>
           </Card>
 
           <Card className="bg-card">
-            <CardHeader className="pb-2 pt-4">
-              <CardTitle className="text-sm font-medium">Completed Orders</CardTitle>
+            <CardHeader className="pb-1 pt-2 px-3">
+              <CardTitle className="text-xs sm:text-sm font-medium truncate">Unpaid Orders</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{orderStats.completed}</div>
-              <div className="flex gap-2 mt-2">
-                <Badge variant="outline" className={getStatusBadgeClass(OrderStatus.COMPLETED)}>
-                  Completed
-                </Badge>
-                <Badge variant="outline" className={getStatusBadgeClass(OrderStatus.CANCELLED)}>
-                  {orderStats.cancelled} Cancelled
-                </Badge>
-              </div>
+            <CardContent className="px-3 pb-2">
+              <div className="text-lg sm:text-xl font-bold text-red-600">{orderStats.unpaid}</div>
+              <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                {formatCurrency(orderStats.unpaidAmount.toFixed(2))} outstanding
+              </p>
             </CardContent>
           </Card>
         </div>
+
+
 
         {/* View Selector and Filters */}
         <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -726,6 +802,7 @@ const OrderList: React.FC = () => {
                     <TableHead>Items</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Payment</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -768,6 +845,15 @@ const OrderList: React.FC = () => {
                       <TableCell>
                         <Badge variant="outline" className={getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}>
                           {pendingStatusUpdates[order.id] || order.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`${order.status !== OrderStatus.CANCELLED ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${OrderService.getPaymentStatusColor(order.paymentStatus)}`}
+                          onClick={() => order.status !== OrderStatus.CANCELLED && handlePaymentStatusClick(order)}
+                        >
+                          {order.paymentStatus === OrderPaymentStatus.PAID ? 'Paid' : 'Unpaid'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -833,180 +919,143 @@ const OrderList: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredInfiniteOrders.map((order: Order) => (
-                <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow flex flex-col min-h-[280px]">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          Order #{order.id.substring(0, 8)}
+                <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3 pt-3 px-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <CardTitle className="text-sm font-semibold truncate">
+                          #{order.id.substring(0, 8)}
                         </CardTitle>
-                        <CardDescription className="flex items-center gap-1 mt-1">
-                          <Calendar className="h-3 w-3" />
-                          {format(new Date(order.createdAt), 'MMM d, yyyy')}
-                          <span className="mx-1">•</span>
-                          <Clock className="h-3 w-3" />
-                          {format(new Date(order.createdAt), 'h:mm a')}
+                        <CardDescription className="text-xs flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{format(new Date(order.createdAt), 'MMM d, h:mm a')}</span>
                         </CardDescription>
                       </div>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge variant="outline" className={getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}>
-                              <div className="flex items-center gap-1">
-                                {getStatusIcon(pendingStatusUpdates[order.id] || order.status)}
-                                <span>{pendingStatusUpdates[order.id] || order.status}</span>
-                              </div>
-                            </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Current status: {pendingStatusUpdates[order.id] || order.status}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="flex flex-col gap-1 items-end">
+                        <Badge variant="outline" className={`text-xs px-1.5 py-0.5 ${getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}`}>
+                          <span className="truncate">{pendingStatusUpdates[order.id] || order.status}</span>
+                        </Badge>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs px-1.5 py-0.5 ${order.status !== OrderStatus.CANCELLED ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${OrderService.getPaymentStatusColor(order.paymentStatus)}`}
+                          onClick={() => order.status !== OrderStatus.CANCELLED && handlePaymentStatusClick(order)}
+                        >
+                          {order.paymentStatus === OrderPaymentStatus.PAID ? 'Paid' : 'Unpaid'}
+                        </Badge>
+                      </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="pb-2 flex-grow">
-                    <div className="space-y-3 h-full">
-                      <div className="flex flex-col gap-1">
-                        {/* Show table information if available */}
-                        {order.table && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <TableIcon className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-medium">{order.table.name}</span>
-
-                            {/* Show party size and table capacity */}
-                            {order.partySize && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                <Users className="h-3 w-3 inline mr-1" />
-                                {order.partySize} guests
-                                {order.table?.capacity && ` (${order.table.capacity} max)`}
-                              </span>
-                            )}
-                          </div>
-                        )}
-
-                        {/* Show party size for orders without tables (food trucks) */}
-                        {!order.table && order.partySize && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Users className="h-3 w-3 text-muted-foreground" />
-                            <span>{order.partySize} guests</span>
-                          </div>
-                        )}
+                  <CardContent className="px-3 py-2">
+                    <div className="space-y-2">
+                      {/* Customer and Table Info */}
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                          {order.table ? (
+                            <>
+                              <TableIcon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <span className="font-medium truncate">{order.table.name}</span>
+                              {order.partySize && (
+                                <span className="text-muted-foreground">({order.partySize})</span>
+                              )}
+                            </>
+                          ) : order.customerName ? (
+                            <>
+                              <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <span className="font-medium truncate">{order.customerName}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted-foreground">Walk-in</span>
+                          )}
+                        </div>
 
                         {/* Show venue name when viewing at organization level */}
                         {organizationId && !venueId && !venueFilter && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Store className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-xs text-muted-foreground">
-                              {order.venue?.name || order.table?.venue?.name || 'Unknown Venue'}
-                            </span>
-                          </div>
-                        )}
-
-                        {order.customerName && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="h-3 w-3 text-muted-foreground" />
-                            <span>{order.customerName}</span>
-                          </div>
-                        )}
-
-                        {order.customerPhone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            <span>{order.customerPhone}</span>
-                          </div>
-                        )}
-
-                        {order.customerEmail && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-3 w-3 text-muted-foreground" />
-                            <span>{order.customerEmail}</span>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Store className="h-3 w-3 flex-shrink-0" />
+                            <span className="text-xs truncate max-w-[80px]">{order.venue?.name || order.table?.venue?.name || 'Unknown'}</span>
                           </div>
                         )}
                       </div>
 
-                      <Separator />
-
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Utensils className="h-3 w-3 text-muted-foreground" />
+                      {/* Order Summary */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Utensils className="h-3 w-3" />
                           <span>{order.items?.length || 0} items</span>
                         </div>
-                        <div className="text-sm font-bold">
+                        <div className="font-semibold text-sm">
                           {formatCurrency(order.totalAmount)}
                         </div>
                       </div>
                     </div>
                   </CardContent>
 
-                  <CardFooter className="flex justify-between gap-2 p-4 pt-2 pb-2 bg-muted/20 mt-auto">
+                  <CardFooter className="flex gap-1 p-2 pt-1">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleViewOrder(order.id)}
-                      className="flex-1"
+                      className="flex-1 h-7 text-xs px-2"
                     >
-                      <Eye className="mr-2 h-4 w-4" /> View
+                      <Eye className="h-3 w-3" />
+                      <span className="hidden sm:inline ml-1">View</span>
                     </Button>
                     {canEditOrder(order.status) && (
-                      <>
-                        <Separator orientation="vertical" className="h-8" />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditOrder(order.id)}
-                          className="flex-1"
-                        >
-                          <Edit className="mr-2 h-4 w-4" /> Edit
-                        </Button>
-                      </>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditOrder(order.id)}
+                        className="flex-1 h-7 text-xs px-2"
+                      >
+                        <Edit className="h-3 w-3" />
+                        <span className="hidden sm:inline ml-1">Edit</span>
+                      </Button>
                     )}
                     {(canUpdateOrderStatus(order.status) || canDeleteOrder(order.status)) && (
-                      <>
-                        <Separator orientation="vertical" className="h-8" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="flex-1">
-                              <MoreHorizontal className="mr-2 h-4 w-4" /> More
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56">
-                            {canUpdateOrderStatus(order.status) && (
-                              <>
-                                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {availableStatusFilters.map((status) => (
-                                  <DropdownMenuItem
-                                    key={status}
-                                    onClick={() => handleStatusChange(order.id, status)}
-                                    disabled={order.status === status}
-                                  >
-                                    <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
-                                      {status}
-                                    </Badge>
-                                    {status}
-                                  </DropdownMenuItem>
-                                ))}
-                              </>
-                            )}
-                            {canDeleteOrder(order.status) && (
-                              <>
-                                {canUpdateOrderStatus(order.status) && <DropdownMenuSeparator />}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs px-2">
+                            <MoreHorizontal className="h-3 w-3" />
+                            <span className="hidden sm:inline ml-1">More</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {canUpdateOrderStatus(order.status) && (
+                            <>
+                              <DropdownMenuLabel className="text-xs">Change Status</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {availableStatusFilters.map((status) => (
                                 <DropdownMenuItem
-                                  onClick={() => confirmDelete(order)}
-                                  className="text-destructive focus:text-destructive"
+                                  key={status}
+                                  onClick={() => handleStatusChange(order.id, status)}
+                                  disabled={order.status === status}
+                                  className="text-xs"
                                 >
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                                  <Badge variant="outline" className={`mr-2 text-xs px-1 ${getStatusBadgeClass(status)}`}>
+                                    {status}
+                                  </Badge>
+                                  {status}
                                 </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </>
+                              ))}
+                            </>
+                          )}
+                          {canDeleteOrder(order.status) && (
+                            <>
+                              {canUpdateOrderStatus(order.status) && <DropdownMenuSeparator />}
+                              <DropdownMenuItem
+                                onClick={() => confirmDelete(order)}
+                                className="text-destructive focus:text-destructive text-xs"
+                              >
+                                <Trash2 className="mr-2 h-3 w-3" /> Delete Order
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </CardFooter>
                 </Card>
@@ -1069,6 +1118,16 @@ const OrderList: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <PaymentStatusDialog
+        order={paymentDialogOrder}
+        isOpen={isPaymentDialogOpen}
+        onClose={() => {
+          setIsPaymentDialogOpen(false);
+          setPaymentDialogOrder(null);
+        }}
+        onPaymentStatusChanged={handlePaymentStatusChanged}
+      />
     </>
   );
 };

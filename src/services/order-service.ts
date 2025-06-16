@@ -6,16 +6,35 @@ export enum OrderStatus {
   CONFIRMED = 'CONFIRMED',
   PREPARING = 'PREPARING',
   READY = 'READY',
-  DELIVERED = 'DELIVERED',
+  SERVED = 'SERVED',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED'
+}
+
+export enum OrderPaymentStatus {
+  UNPAID = 'UNPAID',
+  PAID = 'PAID',
+  PARTIALLY_PAID = 'PARTIALLY_PAID',
+  REFUNDED = 'REFUNDED'
+}
+
+export enum PaymentMethod {
+  CASH = 'CASH',
+  CREDIT_CARD = 'CREDIT_CARD',
+  DEBIT_CARD = 'DEBIT_CARD',
+  UPI = 'UPI',
+  NET_BANKING = 'NET_BANKING',
+  WALLET = 'WALLET',
+  MOBILE_PAYMENT = 'MOBILE_PAYMENT',
+  ROOM_CHARGE = 'ROOM_CHARGE',
+  OTHER = 'OTHER'
 }
 
 export enum OrderItemStatus {
   PENDING = 'PENDING',
   PREPARING = 'PREPARING',
   READY = 'READY',
-  DELIVERED = 'DELIVERED',
+  SERVED = 'SERVED',
   COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED'
 }
@@ -64,6 +83,11 @@ export interface Order {
   roomNumber?: string | null;
   partySize?: number | null;
   status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  paidAt?: string | null;
+  paidBy?: string | null;
+  paymentMethod?: PaymentMethod | null;
+  paymentNotes?: string | null;
   subtotalAmount?: string;
   taxAmount?: string;
   taxRate?: number;
@@ -89,6 +113,11 @@ export interface Order {
       id: string;
       name: string;
     };
+  };
+  paidByUser?: {
+    id: string;
+    name: string;
+    email: string;
   };
 }
 
@@ -172,6 +201,27 @@ export interface PaginatedResponse<T> {
 
 export interface PaginatedOrdersResponse extends PaginatedResponse<Order> {
   data: Order[];
+}
+
+// Payment tracking DTOs
+export interface MarkOrderPaidDto {
+  paymentMethod: PaymentMethod;
+  paymentNotes?: string;
+  amount?: number;
+}
+
+export interface MarkOrderUnpaidDto {
+  reason?: string;
+}
+
+export interface PaymentStatusResponse {
+  paymentStatus: string;
+  paidAt?: string;
+  paidBy?: string;
+  paidByName?: string;
+  paymentMethod?: string;
+  paymentNotes?: string;
+  totalAmount: number;
 }
 
 // Type guard to check if response is paginated
@@ -323,6 +373,27 @@ const OrderService = {
     await api.delete(`/orders/${id}`);
   },
 
+  // Payment tracking operations
+  markAsPaid: async (id: string, data: MarkOrderPaidDto): Promise<Order> => {
+    const response = await api.patch<Order>(`/orders/${id}/payment/mark-paid`, data, { showErrorToast: false });
+    return response.data;
+  },
+
+  markAsUnpaid: async (id: string, data: MarkOrderUnpaidDto): Promise<Order> => {
+    const response = await api.patch<Order>(`/orders/${id}/payment/mark-unpaid`, data, { showErrorToast: false });
+    return response.data;
+  },
+
+  getPaymentStatus: async (id: string): Promise<PaymentStatusResponse> => {
+    const response = await api.get<PaymentStatusResponse>(`/orders/${id}/payment-status`);
+    return response.data;
+  },
+
+  getUnpaidOrders: async (venueId: string): Promise<Order[]> => {
+    const response = await api.get<Order[]>(`/orders/venue/${venueId}/unpaid`);
+    return response.data;
+  },
+
   // Combined filtering endpoint
   getFiltered: async (filters: FilterOrdersDto): Promise<ApiResponse<Order[]>> => {
     // Return empty response if no filters are provided
@@ -381,7 +452,7 @@ const OrderService = {
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderStatus.READY:
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case OrderStatus.DELIVERED:
+      case OrderStatus.SERVED:
         return 'bg-teal-100 text-teal-800 border-teal-200';
       case OrderStatus.COMPLETED:
         return 'bg-green-100 text-green-800 border-green-200';
@@ -400,7 +471,7 @@ const OrderService = {
         return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderItemStatus.READY:
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
-      case OrderItemStatus.DELIVERED:
+      case OrderItemStatus.SERVED:
         return 'bg-teal-100 text-teal-800 border-teal-200';
       case OrderItemStatus.COMPLETED:
         return 'bg-green-100 text-green-800 border-green-200';
@@ -408,6 +479,46 @@ const OrderService = {
         return 'bg-red-100 text-red-800 border-red-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  },
+
+  getPaymentStatusColor: (status: OrderPaymentStatus): string => {
+    switch (status) {
+      case OrderPaymentStatus.PAID:
+        return 'bg-green-100 text-green-800 border-green-200';
+      case OrderPaymentStatus.UNPAID:
+        return 'bg-red-100 text-red-800 border-red-200';
+      case OrderPaymentStatus.PARTIALLY_PAID:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case OrderPaymentStatus.REFUNDED:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  },
+
+  getPaymentMethodDisplayName: (method: PaymentMethod): string => {
+    switch (method) {
+      case PaymentMethod.CASH:
+        return 'Cash';
+      case PaymentMethod.CREDIT_CARD:
+        return 'Credit Card';
+      case PaymentMethod.DEBIT_CARD:
+        return 'Debit Card';
+      case PaymentMethod.UPI:
+        return 'UPI';
+      case PaymentMethod.NET_BANKING:
+        return 'Net Banking';
+      case PaymentMethod.WALLET:
+        return 'Wallet';
+      case PaymentMethod.MOBILE_PAYMENT:
+        return 'Mobile Payment';
+      case PaymentMethod.ROOM_CHARGE:
+        return 'Room Charge';
+      case PaymentMethod.OTHER:
+        return 'Other';
+      default:
+        return 'Unknown';
     }
   },
 

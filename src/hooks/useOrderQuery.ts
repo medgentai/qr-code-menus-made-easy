@@ -507,7 +507,18 @@ export const useUpdateOrderStatusMutation = () => {
 
         // Also update in infinite queries for immediate UI feedback
         queryClient.setQueriesData(
-          { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+          {
+            predicate: (query) => {
+              const queryKey = query.queryKey;
+              return (
+                Array.isArray(queryKey) &&
+                queryKey[0] === 'orders' &&
+                queryKey[1] === 'list' &&
+                queryKey[2] === 'filtered' &&
+                queryKey[queryKey.length - 1] === 'infinite'
+              );
+            }
+          },
           (oldData: any) => {
             if (!oldData) return oldData;
 
@@ -623,7 +634,18 @@ export const useUpdateOrderStatusMutation = () => {
         try {
           // Update the order in infinite queries for organization
           queryClient.setQueriesData(
-            { queryKey: ['orders', 'list', 'filtered', 'infinite'] },
+            {
+              predicate: (query) => {
+                const queryKey = query.queryKey;
+                return (
+                  Array.isArray(queryKey) &&
+                  queryKey[0] === 'orders' &&
+                  queryKey[1] === 'list' &&
+                  queryKey[2] === 'filtered' &&
+                  queryKey[queryKey.length - 1] === 'infinite'
+                );
+              }
+            },
             (oldData: any) => {
               if (!oldData) return oldData;
 
@@ -715,6 +737,161 @@ export const useDeleteOrderMutation = () => {
     },
     onError: (error: ApiErrorWithResponse) => {
       const errorMessage = error.response?.data?.message || 'Failed to delete order';
+      toast.error(errorMessage);
+    },
+  });
+};
+
+// Update payment status with optimistic updates
+export const useUpdatePaymentStatusMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, isPaid, data }: {
+      id: string;
+      isPaid: boolean;
+      data: any
+    }) => {
+      return isPaid
+        ? OrderService.markAsPaid(id, data)
+        : OrderService.markAsUnpaid(id, data);
+    },
+    onMutate: async ({ id, isPaid }) => {
+      // Cancel any outgoing requests
+      await queryClient.cancelQueries({ queryKey: orderKeys.detail(id) });
+
+      // Snapshot the previous value
+      const previousOrder = queryClient.getQueryData<Order>(orderKeys.detail(id));
+
+      // Optimistically update to the new value
+      if (previousOrder) {
+        const newPaymentStatus = isPaid ? 'PAID' : 'UNPAID';
+        queryClient.setQueryData(orderKeys.detail(id), {
+          ...previousOrder,
+          paymentStatus: newPaymentStatus,
+        });
+
+        // Also update in infinite queries for immediate UI feedback
+        queryClient.setQueriesData(
+          {
+            predicate: (query) => {
+              const queryKey = query.queryKey;
+              return (
+                Array.isArray(queryKey) &&
+                queryKey[0] === 'orders' &&
+                queryKey[1] === 'list' &&
+                queryKey[2] === 'filtered' &&
+                queryKey[queryKey.length - 1] === 'infinite'
+              );
+            }
+          },
+          (oldData: any) => {
+            if (!oldData) return oldData;
+
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => {
+                if (!page || !page.data) return page;
+
+                return {
+                  ...page,
+                  data: page.data.map((order: Order) =>
+                    order.id === id ? { ...order, paymentStatus: newPaymentStatus } : order
+                  )
+                };
+              })
+            };
+          }
+        );
+      }
+
+      return { previousOrder };
+    },
+    onSuccess: (updatedOrder) => {
+      // Update the order in the cache with the server response
+      queryClient.setQueryData(
+        orderKeys.detail(updatedOrder.id),
+        updatedOrder
+      );
+
+      // Update in infinite queries with the complete updated order
+      queryClient.setQueriesData(
+        {
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === 'orders' &&
+              queryKey[1] === 'list' &&
+              queryKey[2] === 'filtered' &&
+              queryKey[queryKey.length - 1] === 'infinite'
+            );
+          }
+        },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => {
+              if (!page || !page.data) return page;
+
+              return {
+                ...page,
+                data: page.data.map((order: Order) =>
+                  order.id === updatedOrder.id ? updatedOrder : order
+                )
+              };
+            })
+          };
+        }
+      );
+    },
+    onError: (err: ApiErrorWithResponse, { id }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      if (context?.previousOrder) {
+        queryClient.setQueryData(orderKeys.detail(id), context.previousOrder);
+
+        // Also revert in infinite queries
+        queryClient.setQueriesData(
+          {
+            predicate: (query) => {
+              const queryKey = query.queryKey;
+              return (
+                Array.isArray(queryKey) &&
+                queryKey[0] === 'orders' &&
+                queryKey[1] === 'list' &&
+                queryKey[2] === 'filtered' &&
+                queryKey[queryKey.length - 1] === 'infinite'
+              );
+            }
+          },
+          (oldData: any) => {
+            if (!oldData) return oldData;
+
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page: any) => {
+                if (!page || !page.data) return page;
+
+                return {
+                  ...page,
+                  data: page.data.map((order: Order) =>
+                    order.id === id ? context.previousOrder : order
+                  )
+                };
+              })
+            };
+          }
+        );
+      }
+
+      let errorMessage = 'Failed to update payment status';
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       toast.error(errorMessage);
     },
   });

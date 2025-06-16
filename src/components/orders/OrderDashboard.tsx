@@ -133,13 +133,13 @@ export const OrderDashboard: React.FC<OrderDashboardProps> = ({
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
-              <CardContent className="p-6">
+              <CardContent className="p-3">
                 <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-1/2"></div>
                 </div>
               </CardContent>
             </Card>
@@ -192,59 +192,59 @@ export const OrderDashboard: React.FC<OrderDashboardProps> = ({
         </Select>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Responsive Statistics Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2 px-3">
+            <CardTitle className="text-xs sm:text-sm font-medium truncate">Total Orders</CardTitle>
+            <Receipt className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-3 pb-2">
+            <div className="text-lg sm:text-xl font-bold">{stats.totalOrders}</div>
+            <p className="text-xs text-muted-foreground truncate">
               {format(new Date(), 'MMM d, yyyy')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2 px-3">
+            <CardTitle className="text-xs sm:text-sm font-medium truncate">Total Revenue</CardTitle>
+            <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-3 pb-2">
+            <div className="text-lg sm:text-xl font-bold truncate">{formatCurrency(stats.totalRevenue)}</div>
+            <p className="text-xs text-muted-foreground truncate">
               Avg: {formatCurrency(stats.averageOrderValue)}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tax Collected</CardTitle>
-            <Calculator className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2 px-3">
+            <CardTitle className="text-xs sm:text-sm font-medium truncate">Tax Collected</CardTitle>
+            <Calculator className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalTaxCollected)}</div>
-            <p className="text-xs text-muted-foreground">
+          <CardContent className="px-3 pb-2">
+            <div className="text-lg sm:text-xl font-bold truncate">{formatCurrency(stats.totalTaxCollected)}</div>
+            <p className="text-xs text-muted-foreground truncate">
               {stats.taxExemptOrders} exempt orders
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tax Summary</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-2 px-3">
+            <CardTitle className="text-xs sm:text-sm font-medium truncate">Tax Summary</CardTitle>
+            <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
+          <CardContent className="px-3 pb-2">
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-xs">
                 <span>Exempt:</span>
                 <span>{stats.taxExemptOrders}</span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs">
                 <span>Inclusive:</span>
                 <span>{stats.taxInclusiveOrders}</span>
               </div>

@@ -233,8 +233,8 @@ export function getAllowedOrderStatuses(role: MemberRole, staffType?: StaffType)
         // Kitchen staff should see orders they need to work on
         return ['CONFIRMED', 'PREPARING', 'READY'];
       case StaffType.FRONT_OF_HOUSE:
-        // Front of house staff should see the full customer service workflow
-        return ['PENDING', 'CONFIRMED', 'READY', 'COMPLETED', 'CANCELLED'];
+        // Front of house staff should see the full customer service workflow including SERVED
+        return ['PENDING', 'CONFIRMED', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED'];
       default:
         return ['PENDING', 'CONFIRMED']; // Default limited view
     }
@@ -270,7 +270,7 @@ export function canPerformOrderAction(
         if (action === 'create') return true;
         if (action === 'edit') return true; // Front of house can edit orders
         if (action === 'updateStatus') {
-          return ['PENDING', 'CONFIRMED', 'READY', 'COMPLETED', 'CANCELLED'].includes(orderStatus || '');
+          return ['PENDING', 'CONFIRMED', 'READY', 'SERVED', 'COMPLETED', 'CANCELLED'].includes(orderStatus || '');
         }
         return false;
       default:

@@ -45,7 +45,7 @@ export const useActiveOrders = (
         OrderStatus.CONFIRMED,
         OrderStatus.PREPARING,
         OrderStatus.READY,
-        OrderStatus.DELIVERED
+        OrderStatus.SERVED
       ];
       
       const activeOrders = response.data.filter(order => 
