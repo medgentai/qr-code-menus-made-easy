@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrganization } from '@/contexts/organization-context';
@@ -7,11 +7,9 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -24,17 +22,14 @@ import {
   MapPin,
   Mail,
   Phone,
-  Globe,
   Calendar,
   Edit,
   Trash2,
   Table as TableIcon,
-  QrCode,
   Plus,
   MoreHorizontal,
   Settings
 } from 'lucide-react';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,10 +48,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { TableStatus, TableStatusColors, TableStatusLabels } from '@/types/venue';
+import { TableStatusColors, TableStatusLabels } from '@/types/venue';
 import { OrganizationType } from '@/types/organization';
 import { formatDate } from '@/lib/utils';
-import { VenueImageUpload } from '@/components/venues/venue-image-upload';
 import { useUploadVenueImage } from '@/hooks/useImageUpload';
 import { ImageUploadField } from '@/components/ui/image-upload-field';
 import {
@@ -71,7 +65,7 @@ import {
 const VenueDetails = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId: string }>();
   const navigate = useNavigate();
-  const { currentOrganization, currentOrganizationDetails, fetchOrganizationDetails } = useOrganization();
+  const { currentOrganization, currentOrganizationDetails } = useOrganization();
   const {
     currentVenue,
     tables,
@@ -552,21 +546,13 @@ const VenueDetails = () => {
                                 </Badge>
                               </td>
                               <td className="py-3 px-4 text-sm">{table.location || '-'}</td>
-                              <td className="py-3 px-4 text-right">
-                                <div className="flex justify-end gap-2">
+                              <td className="py-3 px-4 text-right">                                <div className="flex justify-end gap-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
                                   >
                                     Edit
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
-                                  >
-                                    QR Code
                                   </Button>
                                 </div>
                               </td>
@@ -599,8 +585,7 @@ const VenueDetails = () => {
                               <span>Location:</span>
                               <span>{table.location || '-'}</span>
                             </div>
-                          </div>
-                          <div className="flex gap-2">
+                          </div>                          <div className="flex gap-2">
                             <Button
                               variant="outline"
                               size="sm"
@@ -608,14 +593,6 @@ const VenueDetails = () => {
                               onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
                             >
                               Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 text-xs"
-                              onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
-                            >
-                              QR Code
                             </Button>
                           </div>
                         </Card>

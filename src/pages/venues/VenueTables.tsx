@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useVenue } from '@/contexts/venue-context';
 import { useOrganization } from '@/contexts/organization-context';
@@ -16,7 +16,6 @@ import {
   ArrowLeft,
   Plus,
   TableIcon,
-  QrCode,
   MoreHorizontal,
   Settings,
   Edit,
@@ -26,11 +25,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { TableStatus, TableStatusColors, TableStatusLabels } from '@/types/venue';
+import { TableStatusColors, TableStatusLabels } from '@/types/venue';
 import { OrganizationType } from '@/types/organization';
 import {
   AlertDialog,
@@ -47,7 +44,7 @@ import {
 const VenueTables = () => {
   const { id: organizationId, venueId } = useParams<{ id: string; venueId: string }>();
   const navigate = useNavigate();
-  const { currentOrganization, currentOrganizationDetails, fetchOrganizationDetails } = useOrganization();
+  const { currentOrganization, currentOrganizationDetails } = useOrganization();
   const {
     currentVenue,
     tables,
@@ -196,8 +193,7 @@ const VenueTables = () => {
                               {TableStatusLabels[table.status]}
                             </Badge>
                           </td>
-                          <td className="py-3 px-4 text-sm">{table.location || '-'}</td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3 px-4 text-sm">{table.location || '-'}</td>                          <td className="py-3 px-4 text-right">
                             <div className="flex justify-end gap-1">
                               <Button
                                 variant="outline"
@@ -205,13 +201,6 @@ const VenueTables = () => {
                                 onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/edit`)}
                               >
                                 Edit
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
-                              >
-                                QR Code
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -262,8 +251,7 @@ const VenueTables = () => {
                           {TableStatusLabels[table.status]}
                         </Badge>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <div className="flex gap-2">
+                      <div className="flex flex-col gap-2">                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -272,15 +260,6 @@ const VenueTables = () => {
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => navigate(`/organizations/${organizationId}/venues/${venueId}/tables/${table.id}/qrcode`)}
-                          >
-                            <QrCode className="h-4 w-4 mr-1" />
-                            QR Code
                           </Button>
                         </div>
                         <AlertDialog>

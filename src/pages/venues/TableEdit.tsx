@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,7 +22,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -38,6 +37,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { TableStatus, TableStatusLabels } from '@/types/venue';
 import { Skeleton } from '@/components/ui/skeleton';
 import VenueService from '@/services/venue-service';
+import OrganizationService from '@/services/organization-service';
 
 // Form schema
 const tableFormSchema = z.object({
@@ -55,11 +55,12 @@ type TableFormValues = z.infer<typeof tableFormSchema>;
 const TableEdit = () => {
   const { id: organizationId, venueId, tableId } = useParams<{ id: string; venueId: string; tableId: string }>();
   const navigate = useNavigate();
-  const { currentVenue, fetchVenueById, updateTable, isLoading } = useVenue();
-  const { currentOrganization, fetchOrganizationDetails } = useOrganization();
+  const { currentVenue, updateTable, isLoading } = useVenue();
+  const { currentOrganization } = useOrganization();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [table, setTable] = useState<any>(null);
   const [isTableLoading, setIsTableLoading] = useState(true);
+  const lastParams = useRef({ organizationId: '', venueId: '', tableId: '' });
 
   // Initialize form
   const form = useForm<TableFormValues>({
@@ -72,38 +73,61 @@ const TableEdit = () => {
     }
   });
 
-  // Fetch data
+  // Fetch data directly using services to avoid context function dependencies
   useEffect(() => {
-    const fetchData = async () => {
-      if (organizationId) {
-        fetchOrganizationDetails(organizationId);
-      }
-      if (venueId) {
-        fetchVenueById(venueId);
-      }
-      if (tableId) {
-        setIsTableLoading(true);
-        try {
-          const tableData = await VenueService.getTableById(tableId);
-          setTable(tableData);
-
-          // Reset form with table data
-          form.reset({
-            name: tableData.name,
-            capacity: tableData.capacity,
-            status: tableData.status,
-            location: tableData.location || ''
-          });
-        } catch (error) {
-          console.error('Failed to fetch table:', error);
-        } finally {
-          setIsTableLoading(false);
+    const currentParams = { organizationId: organizationId || '', venueId: venueId || '', tableId: tableId || '' };
+    
+    // Check if parameters have changed
+    if (
+      lastParams.current.organizationId === currentParams.organizationId &&
+      lastParams.current.venueId === currentParams.venueId &&
+      lastParams.current.tableId === currentParams.tableId
+    ) {
+      return; // No change, skip fetch
+    }
+    
+    lastParams.current = currentParams;
+    
+    const fetchAllData = async () => {
+      try {
+        // Fetch organization details directly
+        if (organizationId) {
+          OrganizationService.getDetails(organizationId).catch(console.error);
         }
+        
+        // Fetch venue details directly
+        if (venueId) {
+          VenueService.getById(venueId).catch(console.error);
+        }
+        
+        // Fetch table data
+        if (tableId) {
+          setIsTableLoading(true);
+          try {
+            const tableData = await VenueService.getTableById(tableId);
+            setTable(tableData);
+
+            // Reset form with table data
+            form.reset({
+              name: tableData.name,
+              capacity: tableData.capacity,
+              status: tableData.status,
+              location: tableData.location || ''
+            });
+          } catch (error) {
+            console.error('Failed to fetch table:', error);
+            toast.error('Failed to fetch table data');
+          } finally {
+            setIsTableLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
       }
     };
 
-    fetchData();
-  }, [organizationId, venueId, tableId, fetchOrganizationDetails, fetchVenueById, form]);
+    fetchAllData();
+  }, [organizationId, venueId, tableId]); // Only depend on the URL parameters
 
   // Handle form submission
   const onSubmit = async (data: TableFormValues) => {
