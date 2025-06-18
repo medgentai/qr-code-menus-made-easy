@@ -64,9 +64,8 @@ const OrganizationList = () => {
         return <Coffee className="h-5 w-5" />;
       case OrganizationType.FOOD_TRUCK:
         return <Truck className="h-5 w-5" />;
-      case OrganizationType.BAR:
+        case OrganizationType.BAR:
         return <Wine className="h-5 w-5" />;
-      case OrganizationType.OTHER:
       default:
         return <Store className="h-5 w-5" />;
     }

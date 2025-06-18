@@ -78,24 +78,23 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   });
 
   // Fetch venues for an organization - now just a wrapper around the React Query refetch
-  const fetchVenuesForOrganization = useCallback(async (organizationId: string) => {
-    if (!isUserAuthenticated) return [];
+  const fetchVenuesForOrganization = useCallback(async (organizationId: string): Promise<void> => {
+    if (!isUserAuthenticated) return;
 
     // If the organization ID matches the current one, use the refetch function
     if (currentOrganization?.id === organizationId) {
-      return refetchVenues().then(result => result.data || []);
+      await refetchVenues();
+      return;
     }
 
     // Otherwise, manually fetch and update the cache
     try {
       const data = await VenueService.getAllForOrganization(organizationId);
       queryClient.setQueryData(['venues', 'organization', organizationId], data);
-      return data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch venues';
       setError(errorMessage);
       toast.error(errorMessage);
-      return [];
     }
   }, [isUserAuthenticated, currentOrganization, queryClient, refetchVenues]);
 
@@ -175,8 +174,9 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       queryClient.setQueryData(['venue', id], updatedVenue);
 
       // Update the venue in the organization's venue list
-      if (data.organizationId) {
-        queryClient.setQueryData(['venues', 'organization', data.organizationId],
+      // Get organization ID from the updated venue response
+      if (updatedVenue.organizationId) {
+        queryClient.setQueryData(['venues', 'organization', updatedVenue.organizationId],
           (oldData: Venue[] = []) => oldData.map(venue => venue.id === id ? updatedVenue : venue));
       }
 
@@ -205,7 +205,7 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       await VenueService.delete(id);
 
       // Remove from cache
-      queryClient.removeQueries(['venue', id]);
+      queryClient.removeQueries({ queryKey: ['venue', id] });
 
       // Update the organization's venue list if we know the organization ID
       if (venueToDelete?.organizationId) {
@@ -266,14 +266,14 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
   }, []);
 
   // Fetch tables for a venue using React Query patterns
-  const fetchTablesForVenue = useCallback(async (venueId: string) => {
-    if (!isUserAuthenticated) return [];
+  const fetchTablesForVenue = useCallback(async (venueId: string): Promise<void> => {
+    if (!isUserAuthenticated) return;
 
     // Check if we already have data in the cache
     const cachedTables = queryClient.getQueryData<Table[]>(['tables', 'venue', venueId]);
     if (cachedTables) {
       setTables(cachedTables);
-      return cachedTables;
+      return;
     }
 
     try {
@@ -281,12 +281,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
       setTables(data);
       // Update the cache
       queryClient.setQueryData(['tables', 'venue', venueId], data);
-      return data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch tables';
       setError(errorMessage);
       toast.error(errorMessage);
-      return [];
     }
   }, [isUserAuthenticated, queryClient]);
 
@@ -325,9 +323,10 @@ export const VenueProvider: React.FC<VenueProviderProps> = ({ children }) => {
     try {
       const updatedTable = await VenueService.updateTable(id, data);
 
-      // Update the table in the venue's tables list
-      if (data.venueId) {
-        queryClient.setQueryData(['tables', 'venue', data.venueId],
+      // Find the current table to get its venueId
+      const currentTable = tables.find(table => table.id === id);
+      if (currentTable) {
+        queryClient.setQueryData(['tables', 'venue', currentTable.venueId],
           (oldData: Table[] = []) => oldData.map(table => table.id === id ? updatedTable : table));
       }
 

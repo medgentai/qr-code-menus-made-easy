@@ -153,7 +153,6 @@ const OrganizationDetails = () => {
         return <Truck className="h-5 w-5" />;
       case OrganizationType.BAR:
         return <Wine className="h-5 w-5" />;
-      case OrganizationType.OTHER:
       default:
         return <Store className="h-5 w-5" />;
     }
