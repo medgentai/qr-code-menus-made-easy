@@ -5,7 +5,6 @@ import OrderService, {
   OrderStatus,
   CreateOrderDto,
   UpdateOrderDto,
-  UpdateOrderItemDto,
   FilterOrdersDto
 } from '@/services/order-service';
 
@@ -897,62 +896,4 @@ export const useUpdatePaymentStatusMutation = () => {
   });
 };
 
-// Update an order item with optimistic updates
-export const useUpdateOrderItemMutation = () => {
-  const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: ({ orderId, itemId, data }: {
-      orderId: string;
-      itemId: string;
-      data: UpdateOrderItemDto
-    }) => OrderService.updateOrderItem(orderId, itemId, data),
-    onMutate: async ({ orderId, itemId, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: orderKeys.detail(orderId) });
-
-      // Snapshot the previous value
-      const previousOrder = queryClient.getQueryData<Order>(orderKeys.detail(orderId));
-
-      // Return a context object with the snapshotted value
-      return { previousOrder };
-    },
-    onSuccess: (updatedItem, { orderId }) => {
-      // Instead of invalidating, we'll update the cache with the new data
-      // This reduces the number of API calls
-      const order = queryClient.getQueryData<Order>(orderKeys.detail(orderId));
-
-      if (order) {
-        // Update the item in the order
-        const updatedOrder = {
-          ...order,
-          items: order.items?.map(item =>
-            item.id === updatedItem.id ? updatedItem : item
-          )
-        };
-
-        // Update the cache
-        queryClient.setQueryData(orderKeys.detail(orderId), updatedOrder);
-      }
-
-      toast.success('Order item updated successfully');
-    },
-    onError: (error: ApiErrorWithResponse, variables, context) => {
-      // If we have the previous order data, restore it
-      if (context?.previousOrder) {
-        queryClient.setQueryData(
-          orderKeys.detail(variables.orderId),
-          context.previousOrder
-        );
-      }
-
-      const errorMessage = error.response?.data?.message || 'Failed to update order item';
-      toast.error(errorMessage);
-    },
-    onSettled: (_, __, { orderId }) => {
-      // After success or error, refetch to ensure our cache is in sync
-      // But only refetch the specific order, not all lists
-      queryClient.invalidateQueries({ queryKey: orderKeys.detail(orderId) });
-    },
-  });
-};

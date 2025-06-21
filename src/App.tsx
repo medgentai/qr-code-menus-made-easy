@@ -258,7 +258,9 @@ const App = () => (
                 path="/kitchen-dashboard"
                 element={
                   <ProtectedRoute>
-                    <KitchenDashboard />
+                    <OrganizationGuard>
+                      <KitchenDashboard />
+                    </OrganizationGuard>
                   </ProtectedRoute>
                 }
               />              {/* Organization routes */}

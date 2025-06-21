@@ -55,7 +55,6 @@ export const RolePermissions: Record<MemberRole, Permission[]> = {
 export const StaffTypePermissions: Record<StaffType, Permission[]> = {
   [StaffType.KITCHEN]: [
     ...PermissionGroups.KITCHEN_STAFF,
-    ...PermissionGroups.MENU_BASIC,
     ...PermissionGroups.SETTINGS,
   ],
 

@@ -10,7 +10,7 @@ import {
   useCreateOrderMutation,
   useUpdateOrderMutation,
   useUpdateOrderStatusMutation,
-  useUpdateOrderItemMutation,
+
   useDeleteOrderMutation,
   useInfiniteVenueOrdersQuery,
   useInfiniteOrganizationOrdersQuery,
@@ -22,7 +22,7 @@ import {
   OrderStatus,
   CreateOrderDto,
   UpdateOrderDto,
-  UpdateOrderItemDto,
+
   FilterOrdersDto,
   PaginatedOrdersResponse
 } from '@/services/order-service';
@@ -123,7 +123,7 @@ export const useOrderContext = (): OrderContextType => {
   const createOrderMutation = useCreateOrderMutation();
   const updateOrderMutation = useUpdateOrderMutation();
   const updateOrderStatusMutation = useUpdateOrderStatusMutation();
-  const updateOrderItemMutation = useUpdateOrderItemMutation();
+
   const deleteOrderMutation = useDeleteOrderMutation();
 
   // Load orders when organization or venue changes - optimized to avoid redundant API calls
@@ -314,23 +314,7 @@ export const useOrderContext = (): OrderContextType => {
     }
   }, [updateOrderStatusMutation]);
 
-  // Update order item
-  const updateOrderItem = useCallback(async (
-    orderId: string,
-    itemId: string,
-    data: UpdateOrderItemDto
-  ): Promise<OrderItem | null> => {
-    try {
-      // Let the mutation handle the update
-      const result = await updateOrderItemMutation.mutateAsync({ orderId, itemId, data });
 
-      // The mutation's onSuccess handler will handle cache updates
-      return result;
-    } catch (err: any) {
-      // Don't show error toast here since the mutation already handles it
-      return null;
-    }
-  }, [updateOrderItemMutation]);
 
   // Delete an order
   const deleteOrder = useCallback(async (id: string): Promise<boolean> => {
@@ -428,7 +412,6 @@ export const useOrderContext = (): OrderContextType => {
     isLoading: ordersQuery.isLoading || currentOrderQuery.isLoading ||
                createOrderMutation.isPending || updateOrderMutation.isPending ||
                updateOrderStatusMutation.isPending || deleteOrderMutation.isPending ||
-               updateOrderItemMutation.isPending || deleteOrderMutation.isPending ||
                infiniteOrdersQuery.isLoading,
     error: ordersQuery.error?.message || currentOrderQuery.error?.message ||
            infiniteOrdersQuery.error?.message || null,
@@ -439,7 +422,6 @@ export const useOrderContext = (): OrderContextType => {
     createOrder,
     updateOrder,
     updateOrderStatus,
-    updateOrderItem,
     deleteOrder,
     selectOrder,
     // Pagination related functions

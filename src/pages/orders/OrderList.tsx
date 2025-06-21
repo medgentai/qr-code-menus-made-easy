@@ -73,6 +73,8 @@ import { useOrder } from '@/hooks/useOrder';
 import { useRoleBasedOrders } from '@/hooks/useRoleBasedOrders';
 import OrderService, { Order, OrderStatus, OrderPaymentStatus } from '@/services/order-service';
 import { PaymentStatusDialog } from '@/components/orders/PaymentStatusDialog';
+import { NewOrderCard } from '@/components/orders/NewOrderCard';
+import { OrderFilters, FilterType } from '@/components/orders/OrderFilters';
 import { toast } from 'sonner';
 import {
   useUpdateOrderStatusMutation,
@@ -125,6 +127,7 @@ const OrderList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [paymentDialogOrder, setPaymentDialogOrder] = useState<Order | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterType>('active');
 
 
   // State to track orders with pending status updates - for immediate UI updates
@@ -384,6 +387,58 @@ const OrderList: React.FC = () => {
     });
   }, [infiniteOrders, searchTerm]);
 
+  // Filter orders based on active filter
+  const displayOrders = useMemo(() => {
+    let filtered = filteredInfiniteOrders;
+
+    switch (activeFilter) {
+      case 'active':
+        filtered = filtered.filter(order =>
+          ['PENDING', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status)
+        );
+        break;
+      case 'ready':
+        filtered = filtered.filter(order => order.status === 'READY');
+        break;
+      case 'kitchen':
+        filtered = filtered.filter(order =>
+          ['CONFIRMED', 'PREPARING'].includes(order.status)
+        );
+        break;
+      case 'unpaid':
+        filtered = filtered.filter(order =>
+          order.paymentStatus === OrderPaymentStatus.UNPAID &&
+          order.status !== OrderStatus.CANCELLED
+        );
+        break;
+      case 'completed':
+        filtered = filtered.filter(order =>
+          ['SERVED', 'COMPLETED'].includes(order.status)
+        );
+        break;
+      case 'all':
+      default:
+        // Show all orders
+        break;
+    }
+
+    // Sort by priority: READY first, then by creation time (newest first)
+    return filtered.sort((a, b) => {
+      // Priority 1: READY orders first
+      if (a.status === 'READY' && b.status !== 'READY') return -1;
+      if (b.status === 'READY' && a.status !== 'READY') return 1;
+
+      // Priority 2: Unpaid orders next (if not filtering by payment)
+      if (activeFilter !== 'unpaid') {
+        if (a.paymentStatus === OrderPaymentStatus.UNPAID && b.paymentStatus === OrderPaymentStatus.PAID) return -1;
+        if (b.paymentStatus === OrderPaymentStatus.UNPAID && a.paymentStatus === OrderPaymentStatus.PAID) return 1;
+      }
+
+      // Priority 3: By creation time (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [filteredInfiniteOrders, activeFilter]);
+
   // Handle status change - defined after filteredInfiniteOrders to avoid reference error
   const handleStatusChange = useCallback(async (orderId: string, status: OrderStatus) => {
     // Find the order in our data to show optimistic UI feedback
@@ -518,28 +573,6 @@ const OrderList: React.FC = () => {
     return OrderService.formatCurrency(amount);
   };
 
-  // Get status icon based on order status
-  const getStatusIcon = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.PENDING:
-        return <Clock className="h-4 w-4" />;
-      case OrderStatus.CONFIRMED:
-        return <CheckCircle2 className="h-4 w-4" />;
-      case OrderStatus.PREPARING:
-        return <Utensils className="h-4 w-4" />;
-      case OrderStatus.READY:
-        return <CheckCircle2 className="h-4 w-4" />;
-      case OrderStatus.SERVED:
-        return <CheckCircle2 className="h-4 w-4" />;
-      case OrderStatus.COMPLETED:
-        return <CheckCircle2 className="h-4 w-4" />;
-      case OrderStatus.CANCELLED:
-        return <AlertCircle className="h-4 w-4" />;
-      default:
-        return <Clock className="h-4 w-4" />;
-    }
-  };
-
   return (
     <>
       <div className="space-y-6">
@@ -625,123 +658,82 @@ const OrderList: React.FC = () => {
 
 
 
-        {/* View Selector and Filters */}
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search orders..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        {/* New Simple Filters */}
+        <div className="space-y-4">
+          {/* Order Filters */}
+          <OrderFilters
+            orders={filteredInfiniteOrders}
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+          />
+
+          {/* Search, Venue Filter, and View Mode - All in one line */}
+          <div className="flex flex-col gap-4">
+            {/* Search and Venue Filter - Always on same line */}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search orders..."
+                  className="pl-8"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              {/* Venue Filter Dropdown - Only show on organization page and if user has access to multiple venues */}
+              {organizationId && !venueId && accessibleVenues.length > 1 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex-shrink-0 justify-start min-w-[120px]">
+                      <Store className="mr-2 h-4 w-4" />
+                      <span className="truncate">
+                        {venueFilter ? `${accessibleVenues.find(v => v.id === venueFilter)?.name || 'Selected Venue'}` : 'All Venues'}
+                      </span>
+                      <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>Filter by Venue</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setVenueFilter('')}
+                    >
+                      All Accessible Venues
+                    </DropdownMenuItem>
+                    {accessibleVenues.map((venue) => (
+                      <DropdownMenuItem
+                        key={venue.id}
+                        onClick={() => setVenueFilter(venue.id)}
+                      >
+                        <Store className="mr-2 h-4 w-4" />
+                        {venue.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
 
-            {/* Status Filter Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto">
-                  <Filter className="mr-2 h-4 w-4" />
-                  {statusFilter ? `Status: ${statusFilter}` : 'Filter by Status'}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    // Only update if we're changing from a filtered state
-                    if (statusFilter !== '') {
-                      setStatusFilter('');
-                      // Filter changes are now handled by the useEffect that updates filters
-                    }
-                  }}
-                >
-                  All Statuses
-                </DropdownMenuItem>
-                {availableStatusFilters.map((status) => (
-                  <DropdownMenuItem
-                    key={status}
-                    onClick={() => {
-                      // Only update if we're changing to a different status
-                      if (statusFilter !== status) {
-                        setStatusFilter(status);
-                        // Filter changes are now handled by the useEffect that updates filters
-                      }
-                    }}
-                  >
-                    <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
-                      {status}
-                    </Badge>
-                    {status}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Venue Filter Dropdown - Only show on organization page and if user has access to multiple venues */}
-            {organizationId && !venueId && accessibleVenues.length > 1 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full sm:w-auto">
-                    <Store className="mr-2 h-4 w-4" />
-                    {venueFilter ? `Venue: ${accessibleVenues.find(v => v.id === venueFilter)?.name || 'Selected'}` : 'All Venues'}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Filter by Venue</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => {
-                      // Only update if we're changing from a filtered state
-                      if (venueFilter !== '') {
-                        setVenueFilter('');
-                        // Filter changes are now handled by the useEffect that updates filters
-                      }
-                    }}
-                  >
-                    All Accessible Venues
-                  </DropdownMenuItem>
-                  {accessibleVenues.map((venue) => (
-                    <DropdownMenuItem
-                      key={venue.id}
-                      onClick={() => {
-                        // Only update if we're changing to a different venue
-                        if (venueFilter !== venue.id) {
-                          setVenueFilter(venue.id);
-                          // Filter changes are now handled by the useEffect that updates filters
-                        }
-                      }}
-                    >
-                      <Store className="mr-2 h-4 w-4" />
-                      {venue.name}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === 'cards' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('cards')}
-              className="w-full sm:w-auto"
-            >
-              <BarChart3 className="mr-2 h-4 w-4" /> Cards
-            </Button>
-            <Button
-              variant={viewMode === 'table' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setViewMode('table')}
-              className="w-full sm:w-auto"
-            >
-              <TableIcon className="mr-2 h-4 w-4" /> Table
-            </Button>
+            {/* View Mode Buttons */}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === 'cards' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('cards')}
+                className="w-full sm:w-auto"
+              >
+                <BarChart3 className="mr-2 h-4 w-4" /> Cards
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('table')}
+                className="w-full sm:w-auto"
+              >
+                <TableIcon className="mr-2 h-4 w-4" /> Table
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -919,155 +911,31 @@ const OrderList: React.FC = () => {
             </div>
           </div>
         ) : (
+          /* New Simple Cards View - Mobile-First Design */
           <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredInfiniteOrders.map((order: Order) => (
-                <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3 pt-3 px-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="min-w-0 flex-1">
-                        <CardTitle className="text-sm font-semibold truncate">
-                          #{order.id.substring(0, 8)}
-                        </CardTitle>
-                        <CardDescription className="text-xs flex items-center gap-1 mt-1">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          <span className="truncate">{format(new Date(order.createdAt), 'MMM d, h:mm a')}</span>
-                        </CardDescription>
-                      </div>
-                      <div className="flex flex-col gap-1 items-end">
-                        <Badge variant="outline" className={`text-xs px-1.5 py-0.5 ${getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}`}>
-                          <span className="truncate">{pendingStatusUpdates[order.id] || order.status}</span>
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs px-1.5 py-0.5 ${order.status !== OrderStatus.CANCELLED ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'} ${OrderService.getPaymentStatusColor(order.paymentStatus)}`}
-                          onClick={() => order.status !== OrderStatus.CANCELLED && handlePaymentStatusClick(order)}
-                        >
-                          {order.paymentStatus === OrderPaymentStatus.PAID ? 'Paid' : 'Unpaid'}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="px-3 py-2">
-                    <div className="space-y-2">
-                      {/* Customer and Table Info */}
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1 min-w-0 flex-1">
-                          {order.table ? (
-                            <>
-                              <TableIcon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                              <span className="font-medium truncate">{order.table.name}</span>
-                              {order.partySize && (
-                                <span className="text-muted-foreground">({order.partySize})</span>
-                              )}
-                            </>
-                          ) : order.customerName ? (
-                            <>
-                              <User className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                              <span className="font-medium truncate">{order.customerName}</span>
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground">Walk-in</span>
-                          )}
-                        </div>
-
-                        {/* Show venue name when viewing at organization level */}
-                        {organizationId && !venueId && !venueFilter && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Store className="h-3 w-3 flex-shrink-0" />
-                            <span className="text-xs truncate max-w-[80px]">{order.venue?.name || order.table?.venue?.name || 'Unknown'}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Order Summary */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Utensils className="h-3 w-3" />
-                          <span>{order.items?.length || 0} items</span>
-                        </div>
-                        <div className="font-semibold text-sm">
-                          {formatCurrency(order.totalAmount)}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-
-                  <CardFooter className="flex gap-1 p-2 pt-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleViewOrder(order.id)}
-                      className="flex-1 h-7 text-xs px-2"
-                    >
-                      <Eye className="h-3 w-3" />
-                      <span className="hidden sm:inline ml-1">View</span>
-                    </Button>
-                    {canEditOrder(order.status) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditOrder(order.id)}
-                        className="flex-1 h-7 text-xs px-2"
-                      >
-                        <Edit className="h-3 w-3" />
-                        <span className="hidden sm:inline ml-1">Edit</span>
-                      </Button>
-                    )}
-                    {(canUpdateOrderStatus(order.status) || canDeleteOrder(order.status)) && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs px-2">
-                            <MoreHorizontal className="h-3 w-3" />
-                            <span className="hidden sm:inline ml-1">More</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          {canUpdateOrderStatus(order.status) && (
-                            <>
-                              <DropdownMenuLabel className="text-xs">Change Status</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {availableStatusFilters.map((status) => (
-                                <DropdownMenuItem
-                                  key={status}
-                                  onClick={() => handleStatusChange(order.id, status)}
-                                  disabled={order.status === status}
-                                  className="text-xs"
-                                >
-                                  <Badge variant="outline" className={`mr-2 text-xs px-1 ${getStatusBadgeClass(status)}`}>
-                                    {status}
-                                  </Badge>
-                                  {status}
-                                </DropdownMenuItem>
-                              ))}
-                            </>
-                          )}
-                          {canDeleteOrder(order.status) && (
-                            <>
-                              {canUpdateOrderStatus(order.status) && <DropdownMenuSeparator />}
-                              <DropdownMenuItem
-                                onClick={() => confirmDelete(order)}
-                                className="text-destructive focus:text-destructive text-xs"
-                              >
-                                <Trash2 className="mr-2 h-3 w-3" /> Delete Order
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+            {displayOrders.map((order: Order) => (
+              <NewOrderCard
+                key={order.id}
+                order={order}
+                onViewOrder={handleViewOrder}
+                onEditOrder={handleEditOrder}
+                onDeleteOrder={confirmDelete}
+                onStatusChange={handleStatusChange}
+                onPaymentStatusClick={handlePaymentStatusClick}
+                canEditOrder={canEditOrder}
+                canDeleteOrder={canDeleteOrder}
+                canUpdateOrderStatus={canUpdateOrderStatus}
+                availableStatusFilters={availableStatusFilters}
+                pendingStatusUpdates={pendingStatusUpdates}
+              />
+            ))}
 
             {/* Pagination info and View More button */}
             <div className="mt-6 flex flex-col items-center gap-2">
               {/* Pagination info */}
-              {filteredInfiniteOrders.length > 0 && (
+              {displayOrders.length > 0 && (
                 <div className="text-sm text-muted-foreground mb-2">
-                  Showing {filteredInfiniteOrders.length} orders
+                  Showing {displayOrders.length} orders
                   {infiniteOrdersQuery.hasNextPage && " (more available)"}
                   {infiniteOrdersQuery.data?.pages && infiniteOrdersQuery.data.pages.length > 0 && (
                     <span className="ml-1">- Page {infiniteOrdersQuery.data.pages.length} of results</span>
@@ -1090,14 +958,12 @@ const OrderList: React.FC = () => {
                 >
                   View Next 100 Orders
                 </Button>
-              ) : filteredInfiniteOrders.length > 0 ? (
+              ) : displayOrders.length > 0 ? (
                 <div className="text-sm text-muted-foreground py-4 px-6 bg-muted/50 rounded-md">
                   You've reached the end of the list
                 </div>
               ) : null}
             </div>
-
-
           </div>
         )}
       </div>

@@ -79,7 +79,7 @@ const TrackOrder: React.FC<TrackOrderProps> = ({ onBackToMenu }) => {
       case OrderStatus.READY:
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case OrderStatus.SERVED:
-        return 'bg-teal-100 text-teal-800 border-teal-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderStatus.COMPLETED:
         return 'bg-green-100 text-green-800 border-green-200';
       case OrderStatus.CANCELLED:

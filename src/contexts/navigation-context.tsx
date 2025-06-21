@@ -94,11 +94,6 @@ const staffNavigationTemplates: Record<StaffType, Omit<NavigationItem, 'path'>[]
       permissions: [Permission.VIEW_KITCHEN_ORDERS],
     },
     {
-      label: 'Menus',
-      icon: Menu,
-      permissions: [Permission.VIEW_MENUS],
-    },
-    {
       label: 'Settings',
       icon: Settings,
       permissions: [Permission.VIEW_SETTINGS],

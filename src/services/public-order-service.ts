@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import { OrderStatus } from './order-service';
+import { OrderStatus, OrderPaymentStatus } from './order-service';
 
 // Public order response interface
 export interface PublicOrderResponse {
@@ -35,6 +35,42 @@ export interface CreatePublicOrderDto {
       modifierId: string;
     }[];
   }[];
+}
+
+// Customer search response interface
+export interface CustomerSearchResponse {
+  found: boolean;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+  activeOrders: {
+    orderId: string;
+    tableId: string;
+    tableName: string;
+    venueName: string;
+    status: OrderStatus;
+    paymentStatus: OrderPaymentStatus;
+    createdAt: string;
+    totalAmount: number;
+  }[];
+  canOrder: boolean;
+  restrictionMessage?: string;
+}
+
+// Table ordering validation response interface
+export interface TableOrderValidation {
+  canOrder: boolean;
+  reason?: 'ACTIVE_ORDER_SAME_TABLE' | 'ACTIVE_ORDER_DIFFERENT_TABLE' | 'NO_RESTRICTIONS';
+  activeOrder?: {
+    orderId: string;
+    tableId: string;
+    tableName: string;
+    status: OrderStatus;
+    paymentStatus: OrderPaymentStatus;
+  };
+  requiresConfirmation: boolean;
 }
 
 // Public order service for guest users
@@ -101,6 +137,41 @@ class PublicOrderService {
       throw error;
     }
   }
+
+  /**
+   * Search customer by phone number and check ordering restrictions
+   * @param phoneNumber Customer phone number
+   * @param tableId Optional table ID to check restrictions against
+   * @returns Customer search response with ordering restrictions
+   */
+  async searchCustomerByPhone(phoneNumber: string, tableId?: string): Promise<CustomerSearchResponse> {
+    try {
+      const url = tableId
+        ? `/public/customers/search/${phoneNumber}?tableId=${tableId}`
+        : `/public/customers/search/${phoneNumber}`;
+      const response = await api.get<CustomerSearchResponse>(url, { withAuth: false });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Check if customer can order from specific table
+   * @param phoneNumber Customer phone number
+   * @param tableId Table ID to check
+   * @returns Table ordering validation response
+   */
+  async canOrderFromTable(phoneNumber: string, tableId: string): Promise<TableOrderValidation> {
+    try {
+      const response = await api.get<TableOrderValidation>(`/public/customers/${phoneNumber}/can-order-from-table/${tableId}`, { withAuth: false });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
 }
 
 // Create a singleton instance

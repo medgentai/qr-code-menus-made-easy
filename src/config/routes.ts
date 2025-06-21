@@ -57,6 +57,7 @@ export const PROTECTED_ROUTE_PREFIXES = [
   '/analytics',
   '/settings',
   '/admin',
+  '/kitchen-dashboard',
 ];
 
 /**

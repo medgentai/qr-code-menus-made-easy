@@ -47,13 +47,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import OrderService, {
-  OrderStatus,
-  OrderItemStatus
+  OrderStatus
 } from '@/services/order-service';
 import {
   useOrderQuery,
   useUpdateOrderStatusMutation,
-  useUpdateOrderItemMutation,
   useDeleteOrderMutation
 } from '@/hooks/useOrderQuery';
 import { TaxBreakdown } from '@/components/orders/TaxBreakdown';
@@ -74,7 +72,6 @@ const OrderDetails: React.FC = () => {
   } = useOrderQuery(orderId || '');
 
   const updateOrderStatusMutation = useUpdateOrderStatusMutation();
-  const updateOrderItemMutation = useUpdateOrderItemMutation();
   const deleteOrderMutation = useDeleteOrderMutation();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -121,13 +118,7 @@ const OrderDetails: React.FC = () => {
     );
   };
 
-  const handleItemStatusChange = async (itemId: string, status: OrderItemStatus) => {
-    updateOrderItemMutation.mutate({
-      orderId: orderId!,
-      itemId,
-      data: { status }
-    });
-  };
+
 
   const handlePrint = () => {
     window.print();
@@ -137,9 +128,7 @@ const OrderDetails: React.FC = () => {
     return OrderService.getStatusColor(status);
   };
 
-  const getItemStatusBadgeClass = (status: OrderItemStatus) => {
-    return OrderService.getItemStatusColor(status);
-  };
+
 
   const formatCurrency = (amount: string) => {
     return OrderService.formatCurrency(amount);
@@ -400,34 +389,7 @@ const OrderDetails: React.FC = () => {
                         <span className="font-medium">{item.quantity}x</span>
                         <span className="text-lg">{item.menuItem?.name}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={getItemStatusBadgeClass(item.status)}>
-                          {item.status}
-                        </Badge>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 print:hidden">
-                              <ChevronDown className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {Object.values(OrderItemStatus).map((status) => (
-                              <DropdownMenuItem
-                                key={status}
-                                onClick={() => handleItemStatusChange(item.id, status)}
-                                disabled={item.status === status}
-                              >
-                                <Badge variant="outline" className={`mr-2 ${getItemStatusBadgeClass(status)}`}>
-                                  {status}
-                                </Badge>
-                                {status}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+
                     </div>
                     {item.menuItem?.description && (
                       <p className="text-sm text-muted-foreground mb-2">{item.menuItem.description}</p>

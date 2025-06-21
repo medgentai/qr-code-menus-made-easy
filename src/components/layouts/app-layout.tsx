@@ -30,6 +30,7 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { Organization } from '@/services/organization-service';
+import { MemberRole, StaffType } from '@/types/organization';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     currentOrganization,
     selectOrganization
   } = useOrganization();
-  const { canManageOrganization } = usePermissions();
+  const { canManageOrganization, userRole, userStaffType } = usePermissions();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -209,18 +210,25 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/organizations')}>
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Organizations
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/subscriptions')}>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Subscriptions
-                  </DropdownMenuItem>
+
+                  {/* Hide Dashboard, Organizations, and Subscriptions for Kitchen Staff */}
+                  {!(userRole === MemberRole.STAFF && userStaffType === StaffType.KITCHEN) && (
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/organizations')}>
+                        <Building2 className="mr-2 h-4 w-4" />
+                        Organizations
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/subscriptions')}>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Subscriptions
+                      </DropdownMenuItem>
+                    </>
+                  )}
+
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     Profile

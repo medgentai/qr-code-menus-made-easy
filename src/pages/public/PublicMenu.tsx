@@ -20,8 +20,9 @@ import { formatPrice } from '@/lib/utils';
 import CheckoutForm from '@/components/public/checkout-form';
 import OrderConfirmation from '@/components/public/order-confirmation';
 import TrackOrder from '@/components/public/track-order';
+import TableChangeConfirmationDialog from '@/components/public/table-change-confirmation-dialog';
 import { OrderStatus } from '@/services/order-service';
-import { publicOrderService, CreatePublicOrderDto } from '@/services/public-order-service';
+import { publicOrderService, CreatePublicOrderDto, CustomerSearchResponse } from '@/services/public-order-service';
 
 // View states for the public menu
 enum ViewState {
@@ -181,6 +182,15 @@ const PublicMenu: React.FC = () => {
     customerName: string;
   } | null>(null);
 
+  // Table change detection state
+  const [showTableChangeDialog, setShowTableChangeDialog] = useState(false);
+  const [pendingTableChange, setPendingTableChange] = useState<{
+    newTableId: string;
+    newTableName: string;
+    newVenueName?: string;
+  } | null>(null);
+  const [customerActiveOrders, setCustomerActiveOrders] = useState<CustomerSearchResponse['activeOrders']>([]);
+
   useEffect(() => {
     if (slug) {
       loadMenuByOrganizationSlug(slug, tableId || undefined, venueId || undefined);
@@ -195,6 +205,85 @@ const PublicMenu: React.FC = () => {
 
     // Use venue ID from URL if available
   }, [tableId, venueId, setCartTableId]);
+
+  // Table change detection effect
+  useEffect(() => {
+    const checkTableChange = async () => {
+      if (!tableId) return;
+
+      // Get stored table ID from localStorage
+      const storedTableId = localStorage.getItem('currentTableId');
+      const storedCustomerPhone = localStorage.getItem('customerPhone');
+
+      // If we have a stored table ID and it's different from current, check for active orders
+      if (storedTableId && storedTableId !== tableId && storedCustomerPhone) {
+        try {
+          const customerSearch = await publicOrderService.searchCustomerByPhone(storedCustomerPhone, tableId);
+
+          if (customerSearch.activeOrders.length > 0) {
+            // Check if any active orders are from different tables
+            const differentTableOrders = customerSearch.activeOrders.filter(order => order.tableId !== tableId);
+
+            if (differentTableOrders.length > 0) {
+              // Get table name from menu data
+              const tableName = menu?.table?.name || `Table ${tableId.substring(0, 8)}`;
+              const venueName = menu?.venue?.name;
+
+              setCustomerActiveOrders(customerSearch.activeOrders);
+              setPendingTableChange({
+                newTableId: tableId,
+                newTableName: tableName,
+                newVenueName: venueName,
+              });
+              setShowTableChangeDialog(true);
+              return; // Don't update stored table ID yet
+            }
+          }
+        } catch (error) {
+          console.error('Error checking table change:', error);
+        }
+      }
+
+      // Update stored table ID
+      if (tableId) {
+        localStorage.setItem('currentTableId', tableId);
+      }
+    };
+
+    checkTableChange();
+  }, [tableId, menu]);
+
+  // Handle table change confirmation
+  const handleTableChangeConfirm = () => {
+    if (pendingTableChange) {
+      // Update stored table ID
+      localStorage.setItem('currentTableId', pendingTableChange.newTableId);
+      setShowTableChangeDialog(false);
+      setPendingTableChange(null);
+      setCustomerActiveOrders([]);
+
+      toast.success(`Switched to ${pendingTableChange.newTableName}`);
+    }
+  };
+
+  // Handle table change cancellation
+  const handleTableChangeCancel = () => {
+    if (pendingTableChange) {
+      // Navigate back to the previous table
+      const storedTableId = localStorage.getItem('currentTableId');
+      if (storedTableId) {
+        const searchParamsString = searchParams.toString();
+        const newSearchParams = new URLSearchParams(searchParamsString);
+        newSearchParams.set('table', storedTableId);
+        const queryString = newSearchParams.toString();
+        navigate(`/${slug}?${queryString}`, { replace: true });
+      }
+
+      setShowTableChangeDialog(false);
+      setPendingTableChange(null);
+      setCustomerActiveOrders([]);
+    }
+  };
 
   // Update footer tab when URL changes
   useEffect(() => {
@@ -454,8 +543,12 @@ const PublicMenu: React.FC = () => {
       const queryString = searchParamsString ? `?${searchParamsString}` : '';
       navigate(`/${slug}/confirmation${queryString}`);
 
-    } catch (error) {
-      toast.error('Failed to place order. Please try again.');
+      toast.success('Order placed successfully!');
+
+    } catch (error: any) {
+      console.error('Order placement error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to place order. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -1582,6 +1675,17 @@ const PublicMenu: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Table Change Confirmation Dialog */}
+      <TableChangeConfirmationDialog
+        isOpen={showTableChangeDialog}
+        onClose={() => setShowTableChangeDialog(false)}
+        onConfirm={handleTableChangeConfirm}
+        onCancel={handleTableChangeCancel}
+        currentOrders={customerActiveOrders}
+        newTable={pendingTableChange || { tableId: '', tableName: '' }}
+        customerPhone={localStorage.getItem('customerPhone') || ''}
+      />
 
     </div>
   );

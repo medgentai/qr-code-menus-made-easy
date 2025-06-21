@@ -213,12 +213,6 @@ export const StaffNavigationConfig = {
       permissions: [Permission.VIEW_KITCHEN_ORDERS],
     },
     {
-      path: '/menus',
-      label: 'Menus',
-      icon: 'Menu',
-      permissions: [Permission.VIEW_MENUS],
-    },
-    {
       path: '/settings',
       label: 'Settings',
       icon: 'Settings',

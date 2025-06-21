@@ -166,13 +166,7 @@ export interface UpdateOrderDto {
   updateItems?: UpdateOrderItemQuantityDto[];
 }
 
-export interface UpdateOrderItemDto {
-  quantity?: number;
-  notes?: string;
-  status?: OrderItemStatus;
-  addModifiers?: CreateOrderItemModifierDto[];
-  removeModifierIds?: string[];
-}
+
 
 export interface FilterOrdersDto {
   organizationId?: string;
@@ -428,18 +422,7 @@ const OrderService = {
     return response;
   },
 
-  // Order item operations
-  updateOrderItem: async (
-    orderId: string,
-    itemId: string,
-    data: UpdateOrderItemDto
-  ): Promise<OrderItem> => {
-    const response = await api.patch<OrderItem>(
-      `/orders/${orderId}/items/${itemId}`,
-      data
-    );
-    return response.data;
-  },
+
 
   // Helper functions
   getStatusColor: (status: OrderStatus): string => {
@@ -453,7 +436,7 @@ const OrderService = {
       case OrderStatus.READY:
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case OrderStatus.SERVED:
-        return 'bg-teal-100 text-teal-800 border-teal-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderStatus.COMPLETED:
         return 'bg-green-100 text-green-800 border-green-200';
       case OrderStatus.CANCELLED:
@@ -472,7 +455,7 @@ const OrderService = {
       case OrderItemStatus.READY:
         return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case OrderItemStatus.SERVED:
-        return 'bg-teal-100 text-teal-800 border-teal-200';
+        return 'bg-purple-100 text-purple-800 border-purple-200';
       case OrderItemStatus.COMPLETED:
         return 'bg-green-100 text-green-800 border-green-200';
       case OrderItemStatus.CANCELLED:
