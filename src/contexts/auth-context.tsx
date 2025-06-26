@@ -93,6 +93,49 @@ const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'user';
 const SESSION_ID_KEY = 'sessionId';
 
+// Generate a consistent device fingerprint
+function generateDeviceFingerprint(): string {
+  // Use a simplified but consistent approach
+  const userAgent = navigator.userAgent;
+
+  // Extract key components for a more stable fingerprint
+  const parts = userAgent.split(' ');
+
+  // Find browser and version
+  let browser = '';
+  let os = '';
+
+  // Common browser patterns
+  if (userAgent.includes('Chrome/')) {
+    browser = parts.find(p => p.includes('Chrome/')) || '';
+  } else if (userAgent.includes('Firefox/')) {
+    browser = parts.find(p => p.includes('Firefox/')) || '';
+  } else if (userAgent.includes('Safari/')) {
+    browser = parts.find(p => p.includes('Safari/')) || '';
+  } else if (userAgent.includes('Edge/')) {
+    browser = parts.find(p => p.includes('Edge/')) || '';
+  }
+
+  // Common OS patterns
+  if (userAgent.includes('Windows')) {
+    os = 'Windows';
+  } else if (userAgent.includes('Mac OS')) {
+    os = 'macOS';
+  } else if (userAgent.includes('Linux')) {
+    os = 'Linux';
+  } else if (userAgent.includes('Android')) {
+    os = 'Android';
+  } else if (userAgent.includes('iOS')) {
+    os = 'iOS';
+  }
+
+  // Create a simplified fingerprint
+  const fingerprint = [browser, os].filter(Boolean).join(' ');
+
+  // Fallback to first 3 parts if parsing fails
+  return fingerprint || parts.slice(0, 3).join(' ');
+}
+
 // Cookie helper functions
 const getCookie = (name: string): string | null => {
   const cookies = document.cookie.split(';');
@@ -255,7 +298,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   // Clear auth state from memory, local storage and cookies
-  const clearAuthState = () => {
+  const clearAuthState = async () => {
     // Clear user data from localStorage
     localStorage.removeItem(USER_KEY);
 
@@ -283,7 +326,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Force disconnect WebSocket
     try {
-      const { default: webSocketService } = require('@/services/websocket-service');
+      const webSocketService = (await import('@/services/websocket-service')).default;
       webSocketService.forceDisconnect();
     } catch (error) {
       // Ignore if websocket service is not available
@@ -515,7 +558,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const currentToken = state.accessToken;
 
     // First clear the local state to ensure UI updates immediately
-    clearAuthState();
+    await clearAuthState();
 
     // Show success message to user
     toast.success('You have been logged out successfully');
@@ -622,15 +665,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         body: JSON.stringify({
           // Only include sessionId if we have it (for backward compatibility)
           ...(sessionId ? { sessionId } : {}),
-          // Include simplified device fingerprint for additional security
-          fingerprint: navigator.userAgent.split(' ').slice(0, 3).join(' ')
+          // Include device fingerprint for additional security
+          fingerprint: generateDeviceFingerprint()
         }),
         // Include credentials to send and receive cookies
         credentials: 'include'
       });
 
       if (!refreshResponse.ok) {
-        clearAuthState();
+        await clearAuthState();
         return false;
       }
 
@@ -646,7 +689,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Check if we have a valid response with accessToken
       if (!tokenData || !tokenData.accessToken) {
-        clearAuthState();
+        await clearAuthState();
         return false;
       }
 
@@ -680,7 +723,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Check if user status has changed (e.g., suspended while logged in)
       if (state.user && (state.user.status === 'SUSPENDED' || state.user.status === 'INACTIVE')) {
-        clearAuthState();
+        await clearAuthState();
         toast.error('Your account has been suspended. Please contact support.');
         window.location.href = '/account-suspended';
         return false;
@@ -722,7 +765,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (!hasUserData) {
         // Clear auth state only if we have no user data
-        clearAuthState();
+        await clearAuthState();
 
         // Only redirect to login if we're not on a public route
         const isPublic = isPublicRoute(location.pathname);

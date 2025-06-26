@@ -264,8 +264,8 @@ export async function refreshAccessToken(): Promise<boolean> {
       body: JSON.stringify({
         // Only include sessionId if we have it (for backward compatibility)
         ...(sessionId ? { sessionId } : {}),
-        // Send a simplified fingerprint to avoid mismatches
-        fingerprint: navigator.userAgent.split(' ').slice(0, 3).join(' ')
+        // Send a device fingerprint for security
+        fingerprint: generateDeviceFingerprint()
       }),
       // Include credentials to send and receive cookies
       credentials: 'include'
@@ -366,6 +366,49 @@ let pendingRequests: Array<() => void> = [];
 // Track consecutive refresh failures to prevent infinite loops
 let consecutiveRefreshFailures = 0;
 const MAX_REFRESH_FAILURES = 3;
+
+// Generate a consistent device fingerprint
+function generateDeviceFingerprint(): string {
+  // Use a simplified but consistent approach
+  const userAgent = navigator.userAgent;
+
+  // Extract key components for a more stable fingerprint
+  const parts = userAgent.split(' ');
+
+  // Find browser and version
+  let browser = '';
+  let os = '';
+
+  // Common browser patterns
+  if (userAgent.includes('Chrome/')) {
+    browser = parts.find(p => p.includes('Chrome/')) || '';
+  } else if (userAgent.includes('Firefox/')) {
+    browser = parts.find(p => p.includes('Firefox/')) || '';
+  } else if (userAgent.includes('Safari/')) {
+    browser = parts.find(p => p.includes('Safari/')) || '';
+  } else if (userAgent.includes('Edge/')) {
+    browser = parts.find(p => p.includes('Edge/')) || '';
+  }
+
+  // Common OS patterns
+  if (userAgent.includes('Windows')) {
+    os = 'Windows';
+  } else if (userAgent.includes('Mac OS')) {
+    os = 'macOS';
+  } else if (userAgent.includes('Linux')) {
+    os = 'Linux';
+  } else if (userAgent.includes('Android')) {
+    os = 'Android';
+  } else if (userAgent.includes('iOS')) {
+    os = 'iOS';
+  }
+
+  // Create a simplified fingerprint
+  const fingerprint = [browser, os].filter(Boolean).join(' ');
+
+  // Fallback to first 3 parts if parsing fails
+  return fingerprint || parts.slice(0, 3).join(' ');
+}
 
 // Request deduplication cache
 const requestCache = new Map<string, Promise<any>>();
