@@ -6,7 +6,7 @@ import * as z from 'zod';
 import { useAuth } from '@/contexts/auth-context';
 import AuthLayout from '@/components/layouts/auth-layout';
 import { Button } from '@/components/ui/button';
-import OrganizationService from '@/services/organization-service';
+// OrganizationService import removed - using OrganizationContext instead
 import {
   Form,
   FormControl,
@@ -70,21 +70,8 @@ const VerifyOtp = () => {
           return;
         }
 
-        // Otherwise, check if user has any organizations
-        try {
-          const organizations = await OrganizationService.getAll();
-          if (organizations.length === 0) {
-            // New user with no organizations - redirect to create organization
-            navigate('/organizations/create', { replace: true });
-          } else {
-            // User has organizations - redirect to dashboard
-            navigate('/dashboard', { replace: true });
-          }
-        } catch (orgError) {
-          // If we can't fetch organizations, default to dashboard
-          // The organization context will handle the redirect if needed
-          navigate('/dashboard', { replace: true });
-        }
+        // Redirect to dashboard - OrganizationContext will handle organization routing
+        navigate('/dashboard', { replace: true });
       } else {
         toast.error('Invalid or expired OTP code. Please try again.');
       }

@@ -4,7 +4,6 @@
 
 import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/auth-context';
-import { useOrganization } from '@/contexts/organization-context';
 import { organizationKeys, venueKeys, menuKeys, orderKeys, analyticsKeys } from '@/lib/query-keys';
 import OrganizationService from '@/services/organization-service';
 import VenueService from '@/services/venue-service';
@@ -12,38 +11,8 @@ import MenuService from '@/services/menu-service';
 import OrderService from '@/services/order-service';
 import AnalyticsService from '@/services/analytics-service';
 
-// Optimized organization data fetching
-export const useOptimizedOrganizationData = () => {
-  const { state: { isAuthenticated, isLoading: authLoading } } = useAuth();
-  const { currentOrganization } = useOrganization();
-
-  // Fetch organizations list and current organization details in parallel
-  const queries = useQueries({
-    queries: [
-      {
-        queryKey: organizationKeys.list(),
-        queryFn: () => OrganizationService.getAll(),
-        enabled: isAuthenticated && !authLoading,
-        staleTime: 15 * 60 * 1000, // 15 minutes for organizations list
-      },
-      {
-        queryKey: organizationKeys.detail(currentOrganization?.id || ''),
-        queryFn: () => OrganizationService.getDetails(currentOrganization!.id),
-        enabled: isAuthenticated && !authLoading && !!currentOrganization?.id,
-        staleTime: 10 * 60 * 1000, // 10 minutes for organization details
-      },
-    ],
-  });
-
-  const [organizationsQuery, organizationDetailsQuery] = queries;
-
-  return {
-    organizations: organizationsQuery.data || [],
-    organizationDetails: organizationDetailsQuery.data,
-    isLoading: organizationsQuery.isLoading || organizationDetailsQuery.isLoading,
-    error: organizationsQuery.error || organizationDetailsQuery.error,
-  };
-};
+// REMOVED: useOptimizedOrganizationData - Use OrganizationContext instead
+// This hook was causing duplicate API calls and has been replaced by OrganizationContext
 
 // Optimized venue and menu data fetching
 export const useOptimizedVenueMenuData = (organizationId?: string) => {
@@ -292,8 +261,14 @@ export const useOptimizedOrderData = (
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchInterval: 3 * 60 * 1000, // Auto-refresh every 3 minutes
     select: (data) => {
+      // Handle both paginated response and array response
+      if (!data) return [];
+      
+      // Check if it's a paginated response (has 'data' property) or a direct array
+      const ordersArray = Array.isArray(data) ? data : data.data || [];
+      
       // Transform and sort data on the client side
-      return data?.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) || [];
+      return ordersArray.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     },
   });
 };

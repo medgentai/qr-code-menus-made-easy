@@ -48,10 +48,16 @@ const OrganizationList = () => {
     }
   }, [location, queryClient]);
 
-  // Force refresh organizations when this component mounts
+  // Only refresh organizations when this component mounts if coming from payment
   useEffect(() => {
-    fetchOrganizations(true); // Pass true to force refresh
-  }, [fetchOrganizations]);
+    const searchParams = new URLSearchParams(location.search);
+    const fromPayment = searchParams.get('from') === 'payment';
+    
+    // Only force refresh if coming from payment
+    if (fromPayment) {
+      fetchOrganizations(true);
+    }
+  }, [fetchOrganizations, location.search]);
 
   // Function to get the appropriate icon based on organization type
   const getOrganizationIcon = (type: OrganizationType) => {

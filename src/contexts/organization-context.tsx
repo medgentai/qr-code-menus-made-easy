@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from './auth-context';
 import OrganizationService, {
   Organization,
@@ -53,6 +54,7 @@ const CURRENT_ORGANIZATION_KEY = 'currentOrganization';
 export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ children }) => {
   const { state: { isAuthenticated, isLoading: authLoading } } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // State
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -66,23 +68,39 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
 
   // Track the last organization ID we fetched details for
   const [lastFetchedDetailsId, setLastFetchedDetailsId] = useState<string | null>(null);
+  
+  // Track ongoing API requests to prevent duplicates
+  const [ongoingRequests, setOngoingRequests] = useState<Set<string>>(new Set());
 
   // Fetch organization details with caching and duplicate request prevention
   const fetchOrganizationDetails = useCallback(async (id: string): Promise<OrganizationDetails | null> => {
     if (!isAuthenticated) return null;
 
     // Prevent duplicate API calls for the same organization ID in rapid succession
-    if (lastFetchedDetailsId === id && isLoading) {
-      return null; // Return null if already fetching to avoid using stale data
+    const requestKey = `organization-details-${id}`;
+    if (ongoingRequests.has(requestKey)) {
+      return null; // Return null if already fetching
     }
 
+    setOngoingRequests(prev => new Set(prev).add(requestKey));
     setLastFetchedDetailsId(id);
     setIsLoading(true);
     setError(null);
 
     try {
+      // Check React Query cache first
+      const cachedData = queryClient.getQueryData<OrganizationDetails>(['organizations', id, 'details']);
+      if (cachedData && currentOrganizationDetails?.id !== id) {
+        setCurrentOrganizationDetails(cachedData);
+        return cachedData;
+      }
+
       const data = await OrganizationService.getDetails(id);
       setCurrentOrganizationDetails(data);
+      
+      // Update React Query cache
+      queryClient.setQueryData(['organizations', id, 'details'], data);
+      
       return data;
     } catch (err) {
       setError('Failed to fetch organization details');
@@ -90,8 +108,13 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       return null;
     } finally {
       setIsLoading(false);
+      setOngoingRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(requestKey);
+        return newSet;
+      });
     }
-  }, [isAuthenticated, isLoading, lastFetchedDetailsId]);
+  }, [isAuthenticated, queryClient, ongoingRequests, currentOrganizationDetails?.id]);
 
   // Fetch organizations
   const fetchOrganizations = useCallback(async (force: boolean = false): Promise<void> => {
@@ -100,13 +123,29 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     // Skip if already loaded and not forced
     if (hasLoadedRef.current && !force) return;
 
+    // Check if there's already an ongoing request
+    const requestKey = 'organizations-list';
+    if (ongoingRequests.has(requestKey) && !force) return;
+
+    setOngoingRequests(prev => new Set(prev).add(requestKey));
     setIsLoading(true);
     setError(null);
 
     try {
+      // Check React Query cache first
+      const cachedData = queryClient.getQueryData<Organization[]>(['organizations']);
+      if (cachedData && !force) {
+        setOrganizations(cachedData);
+        hasLoadedRef.current = true;
+        return;
+      }
+
       const data = await OrganizationService.getAll();
       setOrganizations(data);
       hasLoadedRef.current = true;
+      
+      // Update React Query cache
+      queryClient.setQueryData(['organizations'], data);
 
       // If there's a stored current organization, try to find it in the fetched list
       const storedOrgId = localStorage.getItem(CURRENT_ORGANIZATION_KEY);
@@ -134,8 +173,13 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       toast.error('Failed to fetch organizations');
     } finally {
       setIsLoading(false);
+      setOngoingRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(requestKey);
+        return newSet;
+      });
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, queryClient, ongoingRequests]);
 
   // Select organization
   const selectOrganization = useCallback((organization: Organization): void => {
@@ -538,9 +582,9 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     // Wait for auth to finish loading before making API calls
     if (authLoading) return;
 
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasLoadedRef.current) {
       fetchOrganizations();
-    } else {
+    } else if (!isAuthenticated) {
       // Clear organizations when not authenticated
       setOrganizations([]);
       setCurrentOrganization(null);
@@ -552,7 +596,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
   // Fetch organization details when current organization changes
   useEffect(() => {
     // Wait for auth to finish loading before making API calls
-    if (authLoading) return;
+    if (authLoading || isLoading) return;
 
     if (currentOrganization && isAuthenticated) {
       // Only fetch if we don't already have details for this organization
@@ -563,7 +607,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         fetchOrganizationDetails(currentOrganization.id);
       }
     }
-  }, [currentOrganization?.id, isAuthenticated, authLoading, lastFetchedDetailsId]);
+  }, [currentOrganization?.id, isAuthenticated, authLoading, lastFetchedDetailsId, isLoading]);
 
   // Context value
   const value: OrganizationContextType = {

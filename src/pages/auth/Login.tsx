@@ -69,28 +69,12 @@ const Login = () => {
       if (user) {
         toast.success('Login successful!');
 
-        // Admin users should go to admin panel, regular users need organization check
+        // Admin users should go to admin panel, regular users to dashboard
+        // The OrganizationContext and OrganizationGuard will handle organization routing
         if (user.role === 'ADMIN') {
           navigate('/admin', { replace: true });
         } else {
-          // Check if user has organizations before redirecting
-          try {
-            // Import here to avoid circular dependencies
-            const OrganizationService = (await import('@/services/organization-service')).default;
-            const organizations = await OrganizationService.getAll();
-
-            if (organizations.length === 0) {
-              // New user with no organizations - redirect to create organization
-              navigate('/organizations/create', { replace: true });
-            } else {
-              // User has organizations - redirect to intended destination or dashboard
-              navigate(from, { replace: true });
-            }
-          } catch (orgError) {
-            // If we can't fetch organizations, default to the intended destination
-            // The organization context will handle the redirect if needed
-            navigate(from, { replace: true });
-          }
+          navigate(from, { replace: true });
         }
       } else {
         // If login returns null but no error was thrown, it might be because OTP is required
