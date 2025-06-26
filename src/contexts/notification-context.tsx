@@ -148,6 +148,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Handle new order event
   const handleNewOrder = useCallback((event: OrderEvent) => {
+    // Filter by venue if we're viewing a specific venue
+    if (currentVenue && event.venueId && event.venueId !== currentVenue.id) {
+      return; // Skip events from other venues
+    }
+
     // Check if we've already notified about this order
     if (notifiedOrderIds.has(event.orderId)) {
       return; // Skip duplicate notifications
@@ -196,10 +201,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     setNotifications(prev => [newNotification, ...prev]);
     setUnreadCount(prev => prev + 1);
-  }, [notifiedOrderIds, playSound]);
+  }, [notifiedOrderIds, playSound, currentVenue]);
 
   // Handle order status change event
   const handleOrderStatusChange = useCallback((event: OrderEvent) => {
+    // Filter by venue if we're viewing a specific venue
+    if (currentVenue && event.venueId && event.venueId !== currentVenue.id) {
+      return; // Skip events from other venues
+    }
+
     // Skip payment status change notifications (user preference)
     if (event.message.includes('marked as PAID') || event.message.includes('marked as UNPAID')) {
       return;
@@ -237,7 +247,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     setNotifications(prev => [newNotification, ...prev]);
     setUnreadCount(prev => prev + 1);
-  }, [notifiedOrderIds, playSound]);
+  }, [notifiedOrderIds, playSound, currentVenue]);
 
   // Handle order item status change event
   const handleOrderItemStatusChange = useCallback((event: OrderItemEvent) => {
@@ -331,45 +341,33 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     const currentOrgId = currentOrganization?.id || null;
     const currentVenueId = currentVenue?.id || null;
 
-    // Only join/leave rooms if the IDs have changed
-    if (currentOrgId !== prevOrgId) {
-      // Leave previous organization room if it exists
-      if (prevOrgId) {
-        webSocketService.leaveRoom('organization', prevOrgId);
-      }
-
-      // Join new organization room if it exists
-      if (currentOrgId) {
-        webSocketService.joinRoom('organization', currentOrgId, currentAccessToken);
-      }
-
-      // Update the state
-      setPrevOrgId(currentOrgId);
+    // Leave previous rooms first
+    if (prevOrgId) {
+      webSocketService.leaveRoom('organization', prevOrgId);
+    }
+    if (prevVenueId) {
+      webSocketService.leaveRoom('venue', prevVenueId);
     }
 
-    // Only join/leave venue rooms if the IDs have changed
-    if (currentVenueId !== prevVenueId) {
-      // Leave previous venue room if it exists
-      if (prevVenueId) {
-        webSocketService.leaveRoom('venue', prevVenueId);
-      }
-
-      // Join new venue room if it exists
-      if (currentVenueId) {
-        webSocketService.joinRoom('venue', currentVenueId, currentAccessToken);
-      }
-
-      // Update the state
-      setPrevVenueId(currentVenueId);
+    // Join rooms based on current context - ONLY ONE ROOM AT A TIME
+    if (currentVenueId) {
+      // If we're viewing a specific venue, only join that venue's room
+      webSocketService.joinRoom('venue', currentVenueId, currentAccessToken);
+    } else if (currentOrgId) {
+      // Only join organization room if we're viewing all venues (no specific venue)
+      webSocketService.joinRoom('organization', currentOrgId, currentAccessToken);
     }
+
+    // Update the state
+    setPrevOrgId(currentOrgId);
+    setPrevVenueId(currentVenueId);
 
     // Cleanup: leave rooms when component unmounts
     return () => {
-      if (currentOrgId) {
-        webSocketService.leaveRoom('organization', currentOrgId);
-      }
       if (currentVenueId) {
         webSocketService.leaveRoom('venue', currentVenueId);
+      } else if (currentOrgId) {
+        webSocketService.leaveRoom('organization', currentOrgId);
       }
     };
   }, [isAuthenticated, accessToken, currentOrganization?.id, currentVenue?.id]);

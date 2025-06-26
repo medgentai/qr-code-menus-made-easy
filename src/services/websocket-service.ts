@@ -32,34 +32,31 @@ class WebSocketService {
   private currentToken: string | null = null;
   private connectionCount = 0; // Track how many components are using the connection
   private isConnecting = false; // Prevent multiple simultaneous connections
+  private reconnectTimer: number | null = null;
+  private heartbeatInterval: number | null = null;
+  private lastHeartbeat: number = 0;
 
   // Initialize the socket connection with optional authentication token
   connect(token?: string) {
     // Increment connection count
     this.connectionCount++;
-    console.log(`WebSocket connection requested. Count: ${this.connectionCount}`);
 
     // If we're already connecting, wait for it to complete
     if (this.isConnecting) {
-      console.log('WebSocket connection already in progress, waiting...');
       return;
     }
 
     if (this.socket) {
       // If we already have a socket but the token changed, disconnect and reconnect
       if (token && token !== this.currentToken) {
-        console.log('Token changed, reconnecting WebSocket...');
         this.disconnect();
       } else {
-        console.log('WebSocket already connected, reusing connection');
         return;
       }
     }
 
     this.isConnecting = true;
     this.currentToken = token || null;
-
-    console.log('Creating new WebSocket connection...');
 
     // Prepare connection options
     const connectionOptions: any = {
@@ -108,12 +105,26 @@ class WebSocketService {
       this.connected = true;
       this.reconnectAttempts = 0;
       this.isConnecting = false;
-      console.log('WebSocket connected successfully');
+      this.lastHeartbeat = Date.now();
+
+      // Start heartbeat monitoring
+      this.startHeartbeat();
+
+      // Re-join all previously joined rooms
+      this.rejoinRooms();
     });
 
-    this.socket.on('disconnect', () => {
+    this.socket.on('disconnect', (reason) => {
       this.connected = false;
-      console.log('WebSocket disconnected');
+
+      // Stop heartbeat monitoring
+      this.stopHeartbeat();
+
+      // Attempt reconnection for certain disconnect reasons
+      if (reason === 'io server disconnect') {
+        // Server initiated disconnect, try to reconnect
+        this.scheduleReconnect();
+      }
     });
 
     this.socket.on('connect_error', (error) => {
@@ -129,15 +140,27 @@ class WebSocketService {
 
     // Listen for order events
     this.socket.on('orderUpdated', (data: OrderEvent) => {
+      this.lastHeartbeat = Date.now(); // Update heartbeat on any message
       this.notifyListeners('orderUpdated', data);
     });
 
     this.socket.on('orderItemUpdated', (data: OrderItemEvent) => {
+      this.lastHeartbeat = Date.now(); // Update heartbeat on any message
       this.notifyListeners('orderItemUpdated', data);
     });
 
     this.socket.on('newOrder', (data: OrderEvent) => {
+      this.lastHeartbeat = Date.now(); // Update heartbeat on any message
       this.notifyListeners('newOrder', data);
+    });
+
+    // Listen for heartbeat/ping events
+    this.socket.on('ping', () => {
+      this.lastHeartbeat = Date.now();
+    });
+
+    this.socket.on('pong', () => {
+      this.lastHeartbeat = Date.now();
     });
 
     // Setup cleanup on page unload
@@ -149,13 +172,105 @@ class WebSocketService {
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {
         // Don't disconnect immediately, just reduce activity
-        console.log('Page hidden, WebSocket staying connected but reducing activity');
       }
     });
   }
 
   // Track joined rooms to prevent duplicate joins
   private joinedRooms = new Set<string>();
+
+  // Start heartbeat monitoring
+  private startHeartbeat() {
+    this.stopHeartbeat(); // Clear any existing heartbeat
+
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket && this.connected) {
+        const now = Date.now();
+        // Check if we haven't received a heartbeat in the last 30 seconds
+        if (now - this.lastHeartbeat > 30000) {
+          this.scheduleReconnect();
+        }
+      }
+    }, 10000); // Check every 10 seconds
+  }
+
+  // Stop heartbeat monitoring
+  private stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+
+  // Schedule a reconnection attempt
+  private scheduleReconnect() {
+    if (this.reconnectTimer || this.reconnectAttempts >= this.maxReconnectAttempts) {
+      return;
+    }
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      if (!this.connected && this.connectionCount > 0) {
+        this.connect(this.currentToken);
+      }
+    }, this.reconnectDelay * Math.pow(2, this.reconnectAttempts)); // Exponential backoff
+  }
+
+  // Re-join all previously joined rooms after reconnection
+  private rejoinRooms() {
+    if (!this.socket || !this.connected) return;
+
+    const roomsToRejoin = Array.from(this.joinedRooms);
+    this.joinedRooms.clear(); // Clear the set so joinRoom doesn't skip
+
+    // Filter out conflicting rooms - only keep the most specific room
+    const filteredRooms = this.filterConflictingRooms(roomsToRejoin);
+
+    filteredRooms.forEach(roomKey => {
+      const [room, id] = roomKey.split(':');
+      if (room && id) {
+        this.joinRoom(room, id);
+      }
+    });
+  }
+
+  // Filter out conflicting rooms to prevent joining both organization and venue rooms
+  private filterConflictingRooms(rooms: string[]): string[] {
+    const venueRooms = rooms.filter(room => room.startsWith('venue:'));
+    const orgRooms = rooms.filter(room => room.startsWith('organization:'));
+    const otherRooms = rooms.filter(room => !room.startsWith('venue:') && !room.startsWith('organization:'));
+
+    // If we have venue rooms, prioritize them over organization rooms
+    if (venueRooms.length > 0) {
+      return [...venueRooms, ...otherRooms];
+    }
+
+    // Otherwise, keep organization rooms
+    return [...orgRooms, ...otherRooms];
+  }
+
+  // Handle conflicts between venue and organization rooms
+  private handleVenueOrgRoomConflict(newRoom: string, newId: string) {
+    if (newRoom === 'venue') {
+      // If joining a venue room, leave all organization rooms
+      const orgRoomsToLeave = Array.from(this.joinedRooms).filter(room => room.startsWith('organization:'));
+      orgRoomsToLeave.forEach(roomKey => {
+        const [room, id] = roomKey.split(':');
+        if (room && id) {
+          this.leaveRoom(room, id);
+        }
+      });
+    } else if (newRoom === 'organization') {
+      // If joining an organization room, leave all venue rooms
+      const venueRoomsToLeave = Array.from(this.joinedRooms).filter(room => room.startsWith('venue:'));
+      venueRoomsToLeave.forEach(roomKey => {
+        const [room, id] = roomKey.split(':');
+        if (room && id) {
+          this.leaveRoom(room, id);
+        }
+      });
+    }
+  }
 
   // Join a room to receive specific events
   joinRoom(room: string, id: string, token?: string) {
@@ -169,6 +284,11 @@ class WebSocketService {
     // Skip if already joined this room
     if (this.joinedRooms.has(roomKey)) {
       return;
+    }
+
+    // Handle venue/organization room conflicts
+    if (room === 'venue' || room === 'organization') {
+      this.handleVenueOrgRoomConflict(room, id);
     }
 
     // Connect if not already connected, with token if provided
@@ -256,16 +376,20 @@ class WebSocketService {
   disconnect() {
     // Decrement connection count
     this.connectionCount = Math.max(0, this.connectionCount - 1);
-    console.log(`WebSocket disconnect requested. Count: ${this.connectionCount}`);
 
     // Only actually disconnect if no components are using it
     if (this.connectionCount > 0) {
-      console.log('Other components still using WebSocket, keeping connection alive');
       return;
     }
 
-    console.log('Disconnecting WebSocket...');
     if (!this.socket) return;
+
+    // Clear timers
+    this.stopHeartbeat();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
 
     this.socket.disconnect();
     this.socket = null;
@@ -278,9 +402,15 @@ class WebSocketService {
 
   // Force disconnect (ignore reference counting)
   forceDisconnect() {
-    console.log('Force disconnecting WebSocket...');
     this.connectionCount = 0;
     if (!this.socket) return;
+
+    // Clear timers
+    this.stopHeartbeat();
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
 
     this.socket.disconnect();
     this.socket = null;
@@ -301,6 +431,20 @@ class WebSocketService {
     return this.currentToken;
   }
 
+  // Clear all venue and organization rooms (useful for context switches)
+  clearVenueOrgRooms() {
+    const roomsToLeave = Array.from(this.joinedRooms).filter(room =>
+      room.startsWith('venue:') || room.startsWith('organization:')
+    );
+
+    roomsToLeave.forEach(roomKey => {
+      const [room, id] = roomKey.split(':');
+      if (room && id) {
+        this.leaveRoom(room, id);
+      }
+    });
+  }
+
   // Get connection statistics for debugging
   getConnectionStats() {
     return {
@@ -316,7 +460,7 @@ class WebSocketService {
 
   // Debug method to log connection status
   logConnectionStatus() {
-    console.log('WebSocket Connection Status:', this.getConnectionStats());
+    return this.getConnectionStats();
   }
 }
 

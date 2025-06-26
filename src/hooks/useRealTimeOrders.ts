@@ -40,65 +40,134 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
   const playNotificationSound = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.play().catch(error => {
-        console.log('Could not play notification sound:', error);
+        // Silently fail if sound cannot be played
       });
     }
   }, []);
 
-  // Handle new order events
-  const handleNewOrder = useCallback((event: OrderEvent) => {
-    // Add the new order to the list (you might want to fetch full order details)
-    setOrders(prevOrders => {
-      // Check if order already exists
-      const existingOrder = prevOrders.find(order => order.id === event.orderId);
-      if (existingOrder) {
-        return prevOrders;
-      }
+  // Handle new order events with full order fetching
+  const handleNewOrder = useCallback(async (event: OrderEvent) => {
+    // If we're viewing a specific venue, only show orders for that venue
+    if (currentVenue && event.venueId && event.venueId !== currentVenue.id) {
+      return;
+    }
 
-      // For now, create a minimal order object
-      // In a real implementation, you might want to fetch the full order details
-      const newOrder: Order = {
-        id: event.orderId,
-        status: event.status,
-        tableId: event.tableId || null,
-        customerName: event.tableId ? `Table ${event.tableId}` : 'Online Order',
-        totalAmount: '0',
-        items: [],
-        createdAt: event.timestamp.toString(),
-        updatedAt: event.timestamp.toString(),
-      };
-
-      return [newOrder, ...prevOrders];
-    });
-
-    // Show notification
-    toast.success(`New order received: ${event.message}`, {
+    // Show immediate notification
+    toast.success(`🔔 New order #${event.orderId.substring(0, 8)} received!`, {
       duration: 5000,
+      description: event.message || 'A new order has been placed',
     });
 
     // Play notification sound
     playNotificationSound();
 
-    setLastUpdate(new Date());
+    // Fetch the full order details and add to the list
+    try {
+      const fullOrder = await OrderService.getById(event.orderId);
+
+      setOrders(prevOrders => {
+        // Check if order already exists to prevent duplicates
+        const existingOrder = prevOrders.find(order => order.id === event.orderId);
+        if (existingOrder) {
+          // Update existing order with full details
+          return prevOrders.map(order =>
+            order.id === event.orderId ? fullOrder : order
+          );
+        }
+
+        // Add new order to the beginning of the list
+        return [fullOrder, ...prevOrders];
+      });
+
+      setLastUpdate(new Date());
+    } catch (error) {
+      console.error('Failed to fetch full order details:', error);
+
+      // Fallback: create minimal order object if fetch fails
+      setOrders(prevOrders => {
+        const existingOrder = prevOrders.find(order => order.id === event.orderId);
+        if (existingOrder) {
+          return prevOrders;
+        }
+
+        const minimalOrder: Order = {
+          id: event.orderId,
+          status: event.status,
+          tableId: event.tableId || null,
+          customerName: event.tableId ? `Table ${event.tableId}` : 'Online Order',
+          totalAmount: '0',
+          items: [],
+          createdAt: event.timestamp.toString(),
+          updatedAt: event.timestamp.toString(),
+        };
+
+        return [minimalOrder, ...prevOrders];
+      });
+
+      toast.error('Failed to load full order details, showing basic info');
+      setLastUpdate(new Date());
+    }
   }, [playNotificationSound]);
 
   // Handle order update events
-  const handleOrderUpdate = useCallback((event: OrderEvent) => {
-    setOrders(prevOrders => {
-      return prevOrders.map(order => {
-        if (order.id === event.orderId) {
-          return {
-            ...order,
-            status: event.status,
-            updatedAt: event.timestamp.toString(),
-          };
-        }
-        return order;
-      });
-    });
+  const handleOrderUpdate = useCallback(async (event: OrderEvent) => {
+    // If we're viewing a specific venue, only show orders for that venue
+    if (currentVenue && event.venueId && event.venueId !== currentVenue.id) {
+      return;
+    }
 
-    // Skip payment status change notifications (user preference)
-    if (!event.message.includes('marked as PAID') && !event.message.includes('marked as UNPAID')) {
+    // Check if this is a payment status update
+    const isPaymentUpdate = event.message.includes('marked as PAID') || event.message.includes('marked as UNPAID');
+
+    if (isPaymentUpdate) {
+      // For payment updates, fetch the full order to get updated payment details
+      try {
+        const fullOrder = await OrderService.getById(event.orderId);
+        setOrders(prevOrders => {
+          return prevOrders.map(order => {
+            if (order.id === event.orderId) {
+              return fullOrder;
+            }
+            return order;
+          });
+        });
+
+        // Show payment status notification
+        const isPaid = event.message.includes('marked as PAID');
+        toast.info(`💳 Order #${event.orderId.substring(0, 8)} ${isPaid ? 'payment received' : 'marked as unpaid'}`, {
+          duration: 3000,
+        });
+      } catch (error) {
+        console.error('Failed to fetch updated order for payment status:', error);
+        // Fallback to basic update
+        setOrders(prevOrders => {
+          return prevOrders.map(order => {
+            if (order.id === event.orderId) {
+              return {
+                ...order,
+                status: event.status,
+                updatedAt: event.timestamp.toString(),
+              };
+            }
+            return order;
+          });
+        });
+      }
+    } else {
+      // Regular status update
+      setOrders(prevOrders => {
+        return prevOrders.map(order => {
+          if (order.id === event.orderId) {
+            return {
+              ...order,
+              status: event.status,
+              updatedAt: event.timestamp.toString(),
+            };
+          }
+          return order;
+        });
+      });
+
       // Show notification for status changes
       toast.info(event.message, {
         duration: 3000,
@@ -110,6 +179,13 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
 
   // Handle order item update events
   const handleOrderItemUpdate = useCallback((event: OrderItemEvent) => {
+    // Note: OrderItemEvent doesn't have venueId, so we need to check if the order exists in our current orders
+    // This provides implicit venue filtering since we only have orders for the current venue
+    const orderExists = orders.some(order => order.id === event.orderId);
+    if (!orderExists) {
+      return; // Don't process updates for orders not in our current list
+    }
+
     // Update the specific order item status
     setOrders(prevOrders => {
       return prevOrders.map(order => {
@@ -136,7 +212,7 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
     });
 
     setLastUpdate(new Date());
-  }, []);
+  }, [orders]);
 
   // Setup WebSocket connection and listeners
   useEffect(() => {
@@ -147,17 +223,17 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
       return;
     }
 
-    console.log('useRealTimeOrders: Setting up WebSocket connection...');
-
     // Connect to WebSocket (will reuse existing connection if available)
     webSocketService.connect(token);
 
-    // Join organization room for real-time updates
-    webSocketService.joinRoom('organization', currentOrganization.id, token);
-
-    // Join venue room if we have a current venue
+    // Join rooms based on current context
     if (currentVenue) {
+      // If we're viewing a specific venue, only join that venue's room
       webSocketService.joinRoom('venue', currentVenue.id, token);
+    } else {
+      // Only join organization room if we're viewing all venues
+      // This will receive events from all venues in the organization
+      webSocketService.joinRoom('organization', currentOrganization.id, token);
     }
 
     // Set up event listeners
@@ -177,7 +253,6 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
     listenersSetup.current = true;
 
     return () => {
-      console.log('useRealTimeOrders: Cleaning up...');
       clearInterval(connectionInterval);
       webSocketService.off('newOrder', handleNewOrder);
       webSocketService.off('orderUpdated', handleOrderUpdate);
@@ -249,7 +324,6 @@ export const useRealTimeOrders = (initialOrders: Order[] = []) => {
 
       // Make the actual API call
       await OrderService.updateStatus(orderId, newStatus);
-      console.log(`Successfully updated order ${orderId} to status ${newStatus}`);
 
     } catch (error) {
       console.error('Failed to update order status:', error);

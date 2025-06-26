@@ -3,14 +3,16 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Eye, 
-  Edit, 
+import {
+  Eye,
+  Edit,
   MoreHorizontal,
   Clock,
   CreditCard,
   User,
-  MapPin
+  MapPin,
+  XCircle,
+  Trash2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,13 +30,20 @@ interface NewOrderCardProps {
   onViewOrder: (orderId: string) => void;
   onEditOrder: (orderId: string) => void;
   onDeleteOrder: (order: Order) => void;
+  onCancelOrder?: (orderId: string) => void;
   onStatusChange: (orderId: string, status: OrderStatus) => void;
   onPaymentStatusClick: (order: Order) => void;
   canEditOrder: (status: OrderStatus) => boolean;
   canDeleteOrder: (status: OrderStatus) => boolean;
+  canCancelOrder?: (status: OrderStatus) => boolean;
   canUpdateOrderStatus: (status: OrderStatus) => boolean;
   availableStatusFilters: OrderStatus[];
+  getAvailableStatusTransitions?: (order: Order) => OrderStatus[]; // New prop for status transitions
   pendingStatusUpdates: Record<string, OrderStatus>;
+  isNewOrder?: boolean; // New prop for indicating new orders
+  isRecentlyUpdated?: boolean; // New prop for indicating recently updated orders
+  userRole?: string;
+  userStaffType?: string;
 }
 
 // Food emojis mapping for common items
@@ -62,13 +71,20 @@ export const NewOrderCard: React.FC<NewOrderCardProps> = ({
   onViewOrder,
   onEditOrder,
   onDeleteOrder,
+  onCancelOrder,
   onStatusChange,
   onPaymentStatusClick,
   canEditOrder,
   canDeleteOrder,
+  canCancelOrder,
   canUpdateOrderStatus,
   availableStatusFilters,
+  getAvailableStatusTransitions,
   pendingStatusUpdates,
+  isNewOrder = false,
+  isRecentlyUpdated = false,
+  userRole,
+  userStaffType,
 }) => {
   // Get status color and styling
   const getStatusStyle = (status: OrderStatus) => {
@@ -176,19 +192,34 @@ export const NewOrderCard: React.FC<NewOrderCardProps> = ({
   };
 
   return (
-    <Card 
-      className={`overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer ${statusStyle.bg} ${statusStyle.border} border-l-4`}
+    <Card
+      className={`overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer ${statusStyle.bg} ${statusStyle.border} border-l-4 ${
+        isNewOrder ? 'ring-2 ring-blue-500 ring-opacity-50 animate-slide-in-bounce shadow-lg' :
+        isRecentlyUpdated ? 'ring-2 ring-green-500 ring-opacity-50 shadow-md' : ''
+      }`}
       onClick={() => onViewOrder(order.id)}
     >
       <CardContent className="p-4">
         {/* Status Indicator & Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${statusStyle.indicator}`}></div>
+            <div className={`w-3 h-3 rounded-full ${statusStyle.indicator} ${isNewOrder || isRecentlyUpdated ? 'animate-pulse-subtle' : ''}`}></div>
             <div>
-              <h3 className="font-semibold text-gray-900 text-base leading-tight">
-                {getDisplayName()}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-gray-900 text-base leading-tight">
+                  {getDisplayName()}
+                </h3>
+                {isNewOrder && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 animate-glow-subtle">
+                    NEW
+                  </span>
+                )}
+                {isRecentlyUpdated && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 animate-glow-subtle">
+                    UPDATED
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                 <span className="font-mono">#{order.id.substring(0, 8)}</span>
                 <span>•</span>
@@ -222,15 +253,50 @@ export const NewOrderCard: React.FC<NewOrderCardProps> = ({
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                    {availableStatusFilters.map((status) => (
+                    {(getAvailableStatusTransitions ? getAvailableStatusTransitions(order) : availableStatusFilters.filter(status => status !== order.status)).map((status) => (
                       <DropdownMenuItem
                         key={status}
                         onClick={() => onStatusChange(order.id, status)}
-                        disabled={order.status === status}
+                        className="flex items-center gap-2"
                       >
+                        <span className={`w-2 h-2 rounded-full ${
+                          status === 'PENDING' ? 'bg-yellow-500' :
+                          status === 'CONFIRMED' ? 'bg-blue-500' :
+                          status === 'PREPARING' ? 'bg-orange-500' :
+                          status === 'READY' ? 'bg-green-500' :
+                          status === 'SERVED' ? 'bg-purple-500' :
+                          status === 'COMPLETED' ? 'bg-gray-500' :
+                          status === 'CANCELLED' ? 'bg-red-500' : 'bg-gray-400'
+                        }`} />
                         {status}
                       </DropdownMenuItem>
                     ))}
+                    {/* Show disabled COMPLETED option with explanation if order is SERVED but not paid */}
+                    {order.status === 'SERVED' && order.paymentStatus !== 'PAID' && (
+                      <DropdownMenuItem
+                        disabled
+                        className="flex items-center gap-2 opacity-50 cursor-not-allowed"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-gray-400" />
+                        <div className="flex flex-col">
+                          <span>COMPLETED</span>
+                          <span className="text-xs text-muted-foreground">Payment required</span>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
+                  </>
+                )}
+                {/* Show Cancel option for Front of House staff, Delete for others */}
+                {canCancelOrder && canCancelOrder(order.status) && userRole === 'STAFF' && userStaffType === 'FRONT_OF_HOUSE' && onCancelOrder && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => onCancelOrder(order.id)}
+                      className="text-orange-600 focus:text-orange-700"
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Cancel Order
+                    </DropdownMenuItem>
                   </>
                 )}
                 {canDeleteOrder(order.status) && (
@@ -240,6 +306,7 @@ export const NewOrderCard: React.FC<NewOrderCardProps> = ({
                       onClick={() => onDeleteOrder(order)}
                       className="text-destructive focus:text-destructive"
                     >
+                      <Trash2 className="mr-2 h-4 w-4" />
                       Delete Order
                     </DropdownMenuItem>
                   </>

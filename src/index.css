@@ -246,14 +246,48 @@ html {
 @keyframes pulse-subtle {
   0%, 100% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.7;
+    transform: scale(1.05);
   }
 }
 
 .animate-pulse-subtle {
-  animation: pulse-subtle 3s ease-in-out infinite;
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+@keyframes glow-subtle {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.5), 0 0 25px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.animate-glow-subtle {
+  animation: glow-subtle 3s ease-in-out infinite;
+}
+
+@keyframes slide-in-bounce {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(5px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slide-in-bounce {
+  animation: slide-in-bounce 0.6s ease-out forwards;
 }
 
 @keyframes spin-slow {

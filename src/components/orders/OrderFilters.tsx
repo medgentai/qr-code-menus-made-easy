@@ -1,22 +1,29 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Clock, 
-  ChefHat, 
-  CheckCircle, 
+import {
+  Clock,
+  ChefHat,
+  CheckCircle,
   CreditCard,
   List,
-  AlertCircle
+  AlertCircle,
+  PlayCircle,
+  Utensils,
+  Truck,
+  XCircle,
+  DollarSign
 } from 'lucide-react';
 import { Order, OrderStatus, OrderPaymentStatus } from '@/services/order-service';
 
-export type FilterType = 'all' | 'active' | 'ready' | 'kitchen' | 'unpaid' | 'completed';
+export type FilterType = 'all' | 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'completed' | 'cancelled' | 'unpaid';
 
 interface OrderFiltersProps {
   orders: Order[];
   activeFilter: FilterType;
   onFilterChange: (filter: FilterType) => void;
+  userRole?: string;
+  userStaffType?: string;
   className?: string;
 }
 
@@ -24,43 +31,53 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
   orders,
   activeFilter,
   onFilterChange,
+  userRole,
+  userStaffType,
   className = '',
 }) => {
-  // Calculate counts for each filter
+  // Calculate counts for each filter - Simple and direct
   const getCounts = () => {
     const counts = {
       all: orders.length,
-      active: 0,
+      pending: 0,
+      confirmed: 0,
+      preparing: 0,
       ready: 0,
-      kitchen: 0,
-      unpaid: 0,
+      served: 0,
       completed: 0,
+      cancelled: 0,
+      unpaid: 0,
     };
 
     orders.forEach(order => {
-      // Active orders (pending, confirmed, preparing, ready)
-      if (['PENDING', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status)) {
-        counts.active++;
+      // Count by exact status
+      switch (order.status) {
+        case OrderStatus.PENDING:
+          counts.pending++;
+          break;
+        case OrderStatus.CONFIRMED:
+          counts.confirmed++;
+          break;
+        case OrderStatus.PREPARING:
+          counts.preparing++;
+          break;
+        case OrderStatus.READY:
+          counts.ready++;
+          break;
+        case OrderStatus.SERVED:
+          counts.served++;
+          break;
+        case OrderStatus.COMPLETED:
+          counts.completed++;
+          break;
+        case OrderStatus.CANCELLED:
+          counts.cancelled++;
+          break;
       }
 
-      // Ready orders (ready to serve)
-      if (order.status === 'READY') {
-        counts.ready++;
-      }
-
-      // Kitchen orders (confirmed and preparing)
-      if (['CONFIRMED', 'PREPARING'].includes(order.status)) {
-        counts.kitchen++;
-      }
-
-      // Unpaid orders
+      // Count unpaid orders (regardless of status, except cancelled)
       if (order.paymentStatus === OrderPaymentStatus.UNPAID && order.status !== OrderStatus.CANCELLED) {
         counts.unpaid++;
-      }
-
-      // Completed orders
-      if (['SERVED', 'COMPLETED'].includes(order.status)) {
-        counts.completed++;
       }
     });
 
@@ -69,22 +86,48 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
 
   const counts = getCounts();
 
-  const filters = [
+  // Define role-based filter configurations
+  const getAllFilters = () => [
     {
       key: 'all' as FilterType,
       label: 'All',
       icon: List,
       count: counts.all,
       color: 'text-gray-600',
-      description: 'All orders'
+      description: 'All orders',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200'
     },
     {
-      key: 'active' as FilterType,
-      label: 'Active',
+      key: 'pending' as FilterType,
+      label: 'Pending',
       icon: Clock,
-      count: counts.active,
+      count: counts.pending,
+      color: 'text-yellow-600',
+      description: 'Awaiting confirmation',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      priority: counts.pending > 0
+    },
+    {
+      key: 'confirmed' as FilterType,
+      label: 'Confirmed',
+      icon: PlayCircle,
+      count: counts.confirmed,
       color: 'text-blue-600',
-      description: 'Orders in progress'
+      description: 'Order confirmed',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200'
+    },
+    {
+      key: 'preparing' as FilterType,
+      label: 'Preparing',
+      icon: ChefHat,
+      count: counts.preparing,
+      color: 'text-orange-600',
+      description: 'Being prepared',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200'
     },
     {
       key: 'ready' as FilterType,
@@ -93,26 +136,186 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
       count: counts.ready,
       color: 'text-green-600',
       description: 'Ready to serve',
-      priority: counts.ready > 0 // Highlight if there are ready orders
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      priority: counts.ready > 0
     },
     {
-      key: 'kitchen' as FilterType,
-      label: 'Kitchen',
-      icon: ChefHat,
-      count: counts.kitchen,
-      color: 'text-orange-600',
-      description: 'In kitchen'
+      key: 'served' as FilterType,
+      label: 'Served',
+      icon: Utensils,
+      count: counts.served,
+      color: 'text-purple-600',
+      description: 'Served to customer',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200'
+    },
+    {
+      key: 'completed' as FilterType,
+      label: 'Completed',
+      icon: CheckCircle,
+      count: counts.completed,
+      color: 'text-emerald-600',
+      description: 'Order completed',
+      bgColor: 'bg-emerald-50',
+      borderColor: 'border-emerald-200'
+    },
+    {
+      key: 'cancelled' as FilterType,
+      label: 'Cancelled',
+      icon: XCircle,
+      count: counts.cancelled,
+      color: 'text-red-600',
+      description: 'Cancelled orders',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200'
     },
     {
       key: 'unpaid' as FilterType,
       label: 'Unpaid',
-      icon: CreditCard,
+      icon: DollarSign,
       count: counts.unpaid,
       color: 'text-red-600',
       description: 'Payment pending',
-      priority: counts.unpaid > 0 // Highlight if there are unpaid orders
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      priority: counts.unpaid > 0
     }
   ];
+
+  // Front of House filters - Simple and focused
+  const getFrontOfHouseFilters = () => [
+    {
+      key: 'all' as FilterType,
+      label: 'All',
+      icon: List,
+      count: counts.all,
+      color: 'text-gray-600',
+      description: 'All orders',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200'
+    },
+    {
+      key: 'pending' as FilterType,
+      label: 'Pending',
+      icon: Clock,
+      count: counts.pending,
+      color: 'text-yellow-600',
+      description: 'Awaiting confirmation',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      priority: counts.pending > 0
+    },
+    {
+      key: 'ready' as FilterType,
+      label: 'Ready',
+      icon: CheckCircle,
+      count: counts.ready,
+      color: 'text-green-600',
+      description: 'Ready to serve',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      priority: counts.ready > 0
+    },
+    {
+      key: 'served' as FilterType,
+      label: 'Served',
+      icon: Utensils,
+      count: counts.served,
+      color: 'text-purple-600',
+      description: 'Served to customer',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200'
+    },
+    {
+      key: 'completed' as FilterType,
+      label: 'Completed',
+      icon: CheckCircle,
+      count: counts.completed,
+      color: 'text-emerald-600',
+      description: 'Order completed',
+      bgColor: 'bg-emerald-50',
+      borderColor: 'border-emerald-200'
+    },
+    {
+      key: 'unpaid' as FilterType,
+      label: 'Unpaid',
+      icon: DollarSign,
+      count: counts.unpaid,
+      color: 'text-red-600',
+      description: 'Payment pending',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      priority: counts.unpaid > 0
+    }
+  ];
+
+  // Kitchen filters - Focus on preparation workflow
+  const getKitchenFilters = () => [
+    {
+      key: 'all' as FilterType,
+      label: 'All',
+      icon: List,
+      count: counts.all,
+      color: 'text-gray-600',
+      description: 'All orders',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200'
+    },
+    {
+      key: 'pending' as FilterType,
+      label: 'Pending',
+      icon: Clock,
+      count: counts.pending,
+      color: 'text-yellow-600',
+      description: 'Awaiting confirmation',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200',
+      priority: counts.pending > 0
+    },
+    {
+      key: 'confirmed' as FilterType,
+      label: 'Confirmed',
+      icon: PlayCircle,
+      count: counts.confirmed,
+      color: 'text-blue-600',
+      description: 'Order confirmed',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200'
+    },
+    {
+      key: 'preparing' as FilterType,
+      label: 'Preparing',
+      icon: ChefHat,
+      count: counts.preparing,
+      color: 'text-orange-600',
+      description: 'Being prepared',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200'
+    },
+    {
+      key: 'ready' as FilterType,
+      label: 'Ready',
+      icon: CheckCircle,
+      count: counts.ready,
+      color: 'text-green-600',
+      description: 'Ready to serve',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200'
+    }
+  ];
+
+  // Select filters based on user role
+  const filters = (() => {
+    if (userRole === 'STAFF' && userStaffType === 'FRONT_OF_HOUSE') {
+      return getFrontOfHouseFilters();
+    } else if (userRole === 'STAFF' && userStaffType === 'KITCHEN') {
+      return getKitchenFilters();
+    } else {
+      // Managers, Admins, Owners get all filters
+      return getAllFilters();
+    }
+  })();
 
   return (
     <div className={`space-y-3 ${className}`}>
@@ -131,21 +334,21 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
               size="sm"
               onClick={() => onFilterChange(filter.key)}
               className={`
-                flex items-center gap-2 whitespace-nowrap min-w-fit
-                ${isActive ? 'shadow-sm' : ''}
-                ${isPriority ? 'ring-2 ring-orange-200 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100' : ''}
-                ${!hasItems && !isActive ? 'opacity-60' : ''}
+                flex items-center gap-2 whitespace-nowrap min-w-fit transition-all duration-200
+                ${isActive ? `${filter.bgColor} ${filter.borderColor} ${filter.color} shadow-sm border-2` : 'hover:shadow-sm'}
+                ${isPriority ? `ring-2 ring-offset-1 ${filter.borderColor.replace('border-', 'ring-')} ${filter.bgColor} ${filter.color}` : ''}
+                ${!hasItems && !isActive ? 'opacity-50' : ''}
+                ${hasItems && !isActive ? `hover:${filter.bgColor} hover:${filter.color}` : ''}
               `}
             >
               <Icon className="h-4 w-4" />
               <span className="font-medium">{filter.label}</span>
               {hasItems && (
-                <Badge 
-                  variant={isActive ? 'secondary' : 'outline'} 
+                <Badge
+                  variant="secondary"
                   className={`
                     ml-1 px-1.5 py-0.5 text-xs font-bold min-w-[20px] h-5 flex items-center justify-center
-                    ${isActive ? 'bg-white/20 text-white border-white/30' : ''}
-                    ${isPriority ? 'bg-orange-200 text-orange-800 border-orange-300' : ''}
+                    ${isActive ? 'bg-white/90 text-gray-800 border-white/50' : `${filter.bgColor} ${filter.color} border-current`}
                   `}
                 >
                   {filter.count}

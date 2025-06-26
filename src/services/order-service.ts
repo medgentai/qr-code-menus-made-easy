@@ -104,6 +104,7 @@ export interface Order {
   venue?: {
     id: string;
     name: string;
+    organizationId: string;
   };
   table?: {
     id: string;
@@ -112,6 +113,7 @@ export interface Order {
     venue?: {
       id: string;
       name: string;
+      organizationId: string;
     };
   };
   paidByUser?: {

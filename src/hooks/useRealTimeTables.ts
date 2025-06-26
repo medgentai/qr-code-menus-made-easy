@@ -102,13 +102,14 @@ export const useRealTimeTables = (initialTables: Table[] = []) => {
 
     // Connect to WebSocket (will reuse existing connection if available)
     webSocketService.connect(accessToken);
-    
-    // Join organization room for real-time updates
-    webSocketService.joinRoom('organization', currentOrganization.id, accessToken);
-    
-    // Join venue room if we have a current venue
+
+    // Join rooms based on current context
     if (currentVenue) {
+      // If we're viewing a specific venue, only join that venue's room
       webSocketService.joinRoom('venue', currentVenue.id, accessToken);
+    } else {
+      // Only join organization room if we're viewing all venues
+      webSocketService.joinRoom('organization', currentOrganization.id, accessToken);
     }
 
     // Set up event listeners

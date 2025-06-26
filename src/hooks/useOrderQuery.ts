@@ -688,9 +688,9 @@ export const useUpdateOrderStatusMutation = () => {
               }
             );
           }        // Update in organization queries if we have an organization ID
-        if (updatedOrder.table?.venue) {
+        if (updatedOrder.table?.venue?.organizationId) {
           queryClient.setQueriesData(
-            { queryKey: [...orderKeys.organization(updatedOrder.table.venue.id), 'infinite'] },
+            { queryKey: [...orderKeys.organization(updatedOrder.table.venue.organizationId), 'infinite'] },
               (oldData: any) => {
                 if (!oldData) return oldData;
 

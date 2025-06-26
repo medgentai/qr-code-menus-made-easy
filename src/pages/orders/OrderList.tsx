@@ -6,20 +6,13 @@ import {
   Edit,
   Trash2,
   Eye,
-  Filter,
   Search,
-  Clock,
-  Calendar,
-  User,
-
+  XCircle,
   FileText,
   RefreshCw,
   ChevronDown,
   MoreHorizontal,
-  CheckCircle2,
-  AlertCircle,
   BarChart3,
-  Utensils,
   Table as TableIcon,
   Store,
   Loader2,
@@ -31,7 +24,6 @@ import { Input } from '@/components/ui/input';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle
@@ -71,6 +63,7 @@ import { useVenue } from '@/contexts/venue-context';
 import { usePermissions } from '@/contexts/permission-context';
 import { useOrder } from '@/hooks/useOrder';
 import { useRoleBasedOrders } from '@/hooks/useRoleBasedOrders';
+import { useRoleBasedRealTimeOrders } from '@/hooks/useRoleBasedRealTimeOrders';
 import OrderService, { Order, OrderStatus, OrderPaymentStatus } from '@/services/order-service';
 import { PaymentStatusDialog } from '@/components/orders/PaymentStatusDialog';
 import { NewOrderCard } from '@/components/orders/NewOrderCard';
@@ -89,25 +82,41 @@ const OrderList: React.FC = () => {
   const { currentOrganization } = useOrganization();
   const { currentVenue, venues, fetchTablesForVenue } = useVenue();
   const { selectOrder } = useOrder();
-  const { userRole, userVenueIds } = usePermissions();
+  const { userRole, userStaffType, userVenueIds } = usePermissions();
   const queryClient = useQueryClient();
 
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
+  const [statusFilter] = useState<OrderStatus | ''>('');
   const [venueFilter, setVenueFilter] = useState<string>('');
 
-  // Use role-based orders hook for automatic filtering with additional filters
+  // Use real-time orders hook for live updates
+  const {
+    isConnected,
+    lastUpdate,
+    canCreateOrder,
+    canEditOrder,
+    canDeleteOrder,
+    canCancelOrder,
+    canUpdateOrderStatus,
+    availableStatusFilters,
+    getAvailableStatusTransitions,
+    updateOrderPaymentStatus: realTimeUpdateOrderPaymentStatus,
+    refetch: refetchRealTimeOrders,
+    newOrderIds,
+    clearNewOrderIndicator
+  } = useRoleBasedRealTimeOrders({
+    status: statusFilter === '' ? undefined : statusFilter,
+    venueId: venueFilter === '' ? undefined : venueFilter
+  });
+
+  // Fallback to role-based orders hook for pagination support (if needed)
   const {
     orders: roleBasedOrders,
     isLoading: roleBasedLoading,
     hasNextPage,
     fetchNextPage,
-    canCreateOrder,
-    canEditOrder,
-    canDeleteOrder,
-    canUpdateOrderStatus,
-    availableStatusFilters,
     pageInfo,
-    rawQuery: infiniteOrdersQuery
+    rawQuery: infiniteOrdersQuery,
+    getAvailableStatusTransitions: fallbackGetAvailableStatusTransitions
   } = useRoleBasedOrders({
     status: statusFilter === '' ? undefined : statusFilter,
     venueId: venueFilter === '' ? undefined : venueFilter
@@ -117,7 +126,8 @@ const OrderList: React.FC = () => {
   const updateOrderStatusMutation = useUpdateOrderStatusMutation();
   const deleteOrderMutation = useDeleteOrderMutation();
 
-  // Use role-based orders as the main data source
+  // Always use role-based orders for pagination support, but merge with real-time updates
+  // Real-time orders are used for live updates, but pagination comes from role-based orders
   const infiniteOrders = roleBasedOrders;
 
   const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
@@ -127,13 +137,13 @@ const OrderList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [paymentDialogOrder, setPaymentDialogOrder] = useState<Order | null>(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('active');
+  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
 
 
   // State to track orders with pending status updates - for immediate UI updates
   const [pendingStatusUpdates, setPendingStatusUpdates] = useState<Record<string, OrderStatus>>({});
 
-  // Use role-based loading state
+  // Use role-based loading state as primary, real-time loading for updates
   const isLoading = roleBasedLoading;
 
   // Filter venues based on user permissions
@@ -149,9 +159,9 @@ const OrderList: React.FC = () => {
     return venues;
   }, [venues, userRole, userVenueIds]);
 
-  // Order statistics - using infinite query data for consistency
+  // Order statistics - calculated from role-based orders (supports pagination)
   const orderStats = useMemo(() => {
-    // Use the infinite orders data for statistics
+    // Always calculate stats from the current paginated orders
     const total = infiniteOrders.length;
     const pending = infiniteOrders.filter((o: Order) => o.status === OrderStatus.PENDING).length;
     const confirmed = infiniteOrders.filter((o: Order) => o.status === OrderStatus.CONFIRMED).length;
@@ -161,7 +171,6 @@ const OrderList: React.FC = () => {
     const completed = infiniteOrders.filter((o: Order) => o.status === OrderStatus.COMPLETED).length;
     const cancelled = infiniteOrders.filter((o: Order) => o.status === OrderStatus.CANCELLED).length;
 
-    // Payment statistics - exclude cancelled orders from unpaid count
     const paid = infiniteOrders.filter((o: Order) => o.paymentStatus === OrderPaymentStatus.PAID).length;
     const unpaid = infiniteOrders.filter((o: Order) =>
       o.paymentStatus === OrderPaymentStatus.UNPAID &&
@@ -202,7 +211,9 @@ const OrderList: React.FC = () => {
       paidAmount,
       unpaidAmount
     };
-  }, [infiniteOrders]);  // Refresh function - always refetch when user explicitly clicks refresh
+  }, [infiniteOrders]);
+
+  // Refresh function - always use role-based orders refetch for pagination support
   const handleRefresh = useCallback(async () => {
     // Prevent refresh if already refreshing
     if (isRefreshing) return;
@@ -212,16 +223,18 @@ const OrderList: React.FC = () => {
     try {
       // Clear any pending status updates before refreshing
       setPendingStatusUpdates({});
-      
-      // Always refetch when user explicitly clicks refresh
+
+      // Always use role-based orders refetch for pagination support
       await infiniteOrdersQuery.refetch();
+      // Also refresh real-time connection for live updates
+      await refetchRealTimeOrders();
     } finally {
       // Use setTimeout to prevent UI flicker
       setTimeout(() => {
         setIsRefreshing(false);
       }, 500);
     }
-  }, [infiniteOrdersQuery, isRefreshing]);
+  }, [infiniteOrdersQuery, isRefreshing, refetchRealTimeOrders]);
 
   // Function to load more orders - memoized to prevent unnecessary re-renders
   const handleLoadMore = useCallback(async () => {
@@ -239,6 +252,11 @@ const OrderList: React.FC = () => {
   };
 
   const handleViewOrder = (orderId: string) => {
+    // Clear new order indicator when viewing
+    if (newOrderIds.has(orderId)) {
+      clearNewOrderIndicator(orderId);
+    }
+
     if (venueId) {
       navigate(`/organizations/${organizationId}/venues/${venueId}/orders/${orderId}`);
     } else {
@@ -252,7 +270,6 @@ const OrderList: React.FC = () => {
 
     // If we found the order, set it as the current order to avoid fetching it again
     if (orderToEdit) {
-      console.log('Using existing order data for edit:', orderToEdit.id);
 
       // IMPORTANT: Set the order in the cache with the detail query key
       // This ensures it's available when the edit page loads
@@ -273,7 +290,6 @@ const OrderList: React.FC = () => {
         const cachedTables = queryClient.getQueryData(tablesQueryKey);
 
         if (!cachedTables) {
-          console.log('Prefetching tables for venue:', venueIdToUse);
           // Prefetch tables for this venue to avoid an API call when the edit page loads
           // Use fetchQuery instead of prefetchQuery to ensure it completes before navigation
           queryClient.fetchQuery({
@@ -281,8 +297,6 @@ const OrderList: React.FC = () => {
             queryFn: () => fetchTablesForVenue(venueIdToUse),
             staleTime: 10 * 60 * 1000 // 10 minutes
           });
-        } else {
-          console.log('Tables for venue already in cache:', venueIdToUse);
         }
       }
 
@@ -327,6 +341,17 @@ const OrderList: React.FC = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      const loadingToastId = toast.loading('Cancelling order...');
+      await handleStatusChange(orderId, OrderStatus.CANCELLED);
+      toast.dismiss(loadingToastId);
+      toast.success('Order cancelled successfully');
+    } catch (error) {
+      toast.error('Failed to cancel order');
+    }
+  };
+
   const handlePaymentStatusClick = (order: Order) => {
     setPaymentDialogOrder(order);
     setIsPaymentDialogOpen(true);
@@ -365,6 +390,11 @@ const OrderList: React.FC = () => {
         };
       }
     );
+
+    // Also update real-time orders state for immediate UI feedback
+    if (realTimeUpdateOrderPaymentStatus) {
+      realTimeUpdateOrderPaymentStatus(updatedOrder);
+    }
   };
 
   // Filter infinite orders - status filtering is now handled by the backend
@@ -392,28 +422,31 @@ const OrderList: React.FC = () => {
     let filtered = filteredInfiniteOrders;
 
     switch (activeFilter) {
-      case 'active':
-        filtered = filtered.filter(order =>
-          ['PENDING', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status)
-        );
+      case 'pending':
+        filtered = filtered.filter(order => order.status === OrderStatus.PENDING);
+        break;
+      case 'confirmed':
+        filtered = filtered.filter(order => order.status === OrderStatus.CONFIRMED);
+        break;
+      case 'preparing':
+        filtered = filtered.filter(order => order.status === OrderStatus.PREPARING);
         break;
       case 'ready':
-        filtered = filtered.filter(order => order.status === 'READY');
+        filtered = filtered.filter(order => order.status === OrderStatus.READY);
         break;
-      case 'kitchen':
-        filtered = filtered.filter(order =>
-          ['CONFIRMED', 'PREPARING'].includes(order.status)
-        );
+      case 'served':
+        filtered = filtered.filter(order => order.status === OrderStatus.SERVED);
+        break;
+      case 'completed':
+        filtered = filtered.filter(order => order.status === OrderStatus.COMPLETED);
+        break;
+      case 'cancelled':
+        filtered = filtered.filter(order => order.status === OrderStatus.CANCELLED);
         break;
       case 'unpaid':
         filtered = filtered.filter(order =>
           order.paymentStatus === OrderPaymentStatus.UNPAID &&
           order.status !== OrderStatus.CANCELLED
-        );
-        break;
-      case 'completed':
-        filtered = filtered.filter(order =>
-          ['SERVED', 'COMPLETED'].includes(order.status)
         );
         break;
       case 'all':
@@ -422,24 +455,36 @@ const OrderList: React.FC = () => {
         break;
     }
 
-    // Sort by priority: READY first, then by creation time (newest first)
+    // Sort by priority: Latest data always at top
     return filtered.sort((a, b) => {
-      // Priority 1: READY orders first
+      // Priority 1: READY orders first (most urgent - need immediate serving)
       if (a.status === 'READY' && b.status !== 'READY') return -1;
       if (b.status === 'READY' && a.status !== 'READY') return 1;
 
-      // Priority 2: Unpaid orders next (if not filtering by payment)
+      // Priority 2: Recently updated orders (any change moves to top)
+      const aUpdated = new Date(a.updatedAt).getTime();
+      const bUpdated = new Date(b.updatedAt).getTime();
+      const timeDiff = bUpdated - aUpdated;
+
+      // If updated times are significantly different (more than 1 minute), prioritize by update time
+      if (Math.abs(timeDiff) > 60000) { // 1 minute threshold
+        return timeDiff;
+      }
+
+      // Priority 3: Unpaid orders next (if not filtering by payment and similar update times)
       if (activeFilter !== 'unpaid') {
         if (a.paymentStatus === OrderPaymentStatus.UNPAID && b.paymentStatus === OrderPaymentStatus.PAID) return -1;
         if (b.paymentStatus === OrderPaymentStatus.UNPAID && a.paymentStatus === OrderPaymentStatus.PAID) return 1;
       }
 
-      // Priority 3: By creation time (newest first)
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      // Priority 4: Recently created orders (newest first)
+      const aCreated = new Date(a.createdAt).getTime();
+      const bCreated = new Date(b.createdAt).getTime();
+      return bCreated - aCreated;
     });
   }, [filteredInfiniteOrders, activeFilter]);
 
-  // Handle status change - defined after filteredInfiniteOrders to avoid reference error
+  // Handle status change - use real-time update when available
   const handleStatusChange = useCallback(async (orderId: string, status: OrderStatus) => {
     // Find the order in our data to show optimistic UI feedback
     const orderToUpdate = filteredInfiniteOrders.find(order => order.id === orderId);
@@ -448,126 +493,149 @@ const OrderList: React.FC = () => {
     // Show a loading toast that we'll dismiss on success
     const loadingToastId = toast.loading(`Updating order status to ${status}...`);
 
-    // Immediately update the UI with the new status using React state
-    // This ensures the component re-renders with the new status
-    setPendingStatusUpdates(prev => ({
-      ...prev,
-      [orderId]: status
-    }));
+    try {
+      // Always use mutation for status updates (supports pagination)
+      {
+        // Fallback to mutation for role-based orders
+        // Set pending status for immediate UI feedback
+        setPendingStatusUpdates(prev => ({
+          ...prev,
+          [orderId]: status
+        }));
 
-    // Also update the order in the cache directly for immediate UI update
-    if (orderToUpdate) {
-      const updatedOrder = { ...orderToUpdate, status };
+        // Also update the order in the cache directly for immediate UI update
+        if (orderToUpdate) {
+          const updatedOrder = { ...orderToUpdate, status };
 
-      // Update the order in the infinite query cache using a predicate to match all filtered infinite queries
-      queryClient.setQueriesData(
-        {
-          predicate: (query) => {
-            const queryKey = query.queryKey;
-            return (
-              Array.isArray(queryKey) &&
-              queryKey[0] === 'orders' &&
-              queryKey[1] === 'list' &&
-              queryKey[2] === 'filtered' &&
-              queryKey[queryKey.length - 1] === 'infinite'
-            );
-          }
-        },
-        (oldData: any) => {
-          if (!oldData) return oldData;
-
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page: any) => {
-              if (!page || !page.data) return page;
+          // Update the order in the infinite query cache
+          queryClient.setQueriesData(
+            {
+              predicate: (query) => {
+                const queryKey = query.queryKey;
+                return (
+                  Array.isArray(queryKey) &&
+                  queryKey[0] === 'orders' &&
+                  queryKey[1] === 'list' &&
+                  queryKey[2] === 'filtered' &&
+                  queryKey[queryKey.length - 1] === 'infinite'
+                );
+              }
+            },
+            (oldData: any) => {
+              if (!oldData) return oldData;
 
               return {
-                ...page,
-                data: page.data.map((order: Order) =>
-                  order.id === orderId ? updatedOrder : order
-                )
+                ...oldData,
+                pages: oldData.pages.map((page: any) => {
+                  if (!page || !page.data) return page;
+
+                  return {
+                    ...page,
+                    data: page.data.map((order: Order) =>
+                      order.id === orderId ? updatedOrder : order
+                    )
+                  };
+                })
               };
-            })
-          };
+            }
+          );
         }
-      );
-    }
 
-    // The mutation will handle cache updates through its onMutate/onSuccess/onError handlers
-    updateOrderStatusMutation.mutate(
-      { id: orderId, status },
-      {
-        onSuccess: () => {
-          // Dismiss the loading toast - the success toast is shown by the mutation
-          toast.dismiss(loadingToastId);
+        // Use mutation for fallback
+        updateOrderStatusMutation.mutate(
+          { id: orderId, status },
+          {
+            onSuccess: () => {
+              toast.dismiss(loadingToastId);
+              setPendingStatusUpdates(prev => ({
+                ...prev,
+                [orderId]: status
+              }));
+            },
+            onError: (error) => {
+              toast.dismiss(loadingToastId);
+              toast.error(`Failed to update status: ${error.message || 'Unknown error'}`);
+              console.error('Error updating order status:', error);
 
-          // Keep the updated status in our state to ensure the UI stays updated
-          setPendingStatusUpdates(prev => ({
-            ...prev,
-            [orderId]: status
-          }));
-        },
-        onError: (error) => {
-          // Dismiss the loading toast and show error
-          toast.dismiss(loadingToastId);
-          toast.error(`Failed to update status: ${error.message || 'Unknown error'}`);
+              // Remove the pending status update to revert the UI
+              setPendingStatusUpdates(prev => {
+                const newUpdates = { ...prev };
+                delete newUpdates[orderId];
+                return newUpdates;
+              });
 
-          // Log the error for debugging
-          console.error('Error updating order status:', error);
-
-          // Remove the pending status update to revert the UI
-          setPendingStatusUpdates(prev => {
-            const newUpdates = { ...prev };
-            delete newUpdates[orderId];
-            return newUpdates;
-          });
-
-          // Revert the optimistic update in the cache if there was an error
-          if (orderToUpdate && oldStatus) {
-            // Revert the order in the cache
-            const revertedOrder = { ...orderToUpdate, status: oldStatus };
-
-            // Update the order in the infinite query cache using a predicate to match all filtered infinite queries
-            queryClient.setQueriesData(
-              {
-                predicate: (query) => {
-                  const queryKey = query.queryKey;
-                  return (
-                    Array.isArray(queryKey) &&
-                    queryKey[0] === 'orders' &&
-                    queryKey[1] === 'list' &&
-                    queryKey[2] === 'filtered' &&
-                    queryKey[queryKey.length - 1] === 'infinite'
-                  );
-                }
-              },
-              (oldData: any) => {
-                if (!oldData) return oldData;
-
-                return {
-                  ...oldData,
-                  pages: oldData.pages.map((page: any) => {
-                    if (!page || !page.data) return page;
+              // Revert the optimistic update in the cache if there was an error
+              if (orderToUpdate && oldStatus) {
+                const revertedOrder = { ...orderToUpdate, status: oldStatus };
+                queryClient.setQueriesData(
+                  {
+                    predicate: (query) => {
+                      const queryKey = query.queryKey;
+                      return (
+                        Array.isArray(queryKey) &&
+                        queryKey[0] === 'orders' &&
+                        queryKey[1] === 'list' &&
+                        queryKey[2] === 'filtered' &&
+                        queryKey[queryKey.length - 1] === 'infinite'
+                      );
+                    }
+                  },
+                  (oldData: any) => {
+                    if (!oldData) return oldData;
 
                     return {
-                      ...page,
-                      data: page.data.map((order: Order) =>
-                        order.id === orderId ? revertedOrder : order
-                      )
+                      ...oldData,
+                      pages: oldData.pages.map((page: any) => {
+                        if (!page || !page.data) return page;
+
+                        return {
+                          ...page,
+                          data: page.data.map((order: Order) =>
+                            order.id === orderId ? revertedOrder : order
+                          )
+                        };
+                      })
                     };
-                  })
-                };
+                  }
+                );
               }
-            );
+            }
           }
-        }
+        );
       }
-    );
+    } catch (error) {
+      toast.dismiss(loadingToastId);
+      toast.error(`Failed to update status: ${error.message || 'Unknown error'}`);
+      console.error('Error updating order status:', error);
+
+      // Remove the pending status update to revert the UI
+      setPendingStatusUpdates(prev => {
+        const newUpdates = { ...prev };
+        delete newUpdates[orderId];
+        return newUpdates;
+      });
+    }
   }, [updateOrderStatusMutation, filteredInfiniteOrders, toast, queryClient]);
 
   const getStatusBadgeClass = (status: OrderStatus) => {
     return OrderService.getStatusColor(status);
   };
+
+  // Check if order was recently updated (within last 2 minutes)
+  const isOrderRecentlyUpdated = useCallback((order: Order) => {
+    const updatedAt = new Date(order.updatedAt);
+    const createdAt = new Date(order.createdAt);
+    const now = new Date();
+    const timeSinceUpdate = now.getTime() - updatedAt.getTime();
+
+    // Show "UPDATED" if:
+    // 1. Order was updated within last 2 minutes
+    // 2. Update time is significantly different from creation time (more than 30 seconds)
+    // 3. Order is not in newOrderIds (don't show both NEW and UPDATED)
+    return timeSinceUpdate < 120000 && // 2 minutes
+           Math.abs(updatedAt.getTime() - createdAt.getTime()) > 30000 && // 30 seconds
+           !newOrderIds.has(order.id); // Not a new order
+  }, [newOrderIds]);
 
   const formatCurrency = (amount: string) => {
     return OrderService.formatCurrency(amount);
@@ -579,7 +647,21 @@ const OrderList: React.FC = () => {
         {/* Header with title and actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{pageInfo.title}</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">{pageInfo.title}</h1>
+              {/* Real-time connection indicator */}
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-xs text-muted-foreground">
+                  {isConnected ? 'Live' : 'Offline'}
+                </span>
+                {lastUpdate && (
+                  <span className="text-xs text-muted-foreground">
+                    • Updated {new Date(lastUpdate).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            </div>
             <p className="text-muted-foreground">
               {pageInfo.description} {currentVenue?.name ? `at ${currentVenue.name}` : currentOrganization?.name ? `for ${currentOrganization.name}` : ''}
             </p>
@@ -603,58 +685,60 @@ const OrderList: React.FC = () => {
         </div>
 
         {/* Simplified Order Management */}
-        {/* Responsive Statistics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-          <Card className="bg-card">
-            <CardHeader className="pb-1 pt-2 px-3">
-              <CardTitle className="text-xs sm:text-sm font-medium truncate">Total Orders</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-2">
-              <div className="text-lg sm:text-xl font-bold">{orderStats.total}</div>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                {formatCurrency(orderStats.totalAmount.toFixed(2))} total
-              </p>
-            </CardContent>
-          </Card>
+        {/* Responsive Statistics - Hidden for Front of House staff */}
+        {!(userRole === 'STAFF' && userStaffType === 'FRONT_OF_HOUSE') && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            <Card className="bg-card">
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs sm:text-sm font-medium truncate">Total Orders</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-2">
+                <div className="text-lg sm:text-xl font-bold">{orderStats.total}</div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {formatCurrency(orderStats.totalAmount.toFixed(2))} total
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-card">
-            <CardHeader className="pb-1 pt-2 px-3">
-              <CardTitle className="text-xs sm:text-sm font-medium truncate">Active Orders</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-2">
-              <div className="text-lg sm:text-xl font-bold">
-                {orderStats.pending + orderStats.confirmed + orderStats.preparing + orderStats.ready}
-              </div>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                In progress
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs sm:text-sm font-medium truncate">Active Orders</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-2">
+                <div className="text-lg sm:text-xl font-bold">
+                  {orderStats.pending + orderStats.confirmed + orderStats.preparing + orderStats.ready}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  In progress
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-card">
-            <CardHeader className="pb-1 pt-2 px-3">
-              <CardTitle className="text-xs sm:text-sm font-medium truncate">Paid Orders</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-2">
-              <div className="text-lg sm:text-xl font-bold text-green-600">{orderStats.paid}</div>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                {formatCurrency(orderStats.paidAmount.toFixed(2))} collected
-              </p>
-            </CardContent>
-          </Card>
+            <Card className="bg-card">
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs sm:text-sm font-medium truncate">Paid Orders</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-2">
+                <div className="text-lg sm:text-xl font-bold text-green-600">{orderStats.paid}</div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {formatCurrency(orderStats.paidAmount.toFixed(2))} collected
+                </p>
+              </CardContent>
+            </Card>
 
-          <Card className="bg-card">
-            <CardHeader className="pb-1 pt-2 px-3">
-              <CardTitle className="text-xs sm:text-sm font-medium truncate">Unpaid Orders</CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 pb-2">
-              <div className="text-lg sm:text-xl font-bold text-red-600">{orderStats.unpaid}</div>
-              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                {formatCurrency(orderStats.unpaidAmount.toFixed(2))} outstanding
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <Card className="bg-card">
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs sm:text-sm font-medium truncate">Unpaid Orders</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-2">
+                <div className="text-lg sm:text-xl font-bold text-red-600">{orderStats.unpaid}</div>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {formatCurrency(orderStats.unpaidAmount.toFixed(2))} outstanding
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
 
 
@@ -665,6 +749,8 @@ const OrderList: React.FC = () => {
             orders={filteredInfiniteOrders}
             activeFilter={activeFilter}
             onFilterChange={setActiveFilter}
+            userRole={userRole}
+            userStaffType={userStaffType}
           />
 
           {/* Search, Venue Filter, and View Mode - All in one line */}
@@ -835,9 +921,21 @@ const OrderList: React.FC = () => {
                       <TableCell>{order.items?.length || 0}</TableCell>
                       <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}>
-                          {pendingStatusUpdates[order.id] || order.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={getStatusBadgeClass(pendingStatusUpdates[order.id] || order.status)}>
+                            {pendingStatusUpdates[order.id] || order.status}
+                          </Badge>
+                          {newOrderIds.has(order.id) && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              NEW
+                            </span>
+                          )}
+                          {isOrderRecentlyUpdated(order) && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              UPDATED
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -883,6 +981,18 @@ const OrderList: React.FC = () => {
                                 ))}
                               </>
                             )}
+                            {/* Show Cancel option for Front of House staff, Delete for others */}
+                            {canCancelOrder(order.status) && userRole === 'STAFF' && userStaffType === 'FRONT_OF_HOUSE' && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  className="text-orange-600 focus:text-orange-700"
+                                >
+                                  <XCircle className="mr-2 h-4 w-4" /> Cancel Order
+                                </DropdownMenuItem>
+                              </>
+                            )}
                             {canDeleteOrder(order.status) && (
                               <>
                                 <DropdownMenuSeparator />
@@ -920,13 +1030,20 @@ const OrderList: React.FC = () => {
                 onViewOrder={handleViewOrder}
                 onEditOrder={handleEditOrder}
                 onDeleteOrder={confirmDelete}
+                onCancelOrder={handleCancelOrder}
                 onStatusChange={handleStatusChange}
                 onPaymentStatusClick={handlePaymentStatusClick}
                 canEditOrder={canEditOrder}
                 canDeleteOrder={canDeleteOrder}
+                canCancelOrder={canCancelOrder}
                 canUpdateOrderStatus={canUpdateOrderStatus}
+                userRole={userRole}
+                userStaffType={userStaffType}
                 availableStatusFilters={availableStatusFilters}
+                getAvailableStatusTransitions={getAvailableStatusTransitions || fallbackGetAvailableStatusTransitions}
                 pendingStatusUpdates={pendingStatusUpdates}
+                isNewOrder={newOrderIds.has(order.id)}
+                isRecentlyUpdated={isOrderRecentlyUpdated(order)}
               />
             ))}
 

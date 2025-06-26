@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { usePermissions } from '@/contexts/permission-context';
 import { useOrganization } from '@/contexts/organization-context';
 import { useVenue } from '@/contexts/venue-context';
@@ -55,7 +55,7 @@ export const useRoleBasedOrders = (additionalFilters?: {
 
     // Add status filter from additional filters
     if (additionalFilters?.status && additionalFilters.status !== '') {
-      baseFilters.status = additionalFilters.status as OrderStatus;
+      baseFilters.status = additionalFilters.status;
     }
 
     return baseFilters;
@@ -110,6 +110,32 @@ export const useRoleBasedOrders = (additionalFilters?: {
       return canPerformOrderAction('delete', userRole, userStaffType || undefined, orderStatus);
     };
   }, [userRole, userStaffType]);
+
+  // Get available status transitions for a specific order
+  const getAvailableStatusTransitions = useCallback((order: Order) => {
+    const currentStatus = order.status;
+    const isPaid = order.paymentStatus === 'PAID';
+
+    const statusFlow: Record<OrderStatus, OrderStatus[]> = {
+      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
+      [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
+      [OrderStatus.READY]: [OrderStatus.SERVED, OrderStatus.CANCELLED],
+      [OrderStatus.SERVED]: isPaid ? [OrderStatus.COMPLETED] : [], // Can only complete if paid
+      [OrderStatus.COMPLETED]: [], // No transitions from completed
+      [OrderStatus.CANCELLED]: [] // No transitions from cancelled
+    };
+
+    const availableTransitions = statusFlow[currentStatus] || [];
+
+    // Filter based on user role
+    if (userRole === MemberRole.STAFF) {
+      // Staff can't cancel orders, only managers and admins can
+      return availableTransitions.filter(status => status !== OrderStatus.CANCELLED);
+    }
+
+    return availableTransitions;
+  }, [userRole]);
 
   // Get available status options for filtering
   const availableStatusFilters = useMemo(() => {
@@ -183,7 +209,8 @@ export const useRoleBasedOrders = (additionalFilters?: {
     // Filtering
     allowedStatuses,
     availableStatusFilters,
-    
+    getAvailableStatusTransitions,
+
     // UI Info
     pageInfo,
     

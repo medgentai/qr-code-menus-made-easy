@@ -16,6 +16,7 @@ import {
   Printer,
   RefreshCw,
   CheckCircle,
+  CreditCard,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -47,15 +48,21 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import OrderService, {
-  OrderStatus
+  OrderStatus,
+  OrderPaymentStatus,
+  Order
 } from '@/services/order-service';
 import {
   useOrderQuery,
   useUpdateOrderStatusMutation,
   useDeleteOrderMutation
 } from '@/hooks/useOrderQuery';
+import { useRoleBasedRealTimeOrders } from '@/hooks/useRoleBasedRealTimeOrders';
 import { TaxBreakdown } from '@/components/orders/TaxBreakdown';
 import { TaxService } from '@/services/tax-service';
+import { usePermissions } from '@/contexts/permission-context';
+import { MemberRole } from '@/types/organization';
+import { PaymentStatusDialog } from '@/components/orders/PaymentStatusDialog';
 
 const OrderDetails: React.FC = () => {
   const { id: organizationId, venueId, orderId } = useParams<{
@@ -64,22 +71,52 @@ const OrderDetails: React.FC = () => {
     orderId: string
   }>();
   const navigate = useNavigate();
-  // Use React Query hooks
+
+  // Get user permissions first
+  const { userRole, userStaffType } = usePermissions();
+
+  // Use real-time orders hook to get the specific order
   const {
-    data: currentOrder,
-    isLoading,
-    refetch
-  } = useOrderQuery(orderId || '');
+    orders: realTimeOrders,
+    isLoading: realTimeLoading,
+    updateOrderStatus: realTimeUpdateOrderStatus,
+    refetch: realTimeRefetch
+  } = useRoleBasedRealTimeOrders({
+    venueId: venueId,
+  });
+
+  // Find the specific order from real-time orders
+  const currentOrder = realTimeOrders.find(order => order.id === orderId);
+
+  // Fallback to regular query if not found in real-time orders
+  const {
+    data: fallbackOrder,
+    isLoading: fallbackLoading,
+    refetch: fallbackRefetch
+  } = useOrderQuery(orderId || '', {
+    enabled: !currentOrder && !realTimeLoading // Only fetch if not found in real-time
+  });
+
+  // Use real-time order if available, otherwise fallback
+  const order = currentOrder || fallbackOrder;
+  const isLoading = realTimeLoading || (fallbackLoading && !currentOrder);
 
   const updateOrderStatusMutation = useUpdateOrderStatusMutation();
   const deleteOrderMutation = useDeleteOrderMutation();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetch();
+    if (currentOrder) {
+      // Use real-time refetch if order is from real-time
+      await realTimeRefetch();
+    } else {
+      // Use fallback refetch if order is from fallback query
+      await fallbackRefetch();
+    }
     setIsRefreshing(false);
   };
 
@@ -108,14 +145,20 @@ const OrderDetails: React.FC = () => {
   };
 
   const handleStatusChange = async (status: OrderStatus) => {
-    updateOrderStatusMutation.mutate(
-      { id: orderId!, status },
-      {
-        onSuccess: () => {
-          refetch(); // Refresh the order data
+    if (currentOrder && realTimeUpdateOrderStatus) {
+      // Use real-time update for better synchronization
+      await realTimeUpdateOrderStatus(orderId!, status);
+    } else {
+      // Fallback to regular mutation
+      updateOrderStatusMutation.mutate(
+        { id: orderId!, status },
+        {
+          onSuccess: () => {
+            handleRefresh(); // Refresh the order data
+          }
         }
-      }
-    );
+      );
+    }
   };
 
 
@@ -126,6 +169,52 @@ const OrderDetails: React.FC = () => {
 
   const getStatusBadgeClass = (status: OrderStatus) => {
     return OrderService.getStatusColor(status);
+  };
+
+  // Get available status transitions based on role and payment status
+  const getAvailableStatusTransitions = (order: Order) => {
+    const currentStatus = order.status;
+    const isPaid = order.paymentStatus === OrderPaymentStatus.PAID;
+
+    const statusFlow: Record<OrderStatus, OrderStatus[]> = {
+      [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+      [OrderStatus.CONFIRMED]: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
+      [OrderStatus.PREPARING]: [OrderStatus.READY, OrderStatus.CANCELLED],
+      [OrderStatus.READY]: [OrderStatus.SERVED, OrderStatus.CANCELLED],
+      [OrderStatus.SERVED]: isPaid ? [OrderStatus.COMPLETED] : [], // Can only complete if paid
+      [OrderStatus.COMPLETED]: [], // No transitions from completed
+      [OrderStatus.CANCELLED]: [] // No transitions from cancelled
+    };
+
+    let availableTransitions = statusFlow[currentStatus] || [];
+
+    // Filter based on user role and staff type
+    if (userRole === MemberRole.STAFF) {
+      if (userStaffType === 'FRONT_OF_HOUSE') {
+        // Front of house staff only see customer-facing statuses
+        availableTransitions = availableTransitions.filter(status =>
+          ![OrderStatus.PREPARING, OrderStatus.READY].includes(status)
+        );
+      }
+      // Staff can't cancel orders, only managers and admins can
+      availableTransitions = availableTransitions.filter(status => status !== OrderStatus.CANCELLED);
+    }
+
+    return availableTransitions;
+  };
+
+  // Handle payment status click
+  const handlePaymentStatusClick = () => {
+    if (order && order.status !== OrderStatus.CANCELLED) {
+      setIsPaymentDialogOpen(true);
+    }
+  };
+
+  // Handle payment status change
+  const handlePaymentStatusChanged = () => {
+    // Refetch the order to get the latest data
+    handleRefresh();
+    setIsPaymentDialogOpen(false);
   };
 
 
@@ -173,7 +262,7 @@ const OrderDetails: React.FC = () => {
     );
   }
 
-  if (!currentOrder) {
+  if (!order) {
     return (
         <div className="space-y-6">
           <div className="flex items-center gap-2">
@@ -206,7 +295,7 @@ const OrderDetails: React.FC = () => {
             <Button variant="ghost" size="icon" onClick={handleBack} className="print:hidden">
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold">Order #{currentOrder.id.substring(0, 8)}</h1>
+            <h1 className="text-2xl font-bold">Order #{order.id.substring(0, 8)}</h1>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             <Button
@@ -225,30 +314,92 @@ const OrderDetails: React.FC = () => {
             >
               <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="print:hidden">
-                  Status: {currentOrder.status}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {Object.values(OrderStatus).map((status) => (
-                  <DropdownMenuItem
-                    key={status}
-                    onClick={() => handleStatusChange(status)}
-                    disabled={currentOrder.status === status}
+            {/* Payment Status Button */}
+            <Button
+              variant="outline"
+              onClick={handlePaymentStatusClick}
+              className={`print:hidden ${
+                order.paymentStatus === OrderPaymentStatus.PAID
+                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                  : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+              }`}
+              disabled={order.status === OrderStatus.CANCELLED}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              {order.paymentStatus === OrderPaymentStatus.PAID ? 'PAID' : 'UNPAID'}
+            </Button>
+
+            {/* Only show status dropdown if there are available transitions or special cases */}
+            {(() => {
+              const availableTransitions = getAvailableStatusTransitions(order);
+              const hasUnpaidServedCase = order.status === OrderStatus.SERVED && order.paymentStatus !== OrderPaymentStatus.PAID;
+              const canChangeStatus = availableTransitions.length > 0 || hasUnpaidServedCase;
+
+              if (!canChangeStatus) {
+                // Show a disabled button for final states (COMPLETED, CANCELLED)
+                return (
+                  <Button
+                    variant="outline"
+                    disabled
+                    className="print:hidden opacity-50 cursor-not-allowed"
                   >
-                    <Badge variant="outline" className={`mr-2 ${getStatusBadgeClass(status)}`}>
-                      {status}
-                    </Badge>
-                    {status}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    Status: {order.status} (Final)
+                  </Button>
+                );
+              }
+
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="print:hidden">
+                      Status: {order.status}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {availableTransitions.length > 0 ? (
+                      availableTransitions.map((status) => (
+                        <DropdownMenuItem
+                          key={status}
+                          onClick={() => handleStatusChange(status)}
+                          className="flex items-center gap-2"
+                        >
+                          <span className={`w-2 h-2 rounded-full ${
+                            status === OrderStatus.PENDING ? 'bg-yellow-500' :
+                            status === OrderStatus.CONFIRMED ? 'bg-blue-500' :
+                            status === OrderStatus.PREPARING ? 'bg-orange-500' :
+                            status === OrderStatus.READY ? 'bg-green-500' :
+                            status === OrderStatus.SERVED ? 'bg-purple-500' :
+                            status === OrderStatus.COMPLETED ? 'bg-gray-500' :
+                            status === OrderStatus.CANCELLED ? 'bg-red-500' : 'bg-gray-400'
+                          }`} />
+                          {status}
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <DropdownMenuItem disabled className="text-muted-foreground">
+                        No status changes available
+                      </DropdownMenuItem>
+                    )}
+                    {/* Show disabled COMPLETED option with explanation if order is SERVED but not paid */}
+                    {hasUnpaidServedCase && (
+                      <DropdownMenuItem
+                        disabled
+                        className="flex items-center gap-2 opacity-50 cursor-not-allowed"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-gray-400" />
+                        <div className="flex flex-col">
+                          <span>COMPLETED</span>
+                          <span className="text-xs text-muted-foreground">Payment required</span>
+                        </div>
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            })()}
             <Button onClick={handleEdit} className="print:hidden">
               <Edit className="mr-2 h-4 w-4" /> Edit
             </Button>
@@ -265,7 +416,7 @@ const OrderDetails: React.FC = () => {
         <div className="hidden print:block">
           <h1 className="text-3xl font-bold text-center">Order Receipt</h1>
           <p className="text-center text-muted-foreground">
-            Order #{currentOrder.id.substring(0, 8)}
+            Order #{order.id.substring(0, 8)}
           </p>
         </div>
 
@@ -273,8 +424,8 @@ const OrderDetails: React.FC = () => {
           <CardHeader className="pb-2">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
               <CardTitle>Order Information</CardTitle>
-              <Badge variant="outline" className={getStatusBadgeClass(currentOrder.status)}>
-                {currentOrder.status}
+              <Badge variant="outline" className={getStatusBadgeClass(order.status)}>
+                {order.status}
               </Badge>
             </div>
           </CardHeader>
@@ -284,36 +435,36 @@ const OrderDetails: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Date:</span>
-                  <span>{format(new Date(currentOrder.createdAt), 'MMMM d, yyyy')}</span>
+                  <span>{format(new Date(order.createdAt), 'MMMM d, yyyy')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="font-medium">Time:</span>
-                  <span>{format(new Date(currentOrder.createdAt), 'h:mm a')}</span>
+                  <span>{format(new Date(order.createdAt), 'h:mm a')}</span>
                 </div>
-                {currentOrder.completedAt && (
+                {order.completedAt && (
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Completed:</span>
                     <span>
-                      {format(new Date(currentOrder.completedAt), 'MMMM d, yyyy')} at {format(new Date(currentOrder.completedAt), 'h:mm a')}
+                      {format(new Date(order.completedAt), 'MMMM d, yyyy')} at {format(new Date(order.completedAt), 'h:mm a')}
                     </span>
                   </div>
                 )}
               </div>
               <div className="space-y-2">
-                {currentOrder.table && (
+                {order.table && (
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Table:</span>
-                    <span>{currentOrder.table.name}</span>
+                    <span>{order.table.name}</span>
                   </div>
                 )}
-                {currentOrder.table?.venue && (
+                {order.table?.venue && (
                   <div className="flex items-center gap-2">
                     <Building className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Venue:</span>
-                    <span>{currentOrder.table.venue.name}</span>
+                    <span>{order.table.venue.name}</span>
                   </div>
                 )}
               </div>
@@ -323,37 +474,37 @@ const OrderDetails: React.FC = () => {
 
             <div className="space-y-2">
               <h3 className="font-medium">Customer Information</h3>
-              {currentOrder.customerName ? (
+              {order.customerName ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    {currentOrder.customerName && (
+                    {order.customerName && (
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Name:</span>
-                        <span>{currentOrder.customerName}</span>
+                        <span>{order.customerName}</span>
                       </div>
                     )}
-                    {currentOrder.customerPhone && (
+                    {order.customerPhone && (
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Phone:</span>
-                        <span>{currentOrder.customerPhone}</span>
+                        <span>{order.customerPhone}</span>
                       </div>
                     )}
                   </div>
                   <div className="space-y-2">
-                    {currentOrder.customerEmail && (
+                    {order.customerEmail && (
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Email:</span>
-                        <span>{currentOrder.customerEmail}</span>
+                        <span>{order.customerEmail}</span>
                       </div>
                     )}
-                    {currentOrder.roomNumber && (
+                    {order.roomNumber && (
                       <div className="flex items-center gap-2">
                         <Building className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">Room:</span>
-                        <span>{currentOrder.roomNumber}</span>
+                        <span>{order.roomNumber}</span>
                       </div>
                     )}
                   </div>
@@ -363,12 +514,12 @@ const OrderDetails: React.FC = () => {
               )}
             </div>
 
-            {currentOrder.notes && (
+            {order.notes && (
               <>
                 <Separator />
                 <div className="space-y-2">
                   <h3 className="font-medium">Order Notes</h3>
-                  <p>{currentOrder.notes}</p>
+                  <p>{order.notes}</p>
                 </div>
               </>
             )}
@@ -380,9 +531,9 @@ const OrderDetails: React.FC = () => {
             <CardTitle>Order Items</CardTitle>
           </CardHeader>
           <CardContent>
-            {currentOrder.items && currentOrder.items.length > 0 ? (
+            {order.items && order.items.length > 0 ? (
               <div className="space-y-4">
-                {currentOrder.items.map((item) => (
+                {order.items.map((item) => (
                   <div key={item.id} className="border rounded-md p-4">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-2">
                       <div className="flex items-center gap-2">
@@ -423,33 +574,33 @@ const OrderDetails: React.FC = () => {
                 <div className="pt-4 border-t space-y-3">
                   {/* Tax Breakdown */}
                   <div className="space-y-2">
-                    {currentOrder.subtotalAmount && (
+                    {order.subtotalAmount && (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Subtotal:</span>
-                        <span className="font-mono">{formatCurrency(currentOrder.subtotalAmount)}</span>
+                        <span className="font-mono">{formatCurrency(order.subtotalAmount)}</span>
                       </div>
                     )}
 
-                    {currentOrder.isTaxExempt ? (
+                    {order.isTaxExempt ? (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Tax:</span>
                         <span className="text-muted-foreground">Exempt</span>
                       </div>
-                    ) : currentOrder.taxAmount && parseFloat(currentOrder.taxAmount) > 0 ? (
+                    ) : order.taxAmount && parseFloat(order.taxAmount) > 0 ? (
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">
-                          Tax ({TaxService.formatTaxRate(currentOrder.taxRate)}):
+                          Tax ({TaxService.formatTaxRate(order.taxRate)}):
                         </span>
-                        <span className="font-mono">{formatCurrency(currentOrder.taxAmount)}</span>
+                        <span className="font-mono">{formatCurrency(order.taxAmount)}</span>
                       </div>
                     ) : null}
 
                     <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
                       <span>Total</span>
-                      <span className="font-mono">{formatCurrency(currentOrder.totalAmount)}</span>
+                      <span className="font-mono">{formatCurrency(order.totalAmount)}</span>
                     </div>
 
-                    {currentOrder.isPriceInclusive && (
+                    {order.isPriceInclusive && (
                       <div className="text-xs text-muted-foreground text-right">
                         * Tax inclusive pricing
                       </div>
@@ -464,8 +615,8 @@ const OrderDetails: React.FC = () => {
         </Card>
 
         {/* Tax Breakdown Card */}
-        {(currentOrder.taxType || currentOrder.taxAmount || currentOrder.isTaxExempt) && (
-          <TaxBreakdown order={currentOrder} />
+        {(order.taxType || order.taxAmount || order.isTaxExempt) && (
+          <TaxBreakdown order={order} />
         )}
 
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
@@ -484,6 +635,16 @@ const OrderDetails: React.FC = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Payment Status Dialog */}
+        {order && (
+          <PaymentStatusDialog
+            order={order}
+            isOpen={isPaymentDialogOpen}
+            onClose={() => setIsPaymentDialogOpen(false)}
+            onPaymentStatusChanged={handlePaymentStatusChanged}
+          />
+        )}
       </div>
     </>
   );
