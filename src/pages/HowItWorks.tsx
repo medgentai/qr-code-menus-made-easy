@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -23,14 +22,9 @@ const HowItWorks = () => {
                 A simple, intuitive platform designed to transform your menu experience in just a few steps.
               </p>
               <div className="aspect-video max-w-2xl mx-auto rounded-xl overflow-hidden shadow-xl">
-                <iframe 
-                  className="w-full h-full"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Replace with your actual video
-                  title="ScanServe Demo"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-600 text-lg font-medium">
+                  Video coming soon
+                </div>
               </div>
             </div>
           </div>
