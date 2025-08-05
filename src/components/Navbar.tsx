@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center gap-4">
             <Button variant="outline" className="hover-lift" asChild>
-              <Link to="/login">Login</Link>
+              <Link to="/auth/login">Login</Link>
             </Button>
             <Button className="bg-orange-500 hover:bg-orange-600 hover:-translate-y-0.5 transition-all duration-200 shadow-md hover:shadow-lg" asChild>
               <Link to="/get-started">Get Started</Link>
@@ -82,7 +81,7 @@ const Navbar = () => {
             </nav>
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <Button variant="outline" className="w-full text-lg py-6" asChild>
-                <Link to="/login" onClick={toggleMenu}>Login</Link>
+                <Link to="/auth/login" onClick={toggleMenu}>Login</Link>
               </Button>
               <Button className="bg-orange-500 hover:bg-orange-600 w-full text-lg py-6" asChild>
                 <Link to="/get-started" onClick={toggleMenu}>Get Started</Link>
