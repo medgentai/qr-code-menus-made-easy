@@ -3,13 +3,53 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import PricingSection from '../components/PricingSection';
+import SEOHead from '../components/SEOHead';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 const Pricing = () => {
+  const pricingStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "TapDodo QR Code Menu System",
+    "description": "Digital menu system with QR code ordering for restaurants, hotels, and food service businesses",
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Food Truck Plan",
+        "price": "499",
+        "priceCurrency": "INR",
+        "priceValidUntil": "2025-12-31",
+        "availability": "https://schema.org/InStock"
+      },
+      {
+        "@type": "Offer",
+        "name": "Restaurant Plan",
+        "price": "599",
+        "priceCurrency": "INR", 
+        "priceValidUntil": "2025-12-31",
+        "availability": "https://schema.org/InStock"
+      },
+      {
+        "@type": "Offer",
+        "name": "Hotel Plan",
+        "price": "1499",
+        "priceCurrency": "INR",
+        "priceValidUntil": "2025-12-31",
+        "availability": "https://schema.org/InStock"
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
+      <SEOHead
+        title="Pricing Plans - QR Code Menu System"
+        description="Transparent pricing for TapDodo's QR code menu system. Plans starting from ₹499/month for food trucks, ₹599 for restaurants, and ₹1,499 for hotels. 14-day free trial included."
+        keywords="QR menu pricing, digital menu cost, restaurant software pricing, contactless ordering pricing"
+        structuredData={pricingStructuredData}
+      />
       <Navbar />
       
       <main className="flex-grow pt-24">

@@ -32,13 +32,13 @@ DecorativeElements.displayName = 'DecorativeElements';
 const CustomerAvatars = memo(() => (
   <div className="flex items-center justify-center mt-10 gap-3">
     <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white hover:scale-110 transition-transform duration-300">
-      <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Customer" className="h-full w-full object-cover" />
+      <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Happy restaurant owner using TapDodo QR menu system" className="h-full w-full object-cover" />
     </div>
     <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white -ml-4 hover:scale-110 transition-transform duration-300 hover:z-10">
-      <img src="https://randomuser.me/api/portraits/men/36.jpg" alt="Customer" className="h-full w-full object-cover" />
+      <img src="https://randomuser.me/api/portraits/men/36.jpg" alt="Satisfied cafe owner with digital menu solution" className="h-full w-full object-cover" />
     </div>
     <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white -ml-4 hover:scale-110 transition-transform duration-300 hover:z-10">
-      <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Customer" className="h-full w-full object-cover" />
+      <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Food truck owner using contactless ordering system" className="h-full w-full object-cover" />
     </div>
     <p className="text-white/90 ml-2">
       Join 2000+ satisfied customers
