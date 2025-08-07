@@ -64,28 +64,28 @@ const Hero = () => {
                   className="w-full h-auto rounded-xl shadow-sm image-hover"
                 />
                 
-                <div className="absolute right-8 top-10 bg-white rounded-full p-5 shadow-lg rotate-12 animate-bounce [animation-duration:4s]">
-                  <Scan className="h-8 w-8 text-orange-500" />
+                <div className="absolute right-5 top-8 md:right-8 top-4 md:top-10 bg-white rounded-full p-3 md:p-5 shadow-lg rotate-12 animate-bounce [animation-duration:4s]">
+                  <Scan className="h-5 w-5 md:h-8 md:w-8 text-orange-500" />
                 </div>
 
-                {/* Floating elements - moved inside the image container */}
-                <div className="absolute right-8 bottom-1/3 bg-white rounded-lg p-3 shadow-lg animate-float rotate-6 z-20">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-sky-100 p-2 rounded-full">
-                      <Utensils className="h-4 w-4 text-sky-600" />
+                {/* Floating elements - mobile responsive sizing */}
+                <div className="absolute right-5 md:right-8 bottom-1/3 bg-white rounded-lg p-2 md:p-3 shadow-lg animate-float rotate-6 z-20">
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <div className="bg-sky-100 p-1 md:p-2 rounded-full">
+                      <Utensils className="h-3 w-3 md:h-4 md:w-4 text-sky-600" />
                     </div>
                     <span className="text-xs font-medium text-navy-800">Order Received!</span>
                   </div>
                 </div>
 
-                <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm p-4 rounded-lg shadow-xl border border-gray-100 hover-lift">
-                  <div className="flex items-start gap-3">
-                    <div className="bg-orange-500 text-white p-3 rounded-lg">
-                      <Smartphone className="h-6 w-6" />
+                <div className="absolute bottom-4 md:bottom-4 left-4 md:left-4 right-4 md:right-4 bg-white/95 backdrop-blur-sm p-2 md:p-4 rounded-lg shadow-xl border border-gray-100 hover-lift">
+                  <div className="flex items-start gap-2 md:gap-3">
+                    <div className="bg-orange-500 text-white p-2 md:p-3 rounded-lg">
+                      <Smartphone className="h-4 w-4 md:h-6 md:w-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-navy-800">Instant QR Access</h3>
-                      <p className="text-sm text-gray-600">Customers scan & order in seconds</p>
+                      <h3 className="font-semibold md:font-bold text-sm md:text-base text-navy-800">Instant QR Access</h3>
+                      <p className="text-xs md:text-sm text-gray-600">Customers scan & order in seconds</p>
                     </div>
                   </div>
                 </div>
