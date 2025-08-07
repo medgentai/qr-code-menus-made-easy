@@ -10,7 +10,7 @@ const Footer = () => {
           <div>
             <Link to="/" className="inline-block mb-4">
               <span className="text-2xl font-bold">
-                Scan<span className="text-orange-500">Serve</span>
+                Tap<span className="text-orange-500">Dodo</span>
               </span>
             </Link>
             <p className="text-gray-300 mb-6 max-w-xs">
