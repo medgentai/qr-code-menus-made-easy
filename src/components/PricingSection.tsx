@@ -14,46 +14,67 @@ const PricingSection = () => {
 
   const plans = [
     {
-      name: "Restaurant / Cafes",
-      description: "Perfect for restaurants looking to modernize their menu experience.",
+      name: "Food Truck",
+      description: "Perfect for food trucks and mobile vendors looking to streamline orders.",
+      monthlyPrice: 699,
+      annualPrice: 499,
+      annualTotal: 5988,
+      icon: <CircleDollarSign className="h-10 w-10 text-orange-500" />,
+      features: [
+        "Unlimited QR code menus",
+        "Mobile-friendly design", 
+        "Real-time menu updates",
+        "Order management system",
+        "Basic analytics",
+        "Email support",
+        "Easy category management",
+        "Customer feedback collection"
+      ],
+      cta: "Book a Free Demo",
+      highlight: false,
+      dailyCost: 16
+    },
+    {
+      name: "Restaurant / Cafes / Bars / Clubs",
+      description: "Perfect for restaurants, cafes, bars, and clubs looking to modernize their menu experience.",
       monthlyPrice: 799,
       annualPrice: 599,
       annualTotal: 7188,
       icon: <Utensils className="h-10 w-10 text-orange-500" />,
       features: [
-        "Unlimited QR code menus",
+        "All Food Truck features",
+        "Table management",
+        "Advanced analytics",
         "Menu customization",
-        "Real-time menu updates",
-        "Mobile-friendly design",
-        "Basic analytics",
-        "Email support",
-        "Easy category management",
-        "Special dish highlights"
+        "Special dish highlights",
+        "Multi-venue support",
+        "Staff management",
+        "Tax configuration"
       ],
       cta: "Book a Free Demo",
       highlight: true,
-      dailyCost: 24
+      dailyCost: 20
     },
     {
       name: "Hotel",
       description: "Ideal for hotels with multiple dining venues and room service.",
-      monthlyPrice: 1599,
-      annualPrice: 1399,
-      annualTotal: 16788,
+      monthlyPrice: 1699,
+      annualPrice: 1499,
+      annualTotal: 17988,
       icon: <Hotel className="h-10 w-10 text-orange-500" />,
       features: [
         "All Restaurant features",
-        "Multiple menu management",
         "Room service integration",
-        "Order management system",
-        "Customer feedback collection",
+        "Multiple venue management",
+        "Advanced order routing",
+        "Guest management",
         "Enhanced analytics",
         "Priority support",
         "Multi-language support"
       ],
       cta: "Book a Free Demo",
       highlight: false,
-      dailyCost: 46
+      dailyCost: 49
     }
   ];
 
@@ -83,7 +104,7 @@ const PricingSection = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {plans.map((plan, index) => (
             <div 
               key={index} 
