@@ -77,10 +77,10 @@ const Footer = () => {
               &copy; {new Date().getFullYear()} TapDodo. All rights reserved.
             </p>
             <div className="flex gap-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="text-gray-400 text-sm hover:text-orange-500 transition-colors">
+              <Link to="/privacy-policy" className="text-gray-400 text-sm hover:text-orange-500 transition-colors">
                 Privacy Policy
               </Link>
-              <Link to="/terms" className="text-gray-400 text-sm hover:text-orange-500 transition-colors">
+              <Link to="/terms-of-service" className="text-gray-400 text-sm hover:text-orange-500 transition-colors">
                 Terms of Service
               </Link>
             </div>
