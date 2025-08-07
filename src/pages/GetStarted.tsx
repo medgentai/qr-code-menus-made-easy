@@ -33,7 +33,7 @@ const GetStarted = () => {
     // Show success toast
     toast({
       title: "Request Received!",
-      description: "Thank you for booking a demo with ScanServe! We'll contact you shortly.",
+  description: "Thank you for booking a demo with TapDodo! We'll contact you shortly.",
     });
     
     // Reset form (in a real app, you'd redirect to the dashboard or login)
@@ -60,7 +60,7 @@ const GetStarted = () => {
                   Book Your <span className="text-orange-500">Free Demo</span>
                 </h1>
                 <p className="text-xl text-gray-700 mb-8">
-                  Sign up now to experience the power of ScanServe. Our team will guide you through a personalized demo.
+                  Sign up now to experience the power of TapDodo. Our team will guide you through a personalized demo.
                 </p>
                 
                 <form onSubmit={handleSubmit} className="space-y-6 max-w-md">
@@ -179,7 +179,7 @@ const GetStarted = () => {
                 
                 <ul className="space-y-4">
                   {[
-                    "Personalized walkthrough of ScanServe features",
+                    "Personalized walkthrough of TapDodo features",
                     "Live QR code generation demonstration",
                     "Complete menu customization showcase",
                     "Real-time order management preview",
@@ -199,7 +199,7 @@ const GetStarted = () => {
                     What Our Customers Say
                   </h4>
                   <p className="text-gray-600 italic mb-4">
-                    "The ScanServe platform paid for itself within the first month. Our customers love the experience, and we've seen a significant increase in order value."
+                    "The TapDodo platform paid for itself within the first month. Our customers love the experience, and we've seen a significant increase in order value."
                   </p>
                   <div className="flex items-center">
                     <img 

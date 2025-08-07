@@ -16,7 +16,7 @@ const About = () => {
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                About <span className="text-gradient">ScanServe</span>
+                About <span className="text-gradient">TapDodo</span>
               </h1>
               <p className="text-xl text-gray-700 mb-8">
                 Transforming the dining experience with innovative digital solutions
@@ -35,7 +35,7 @@ const About = () => {
                   <span className="absolute -bottom-1 left-0 w-1/3 h-1 bg-orange-500"></span>
                 </h2>
                 <p className="text-gray-700 mb-4">
-                  ScanServe was founded in 2023 with a simple mission: to help restaurants and hospitality businesses 
+                  TapDodo was founded in 2023 with a simple mission: to help restaurants and hospitality businesses 
                   thrive in the digital age by making menu management and ordering simpler, more efficient, and 
                   more cost-effective.
                 </p>
@@ -72,7 +72,7 @@ const About = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-navy-800 mb-4">Our Values</h2>
               <p className="text-gray-700 max-w-2xl mx-auto">
-                These core principles guide everything we do at ScanServe
+                These core principles guide everything we do at TapDodo
               </p>
             </div>
             
@@ -130,7 +130,7 @@ const About = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-navy-800 mb-4">Our Team</h2>
               <p className="text-gray-700 max-w-2xl mx-auto">
-                Meet the people behind ScanServe dedicated to transforming the dining experience
+                Meet the people behind TapDodo dedicated to transforming the dining experience
               </p>
             </div>
             
@@ -152,7 +152,7 @@ const About = () => {
                   name: "David Rodriguez",
                   title: "Head of Customer Success",
                   image: "https://randomuser.me/api/portraits/men/67.jpg",
-                  bio: "Hospitality professional focused on ensuring clients get the most out of ScanServe."
+                  bio: "Hospitality professional focused on ensuring clients get the most out of TapDodo."
                 },
                 {
                   name: "Emily Parker",

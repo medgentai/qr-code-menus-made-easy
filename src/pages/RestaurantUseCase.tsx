@@ -43,7 +43,7 @@ const RestaurantUseCase = () => {
                 <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
                   <img 
                     src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=800&auto=format&fit=crop" 
-                    alt="Restaurant using ScanServe" 
+                    alt="Restaurant using TapDodo" 
                     className="w-full h-auto rounded-t-xl"
                   />
                   <div className="p-6">
@@ -64,7 +64,7 @@ const RestaurantUseCase = () => {
                 Restaurant Challenges <span className="text-orange-500">Solved</span>
               </h2>
               <p className="text-lg text-gray-700">
-                See how ScanServe addresses the unique challenges faced by restaurants.
+                See how TapDodo addresses the unique challenges faced by restaurants.
               </p>
             </div>
             
@@ -201,7 +201,7 @@ const RestaurantUseCase = () => {
                       How Urban Spice Increased Revenue by 32%
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      "ScanServe transformed our operations. Our customers appreciate the visual menu, and the ability to order at their own pace has significantly increased our average check size."
+                      "TapDodo transformed our operations. Our customers appreciate the visual menu, and the ability to order at their own pace has significantly increased our average check size."
                     </p>
                     <div className="flex items-center">
                       <img 
@@ -315,7 +315,7 @@ const RestaurantUseCase = () => {
                 Ready to Transform Your Restaurant?
               </h2>
               <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-                Join hundreds of restaurants already using ScanServe to modernize their operations and delight their customers.
+                Join hundreds of restaurants already using TapDodo to modernize their operations and delight their customers.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

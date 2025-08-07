@@ -109,7 +109,7 @@ const Features = () => {
                 Benefits That Drive <span className="text-orange-500">Business Growth</span>
               </h2>
               <p className="text-lg text-gray-700">
-                See how ScanServe delivers real value to your business.
+                See how TapDodo delivers real value to your business.
               </p>
             </div>
             

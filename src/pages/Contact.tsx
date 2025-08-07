@@ -81,8 +81,8 @@ const Contact = () => {
                 <p className="text-gray-600 mb-4">
                   Need help with your account or having technical issues?
                 </p>
-                <a href="mailto:support@scanserve.com" className="text-orange-500 hover:text-orange-600 font-medium">
-                  support@scanserve.com
+                <a href="mailto:support@tapdodo.com" className="text-orange-500 hover:text-orange-600 font-medium">
+                  support@tapdodo.com
                 </a>
               </div>
               
@@ -109,7 +109,7 @@ const Contact = () => {
                   Schedule a Demo
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  See ScanServe in action with a personalized walkthrough.
+                  See TapDodo in action with a personalized walkthrough.
                 </p>
                 <a href="#contactForm" className="text-orange-500 hover:text-orange-600 font-medium">
                   Request below
@@ -246,7 +246,7 @@ const Contact = () => {
                 <div>
                   <div className="bg-white p-8 rounded-xl shadow-sm">
                     <h3 className="text-xl font-bold text-navy-800 mb-4">
-                      ScanServe Headquarters
+                      TapDodo Headquarters
                     </h3>
                     <p className="text-gray-600 mb-6">
                       123 Tech Boulevard<br />
@@ -263,8 +263,8 @@ const Contact = () => {
                       </p>
                       <p className="flex items-center">
                         <span className="font-medium text-navy-800 mr-2">Email:</span>
-                        <a href="mailto:info@scanserve.com" className="text-orange-500 hover:text-orange-600">
-                          info@scanserve.com
+                        <a href="mailto:info@TapDodo.com" className="text-orange-500 hover:text-orange-600">
+                          info@TapDodo.com
                         </a>
                       </p>
                     </div>
@@ -274,7 +274,7 @@ const Contact = () => {
                 <div className="rounded-xl overflow-hidden shadow-sm">
                   <img 
                     src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop" 
-                    alt="ScanServe office" 
+                    alt="TapDodo office" 
                     className="w-full h-auto"
                   />
                 </div>

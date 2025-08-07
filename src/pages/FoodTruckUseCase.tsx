@@ -51,7 +51,7 @@ const FoodTruckUseCase = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-navy-800 mb-4">Benefits for Food Trucks</h2>
               <p className="text-gray-700 max-w-2xl mx-auto">
-                ScanServe helps food trucks overcome unique challenges and operate more efficiently
+                TapDodo helps food trucks overcome unique challenges and operate more efficiently
               </p>
             </div>
             
@@ -166,7 +166,7 @@ const FoodTruckUseCase = () => {
                       How Taco Revolution Serves 40% More Customers
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      "Before ScanServe, we could only handle a few orders at a time. Now our customers scan the QR code while in line and their orders are ready when they reach the window. We've dramatically increased our capacity without adding staff."
+                      "Before TapDodo, we could only handle a few orders at a time. Now our customers scan the QR code while in line and their orders are ready when they reach the window. We've dramatically increased our capacity without adding staff."
                     </p>
                     <div className="flex items-center">
                       <img 
@@ -205,7 +205,7 @@ const FoodTruckUseCase = () => {
                 Ready to Revolutionize Your Food Truck?
               </h2>
               <p className="text-xl text-gray-300 mb-8">
-                Join successful food trucks already using ScanServe to streamline operations and serve more customers.
+                Join successful food trucks already using TapDodo to streamline operations and serve more customers.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 

@@ -65,7 +65,7 @@ const CTASection = memo(() => {
             Ready to Transform Your Menu Experience?
           </h2>
           <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Join thousands of businesses already using ScanServe to modernize their operations and delight their customers.
+            Join thousands of businesses already using TapDodo to modernize their operations and delight their customers.
           </p>
           
           <div className="flex justify-center">

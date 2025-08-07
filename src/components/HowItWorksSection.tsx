@@ -36,7 +36,7 @@ const HowItWorksSection = () => {
       <div className="container-custom">
         <div className="max-w-3xl mx-auto text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-navy-800 mb-4">
-            How <span className="text-orange-500">ScanServe</span> Works
+            How <span className="text-orange-500">TapDodo</span> Works
           </h2>
           <p className="text-lg text-gray-700">
             Start transforming your customer experience in just a few simple steps.

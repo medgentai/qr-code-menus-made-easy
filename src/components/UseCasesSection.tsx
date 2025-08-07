@@ -35,7 +35,7 @@ const UseCasesSection = () => {
             Perfect for <span className="text-gradient">Every Business</span>
           </h2>
           <p className="text-lg text-gray-700">
-            ScanServe adapts to your unique business needs, whether you're a cozy café or a large hotel chain.
+            TapDodo adapts to your unique business needs, whether you're a cozy café or a large hotel chain.
           </p>
         </div>
 

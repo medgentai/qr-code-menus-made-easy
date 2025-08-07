@@ -16,7 +16,7 @@ const HowItWorks = () => {
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                How <span className="text-orange-500">ScanServe</span> Works
+                How <span className="text-orange-500">TapDodo</span> Works
               </h1>
               <p className="text-xl text-gray-700 mb-8">
                 A simple, intuitive platform designed to transform your menu experience in just a few steps.
@@ -44,7 +44,7 @@ const HowItWorks = () => {
                     <div className="w-full md:w-5/12 md:text-right order-2 md:order-1">
                       <h3 className="text-2xl font-bold text-navy-800 mb-4">Sign Up & Create Your Account</h3>
                       <p className="text-gray-600 mb-4">
-                        Start with a free 14-day trial. Enter your business details to create your account and access the ScanServe dashboard.
+                        Start with a free 14-day trial. Enter your business details to create your account and access the TapDodo dashboard.
                       </p>
                       <ul className="space-y-2 text-gray-700 md:mr-6">
                         <li>No credit card required</li>
@@ -232,11 +232,11 @@ const HowItWorks = () => {
               <div className="space-y-6">
                 {[
                   {
-                    question: "Do customers need to download an app to use ScanServe?",
+                    question: "Do customers need to download an app to use TapDodo?",
                     answer: "No, customers simply scan the QR code with their smartphone camera. The menu opens in their web browser with no app download required."
                   },
                   {
-                    question: "How quickly can I get set up with ScanServe?",
+                    question: "How quickly can I get set up with TapDodo?",
                     answer: "Most businesses can get fully set up within 1-2 hours. The sign-up process takes just minutes, and our intuitive menu builder makes it easy to create your digital menu."
                   },
                   {
@@ -245,10 +245,10 @@ const HowItWorks = () => {
                   },
                   {
                     question: "How do I make updates to my menu?",
-                    answer: "Log in to your ScanServe dashboard, navigate to the menu editor, and make your changes. All updates are reflected instantly on your live menu without needing to replace QR codes."
+                    answer: "Log in to your TapDodo dashboard, navigate to the menu editor, and make your changes. All updates are reflected instantly on your live menu without needing to replace QR codes."
                   },
                   {
-                    question: "Can ScanServe handle multiple locations or different menus?",
+                    question: "Can TapDodo handle multiple locations or different menus?",
                     answer: "Yes, our Professional and Enterprise plans support multiple locations and menu management. You can create different menus for breakfast, lunch, dinner, or special events."
                   }
                 ].map((faq, index) => (

@@ -51,7 +51,7 @@ const CafeUseCase = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-navy-800 mb-4">Benefits for Cafés & Bars</h2>
               <p className="text-gray-700 max-w-2xl mx-auto">
-                ScanServe helps you manage peak times more efficiently and deliver exceptional service
+                TapDodo helps you manage peak times more efficiently and deliver exceptional service
               </p>
             </div>
             
@@ -166,7 +166,7 @@ const CafeUseCase = () => {
                       How Urban Brew Increased Revenue by 22%
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      "With ScanServe, we've eliminated long lines during the morning rush. Customers can order from their table, and our average ticket size has increased significantly as people can browse our entire menu at their leisure."
+                      "With TapDodo, we've eliminated long lines during the morning rush. Customers can order from their table, and our average ticket size has increased significantly as people can browse our entire menu at their leisure."
                     </p>
                     <div className="flex items-center">
                       <img 
@@ -205,7 +205,7 @@ const CafeUseCase = () => {
                 Ready to Transform Your Café or Bar?
               </h2>
               <p className="text-xl text-gray-300 mb-8">
-                Join hundreds of cafés and bars already using ScanServe to improve operations and delight customers.
+                Join hundreds of cafés and bars already using TapDodo to improve operations and delight customers.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 

@@ -4,7 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 
 const testimonials = [
   {
-    quote: "ScanServe has completely transformed how we handle our menu. Our customers love the ease of ordering, and we've seen a 30% increase in average order value.",
+    quote: "TapDodo has completely transformed how we handle our menu. Our customers love the ease of ordering, and we've seen a 30% increase in average order value.",
     name: "Sarah Johnson",
     role: "Owner, Taste of Italy",
     image: "https://randomuser.me/api/portraits/women/32.jpg"
@@ -16,13 +16,13 @@ const testimonials = [
     image: "https://randomuser.me/api/portraits/men/45.jpg"
   },
   {
-    quote: "Our hotel guests love the convenience of scanning the QR code in their rooms to order room service. ScanServe has made the process seamless.",
+    quote: "Our hotel guests love the convenience of scanning the QR code in their rooms to order room service. TapDodo has made the process seamless.",
     name: "Elena Rodriguez",
     role: "F&B Director, Grand Plaza Hotel",
     image: "https://randomuser.me/api/portraits/women/68.jpg"
   },
   {
-    quote: "As a food truck owner, ScanServe has made it so much easier for customers to browse our menu while waiting in line. The implementation was incredibly simple.",
+    quote: "As a food truck owner, TapDodo has made it so much easier for customers to browse our menu while waiting in line. The implementation was incredibly simple.",
     name: "David Wilson",
     role: "Owner, Street Eats Food Truck",
     image: "https://randomuser.me/api/portraits/men/22.jpg"
@@ -38,7 +38,7 @@ const TestimonialsSection = () => {
             Loved by <span className="text-gradient">Business Owners</span>
           </h2>
           <p className="text-lg text-gray-700">
-            See what our customers are saying about their experience with ScanServe.
+            See what our customers are saying about their experience with TapDodo.
           </p>
         </div>
 

@@ -61,7 +61,7 @@ const Blog = () => {
     {
       id: 6,
       title: "The Future of Dining: AI-Powered Menu Recommendations",
-      excerpt: "Discover how ScanServe is integrating AI to provide personalized menu recommendations based on customer preferences.",
+      excerpt: "Discover how TapDodo is integrating AI to provide personalized menu recommendations based on customer preferences.",
       image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop",
       author: "James Wilson",
       date: "April 5, 2025",
@@ -90,7 +90,7 @@ const Blog = () => {
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                <span className="text-orange-500">ScanServe</span> Blog
+                <span className="text-orange-500">TapDodo</span> Blog
               </h1>
               <p className="text-xl text-gray-700 mb-8">
                 Insights, tips, and success stories about digital menus and the hospitality industry
@@ -221,7 +221,7 @@ const Blog = () => {
                 Subscribe to Our Newsletter
               </h2>
               <p className="text-gray-300 mb-8">
-                Stay updated with the latest industry trends, tips, and ScanServe product updates.
+                Stay updated with the latest industry trends, tips, and TapDodo product updates.
               </p>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input 

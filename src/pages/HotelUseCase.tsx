@@ -18,7 +18,7 @@ const HotelUseCase = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                  Transform Hotel Dining with <span className="text-orange-500">ScanServe</span>
+                  Transform Hotel Dining with <span className="text-orange-500">TapDodo</span>
                 </h1>
                 <p className="text-xl text-gray-700 mb-8">
                   Enhance guest experience with convenient digital room service and on-site dining options accessible via QR codes.
@@ -51,7 +51,7 @@ const HotelUseCase = () => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-navy-800 mb-4">Benefits for Hotels</h2>
               <p className="text-gray-700 max-w-2xl mx-auto">
-                ScanServe transforms hotel dining operations and guest experiences
+                TapDodo transforms hotel dining operations and guest experiences
               </p>
             </div>
             
@@ -166,7 +166,7 @@ const HotelUseCase = () => {
                       How Grand Plaza Hotel Improved Guest Satisfaction by 35%
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      "ScanServe has revolutionized our in-room dining and restaurant operations. Guests love the convenience of ordering from their mobile devices, and our staff can focus on delivering exceptional service instead of taking orders over the phone."
+                      "TapDodo has revolutionized our in-room dining and restaurant operations. Guests love the convenience of ordering from their mobile devices, and our staff can focus on delivering exceptional service instead of taking orders over the phone."
                     </p>
                     <div className="flex items-center">
                       <img 
@@ -205,7 +205,7 @@ const HotelUseCase = () => {
                 Elevate Your Hotel's Dining Experience Today
               </h2>
               <p className="text-xl text-gray-300 mb-8">
-                Join leading hotels already using ScanServe to delight their guests and streamline operations.
+                Join leading hotels already using TapDodo to delight their guests and streamline operations.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 

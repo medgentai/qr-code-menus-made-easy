@@ -60,7 +60,7 @@ const Hero = () => {
               <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 p-3">
                 <img 
                   src="https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?w=800&auto=format&fit=crop" 
-                  alt="ScanServe QR code menu in action" 
+                  alt="TapDodo QR code menu in action" 
                   className="w-full h-auto rounded-xl shadow-sm image-hover"
                 />
                 

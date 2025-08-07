@@ -57,7 +57,7 @@ const PricingSection = () => {
     }
   ];
 
-  const customSolutionDescription = "Whether you run Cafés & Bars, Food Trucks, Event Spaces, or need an Enterprise solution, our team can tailor ScanServe to meet your specific requirements and scale with your business.";
+  const customSolutionDescription = "Whether you run Cafés & Bars, Food Trucks, Event Spaces, or need an Enterprise solution, our team can tailor TapDodo to meet your specific requirements and scale with your business.";
 
   return (
     <section className="section bg-navy-800" id="pricing">

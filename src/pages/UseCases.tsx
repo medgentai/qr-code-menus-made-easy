@@ -98,7 +98,7 @@ const UseCases = () => {
           <div className="container-custom">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold text-navy-800 mb-6">
-                <span className="text-orange-500">ScanServe</span> For Every Business
+                <span className="text-orange-500">TapDodo</span> For Every Business
               </h1>
               <p className="text-xl text-gray-700 mb-8">
                 Discover how our digital menu solutions can be tailored to meet the specific needs of your industry.
@@ -165,7 +165,7 @@ const UseCases = () => {
                       How Taste of Italy Increased Orders by 30%
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      "Before ScanServe, we were spending thousands on printing menus. Now, we can update our menu instantly, showcase beautiful photos of our dishes, and our customers love the convenience of ordering directly from their phones."
+                      "Before TapDodo, we were spending thousands on printing menus. Now, we can update our menu instantly, showcase beautiful photos of our dishes, and our customers love the convenience of ordering directly from their phones."
                     </p>
                     <div className="flex items-center">
                       <img 
